@@ -93,7 +93,7 @@ Other relevant information will be referenced in the log and the report.
 
 ### PSM specific hardening checks
 |Hardening check      				| Description               
-|-------|     						| ------|              
+|-------   						| ------
 |ConfigureUsersForPSMSessions|Configure users for PSM sessions
 |PSMForWebApplications|PSM for web applications
 |EnableUsersToPrintPSMSessions|Enable users to print PSM sessions
