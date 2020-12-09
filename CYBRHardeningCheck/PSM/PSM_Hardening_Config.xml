@@ -1,0 +1,48 @@
+<Stage Name="Hardening" Version="1.0">
+
+   <Step Name="ImportingINFConfiguration" DisplayName="Importing INF Configuration" ScriptName="ImportingINFConfiguration" Enable="Yes">
+	<Parameters>
+		<Parameter Name="INFconfigFileName" Value="CyberArk PSM Hardening - Local Security Templates.inf" />
+	</Parameters>
+   </Step>
+   
+   <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableTheScreenSaverForThePSMLocalUsers" Enable="Yes"/>
+
+   <Step Name="AdvancedAuditPolicyConfiguration" DisplayName="Advanced Audit Policy Configuration" ScriptName="AdvancedAuditPolicyConfiguration"  Enable="Yes">
+		<Parameters>
+			<Parameter Name="AuditConfigFileName" Value="CyberArk PSM Hardening - Advanced Audit.csv" />
+		</Parameters>
+   </Step>
+
+	<!-- The following step configures properties for users PSMConnect and PSMAdminConnect-->
+	<Step Name ="ConfigurePSMUsers" DisplayName="Configure users for PSM sessions" ScriptName="ConfigureUsersForPSMSessions" Enable="Yes"/>
+
+	<!-- The following step secures the IE browser- Configure IE ESC, Configure the IE first run settings and adding IE.exe and Chrome.exe to PSMConfigureAppLocker.xml-->
+	<Step Name="WebApplications" DisplayName="PSM for web applications" ScriptName="PSMForWebApplications" Enable="No" />
+
+	<!-- The following step changes PSM user properties to enable users to print PSM sessions-->
+	<Step Name="EnablePrintSessions" DisplayName="Enable users to print PSM sessions" ScriptName="EnableUsersToPrintPSMSessions" Enable="No"/>
+	
+	<Step Name="SupportWebApplications" DisplayName="Support Web Applications on PSM" ScriptName="SupportWebApplications" Enable="No"/>
+	
+	<Step Name="ClearRemoteDesktopUsers" DisplayName="Clear Remote Desktop Users group from PSM Server" ScriptName="ClearRemoteDesktopUsers" Enable="No"/>
+	
+	<!-- The following step runs the applocker script to set applocker rules and enable specific application as configured in PSMConfigureApplocker.XML. 
+	 ******Remember to edit PSMConfigureApplocker.XML before running the script.*******-->
+	<Step Name="RunApplocker" DisplayName="Check up AppLocker Rules" ScriptName="RunApplocker" Enable="No"/>
+	
+	<!-- The following step imports the INF file to GPO , applies advanced audit and Configures PSMConnect PSMAdminConnect and PSMShadow users group to enable them to connect to the machine as recommended by Cyberark-->	 
+	<Step Name= "OutOfDomainHardening" DisplayName="Configure Out Of Domain PSM Server" ScriptName="ConfigureOutOfDomainPSMServer" Enable="Yes"/>
+	
+	<Step Name= "HidePSMDrives" DisplayName="Hide PSM Drives" ScriptName="HidePSMDrives" Enable="Yes"/>
+	
+	<Step Name= "BlockIETools" DisplayName="Block IE Developer Tools and Context menu" ScriptName="BlockIETools" Enable="Yes"/>
+	
+	<Step Name= "HardenRDS" DisplayName="Harden Remote Desktop Services" ScriptName="HardenRDS" Enable="Yes"/>
+	
+	<Step Name= "HardenServices" DisplayName="Harden SMB and XB Services" ScriptName="HardenSMBServices" Enable="Yes"/>
+	
+	<Step Name= "HardenPSMUsersAccess" DisplayName="Harden PSM Users Access" ScriptName="HardenPSMUsersAccess" Enable="Yes"/>
+	
+	
+</Stage>

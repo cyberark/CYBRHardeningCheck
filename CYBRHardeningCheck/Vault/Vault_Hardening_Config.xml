@@ -1,0 +1,28 @@
+<Stage Name="Hardening" Version="1.0">
+
+   <Step Name="StaticIP" DisplayName="Check that the Vault has Static IP" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/Before-CyberArk-Vault-Installation.htm#PreparationoftheCyberArkVaultserver" ScriptName="Vault_StaticIP"  Enable="Yes" />
+   
+   <Step Name="WindowsFirewall" DisplayName="Check that the Vault has the Firewall active" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/CyberArk-DV-Server-Security-Standards-Requirements.htm" ScriptName="Vault_WindowsFirewall"  Enable="Yes" />
+   
+   <Step Name="NICHardening" DisplayName="Network Interface Configuration Hardening" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/Before-CyberArk-Vault-Installation.htm#PreparationoftheCyberArkVaultserver" ScriptName="Vault_NICHardening"  Enable="Yes" />
+   
+   <Step Name="ImportingINFConfiguration" DisplayName="Importing INF Configuration" Description="" ScriptName="ImportingINFConfiguration" Enable="Yes" >
+	<Parameters>
+		<Parameter Name="INFconfigFileName" Value="Windows@OS@Security.inf" />
+	</Parameters>
+   </Step>
+   
+   <Step Name="AdvancedAuditPolicyConfiguration" DisplayName="Advanced Audit Policy Configuration" Description="" ScriptName="AdvancedAuditPolicyConfiguration"  Enable="Yes" >
+		<Parameters>
+			<Parameter Name="AuditConfigFileName" Value="Windows@OS@Audit.csv" />
+		</Parameters>
+   </Step>
+   
+   <Step Name="DomainJoined" DisplayName="Check that the Vault was not joined to a Domain" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/CyberArk-DV-Server-Security-Standards-Requirements.htm" ScriptName="Vault_DomainJoined"  Enable="Yes" />
+   
+   <Step Name="LogicContainerServiceLocalUser" DisplayName="Vault Logic Container Service LocalUser" Description="" ScriptName="Vault_LogicContainerServiceLocalUser" Enable="Yes">
+	  <Parameters>
+         <Parameter Name="LCServiceUserName" Value="LogicContainerUser"/>
+      </Parameters>
+   </Step>
+</Stage>

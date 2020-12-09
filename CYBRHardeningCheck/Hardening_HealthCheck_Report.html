@@ -1,0 +1,308 @@
+<!doctype html>
+<!--Quite a few clients strip your Doctype out, and some even apply their own. Many clients do honor your doctype and it can make things much easier if you can validate constantly against a Doctype.-->
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberArk Hardening Health Check Report</title>
+
+<!-- Please use an inliner tool to convert all CSS to inline as inpage or external CSS is removed by email clients -->
+<!-- important in CSS is used to prevent the styles of currently inline CSS from overriding the ones mentioned in media queries when corresponding screen sizes are encountered -->
+
+<style type="text/css">
+body {
+	margin: 0;
+		background-color: #fafafa;
+}
+body, table, td, p, a, li, blockquote {
+	-webkit-text-size-adjust: none!important;
+	font-family: sans-serif;
+	font-style: normal;
+	font-weight: 400;
+}
+button {
+	width: 90%;
+}
+div.Good {
+	content:url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjBweCIgaGVpZ2h0PSIyMHB4IiB2aWV3Qm94PSIwIDAgMjAgMjAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDUxLjMgKDU3NTQ0KSAtIGh0dHA6Ly93d3cuYm9oZW1pYW5jb2RpbmcuY29tL3NrZXRjaCAtLT4KICAgIDx0aXRsZT5pY19zdWNjZXNzX21lc3NhZ2U8L3RpdGxlPgogICAgPGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+CiAgICA8ZGVmcz48L2RlZnM+CiAgICA8ZyBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0iaWNfc3VjY2Vzc19tZXNzYWdlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjAwMDAwMCwgLTIuMDAwMDAwKSIgc3Ryb2tlPSIjMTRCODc2Ij4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMC4wMDAwMDAsIDIuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMTguNzQ5OCw5Ljc1IEMxOC43NDk4LDE0LjcyMSAxNC43MjA4LDE4Ljc1IDkuNzQ5OCwxOC43NSBDNC43Nzk4LDE4Ljc1IDAuNzQ5OCwxNC43MjEgMC43NDk4LDkuNzUgQzAuNzQ5OCw0Ljc3OSA0Ljc3OTgsMC43NSA5Ljc0OTgsMC43NSBDMTQuNzIwOCwwLjc1IDE4Ljc0OTgsNC43NzkgMTguNzQ5OCw5Ljc1IFoiIGlkPSJTdHJva2UtMSIgc3Ryb2tlLXdpZHRoPSIxLjUiPjwvcGF0aD4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik01LjUxMiwxMC4zMjA4IEw4LjM4MywxMi44MTc4IiBpZD0iU3Ryb2tlLTMiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiPjwvcGF0aD4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik04LjM4MzEsMTIuODE3NCBMMTMuMTU2MSw2LjQ4MDQiIGlkPSJTdHJva2UtNSIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PC9wYXRoPgogICAgICAgICAgICA8L2c+CiAgICAgICAgPC9nPgogICAgPC9nPgo8L3N2Zz4=);
+}
+div.Bad {
+	content:url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjBweCIgaGVpZ2h0PSIyMHB4IiB2aWV3Qm94PSIwIDAgMjAgMjAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDUxLjMgKDU3NTQ0KSAtIGh0dHA6Ly93d3cuYm9oZW1pYW5jb2RpbmcuY29tL3NrZXRjaCAtLT4KICAgIDx0aXRsZT5pY19mYWlsdXJlX21lc3NhZ2U8L3RpdGxlPgogICAgPGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+CiAgICA8ZGVmcz48L2RlZnM+CiAgICA8ZyBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0iaWNfZmFpbHVyZV9tZXNzYWdlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjAwMDAwMCwgLTIuMDAwMDAwKSIgc3Ryb2tlPSIjRUExMTJCIj4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMC4wMDAwMDAsIDIuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMTguNzQ5OCw5Ljc1MDEgQzE4Ljc0OTgsMTQuNzIxMSAxNC43MjA4LDE4Ljc1MDEgOS43NDk4LDE4Ljc1MDEgQzQuNzc5OCwxOC43NTAxIDAuNzQ5OCwxNC43MjExIDAuNzQ5OCw5Ljc1MDEgQzAuNzQ5OCw0Ljc3OTEgNC43Nzk4LDAuNzUwMSA5Ljc0OTgsMC43NTAxIEMxNC43MjA4LDAuNzUwMSAxOC43NDk4LDQuNzc5MSAxOC43NDk4LDkuNzUwMSBaIiBpZD0iU3Ryb2tlLTEiIHN0cm9rZS13aWR0aD0iMS41Ij48L3BhdGg+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMTMuMDY4NiwxMy4xNzU5IEMxMi45OTE2LDEzLjE3NDkgMTIuOTE3NiwxMy4xNDI5IDEyLjg2MzYsMTMuMDg3OSBMNi43NTE2LDYuOTc1OSBDNi42NTQ2LDYuODQ1OSA2LjY4MDYsNi42NjI5IDYuODEwNiw2LjU2NTkgQzYuOTE0Niw2LjQ4NzkgNy4wNTc2LDYuNDg3OSA3LjE2MTYsNi41NjU5IEwxMy4yNzM2LDEyLjY3NzkgQzEzLjM4NjYsMTIuNzkzOSAxMy4zODQ2LDEyLjk3ODkgMTMuMjY5NiwxMy4wOTE5IEMxMy4yMTU2LDEzLjE0NDkgMTMuMTQzNiwxMy4xNzQ5IDEzLjA2ODYsMTMuMTc1OSBaIiBpZD0iU3Ryb2tlLTMiPjwvcGF0aD4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik02LjcwNDksMTMuMTc1OSBDNi41NDI5LDEzLjE3MzkgNi40MTM5LDEzLjA0MDkgNi40MTU5LDEyLjg3ODkgQzYuNDE2OSwxMi44MDM5IDYuNDQ3OSwxMi43MzE5IDYuNDk5OSwxMi42Nzc5IEwxMi42MTE5LDYuNTY1OSBDMTIuNzI2OSw2LjQ1MDkgMTIuOTEyOSw2LjQ1MDkgMTMuMDI3OSw2LjU2NTkgQzEzLjE0MjksNi42ODA5IDEzLjE0MjksNi44NjY5IDEzLjAyNzksNi45ODE5IEw2LjkwOTksMTMuMDg3OSBDNi44NTU5LDEzLjE0MjkgNi43ODE5LDEzLjE3NDkgNi43MDQ5LDEzLjE3NTkgWiIgaWQ9IlN0cm9rZS01Ij48L3BhdGg+CiAgICAgICAgICAgIDwvZz4KICAgICAgICA8L2c+CiAgICA8L2c+Cjwvc3ZnPg==);
+}
+div.Warning {
+	content:url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjBweCIgaGVpZ2h0PSIxN3B4IiB2aWV3Qm94PSIwIDAgMjAgMTciIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDUxLjMgKDU3NTQ0KSAtIGh0dHA6Ly93d3cuYm9oZW1pYW5jb2RpbmcuY29tL3NrZXRjaCAtLT4KICAgIDx0aXRsZT5pY193YXJuaW5nX21lc3NhZ2U8L3RpdGxlPgogICAgPGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+CiAgICA8ZGVmcz48L2RlZnM+CiAgICA8ZyBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0iaWNfd2FybmluZ19tZXNzYWdlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjAwMDAwMCwgLTMuMDAwMDAwKSI+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAuMDAwMDAwLCAzLjAwMDAwMCkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTkuOTE4OSwxNi4xMSBMMS42MDg5LDE2LjExIEMwLjk0MTksMTYuMTEgMC41Mjk5LDE1LjM4MiAwLjg3MzksMTQuODExIEw1LjAwNTksNy45MyBMOS4xODM5LDEuMTU4IEM5LjUyMDksMC42MTIgMTAuMzEzOSwwLjYxNSAxMC42NDY5LDEuMTYyIEwxNC44MzE5LDguMDM4IEwxOC45NTA5LDE0LjgwNiBDMTkuMjk4OSwxNS4zNzkgMTguODg3OSwxNi4xMSAxOC4yMTg5LDE2LjExIEw5LjkxODksMTYuMTEgWiIgaWQ9IlN0cm9rZS0xIiBzdHJva2U9IiNGRjlDMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiPjwvcGF0aD4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik05Ljc4Nyw1LjIwOTYgTDkuNzg3LDEwLjE2NDYiIGlkPSJTdHJva2UtMyIgc3Ryb2tlPSIjRkY5QzAwIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48L3BhdGg+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMTAuNzc4MywxMy4xMzc0IEMxMC43NzgzLDEzLjY4NDQgMTAuMzM0MywxNC4xMjg0IDkuNzg3MywxNC4xMjg0IEM5LjIzOTMsMTQuMTI4NCA4Ljc5NjMsMTMuNjg0NCA4Ljc5NjMsMTMuMTM3NCBDOC43OTYzLDEyLjU5MDQgOS4yMzkzLDEyLjE0NjQgOS43ODczLDEyLjE0NjQgQzEwLjMzNDMsMTIuMTQ2NCAxMC43NzgzLDEyLjU5MDQgMTAuNzc4MywxMy4xMzc0IiBpZD0iRmlsbC01IiBmaWxsPSIjRkY5QzAwIj48L3BhdGg+CiAgICAgICAgICAgIDwvZz4KICAgICAgICA8L2c+CiAgICA8L2c+Cjwvc3ZnPg==);
+}
+
+table {
+	/* All tables are 100% width */
+	table-layout: fixed;
+}
+
+table#tblHardening { border: none; border-collapse: collapse; word-break: break-word;}
+table#tblHardening th { border-top: 2px solid #000;
+						border-bottom: 2px solid #000;
+						}
+table#tblHardening th:first-child { border-left: 2px solid #000;
+									border-right: none; }
+table#tblHardening th:last-child { border-left: none; 
+								   border-right: 2px solid #000; }
+table#tblHardening td:first-child { border-left: 2px solid #000;
+									border-right: none; }
+table#tblHardening td:last-child { border-left: none; 
+								   border-right: 2px solid #000; }
+
+@media screen and (max-width:600px) {
+	/*styling for objects with screen size less than 600px; */
+	body, table, td, p, a, li, blockquote {
+		-webkit-text-size-adjust: none!important;
+		font-family: sans-serif;
+	}
+	table {
+		/* All tables are 100% width */
+		width: 100%;
+	}
+	.footer {
+		/* Footer has 2 columns each of 48% width */
+		height: auto !important;
+		max-width: 48% !important;
+		width: 48% !important;
+	}
+	table.responsiveImage {
+		/* Container for images in catalog */
+		height: auto !important;
+		max-width: 30% !important;
+		width: 30% !important;
+	}
+	table.responsiveContent {
+		/* Content that accompanies the content in the catalog */
+		height: auto !important;
+		max-width: 66% !important;
+		width: 66% !important;
+	}
+	.top {
+		/* Each Columnar table in the header */
+		height: auto !important;
+		max-width: 48% !important;
+		width: 48% !important;
+	}
+	.catalog {
+		margin-left: 0%!important;
+	}
+}
+
+@media screen and (max-width:480px) {
+	/*styling for objects with screen size less than 480px; */
+	body, table, td, p, a, li, blockquote {
+		-webkit-text-size-adjust: none!important;
+		font-family: sans-serif;
+	}
+	table {
+		/* All tables are 100% width */
+		width: 100% !important;
+		border-style: none !important;
+	}
+	.footer {
+		/* Each footer column in this case should occupy 96% width  and 4% is allowed for email client padding*/
+		height: auto !important;
+		max-width: 96% !important;
+		width: 96% !important;
+	}
+	.table.responsiveImage {
+		/* Container for each image now specifying full width */
+		height: auto !important;
+		max-width: 96% !important;
+		width: 96% !important;
+	}
+	.table.responsiveContent {
+		/* Content in catalog  occupying full width of cell */
+		height: auto !important;
+		max-width: 96% !important;
+		width: 96% !important;
+	}
+	.top {
+		/* Header columns occupying full width */
+		height: auto !important;
+		max-width: 100% !important;
+		width: 100% !important;
+	}
+	.catalog {
+		margin-left: 0%!important;
+	}
+	button {
+		width: 90%!important;
+	}
+}
+details {
+  position: relative;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+details summary::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 1.5em;
+  height: 1.5em;
+  transition: transform 0.1s linear;
+}
+details[open] summary:before {
+  transform: rotate(90deg);
+}
+details > p {
+	padding-left: 30px;
+	align-items: center;
+	display: flex;
+}
+summary {
+  width: 100%;
+  align-items: center;
+}
+summary:hover {
+  color: #007bff;
+  cursor: pointer;
+}
+summary:focus {
+  outline: none;
+}
+</style>
+</head>
+<body yahoo="yahoo">
+<table width="100%"  cellspacing="0" cellpadding="0">
+  <tbody>
+    <tr>
+      <td><table width="900"  align="center" cellpadding="0" cellspacing="0" bgcolor="#ffffff">
+          <!-- Main Wrapper Table with initial width set to 60opx -->
+          <tbody>
+            <tr>
+              <td><table bgcolor="#021737" class="top" width="100%" align="left" cellpadding="0" cellspacing="0" height="54px">
+                  <!-- First header column with Logo -->
+                  <tr>
+                  	<td><img src="data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABIAAD/4QMxaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjYtYzEzOCA3OS4xNTk4MjQsIDIwMTYvMDkvMTQtMDE6MDk6MDEgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDQyAyMDE3IChNYWNpbnRvc2gpIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjA4RTZEMjE0MkRBNzExRTg4QUE1RkFCOTRFQkEzMTYwIiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjA4RTZEMjE1MkRBNzExRTg4QUE1RkFCOTRFQkEzMTYwIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6MDhFNkQyMTIyREE3MTFFODhBQTVGQUI5NEVCQTMxNjAiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6MDhFNkQyMTMyREE3MTFFODhBQTVGQUI5NEVCQTMxNjAiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz7/7gAOQWRvYmUAZMAAAAAB/9sAhAAEAwMDAwMEAwMEBQMD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" width="600" height="54" alt=""/></td>
+                  </tr>
+                </table></td>
+            </tr>
+            <tr> 
+              <!-- HTML Spacer row -->
+              <td style="font-size: 0; line-height: 0;" height="20"><table width="100%" align="left"  cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-size: 0; line-height: 0;" height="10"></td>
+                  </tr>
+                </table></td>
+            </tr>
+            <tr> 
+              <!-- HTML Spacer row -->
+              <td style="font-size: 0; line-height: 0;" height="20"><table width="100%" align="left"  cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-size: 0; line-height: 0;" height="10">&nbsp;</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr> 
+              <!-- Introduction area -->
+              <td><table width="100%"  align="left" cellpadding="0" cellspacing="0">
+                  <tr> 
+                    <!-- row container for TITLE/EMAIL THEME -->
+                    <td align="center" style="font-size: 24px; font-weight: 600; line-height: 2.5em; color: #3165BD; font-family: sans-serif;">General Machine details</td>
+                  </tr>
+                </table></td>
+            </tr>
+            <tr>
+              <td><table cellpadding="0" cellspacing="0" align="center" width="90%" class="catalog">
+                  <!-- Table for catalog -->
+                  <tr>
+                    <td >
+                       <table class ="responsive-table" width="40%"  cellspacing="0" cellpadding="0" align="left" style="margin: 5px 10px 5px 0px;">
+                        <!-- Table container for each image and description in catalog -->
+                        <tbody>
+                          <tr>
+                            <td>
+                              <table class="table.responsiveContent" width="90%"  cellspacing="0" cellpadding="0" align="left">
+                                <!-- Table container for content -->
+                                <tbody>
+                                  <tr>
+                                    <td><p style="font-size: 16px; font-style: normal; font-weight: 600; color: #047AD4; line-height: 1.5em; font-family: sans-serif;">Machine Name:</p>
+                                    <p style="font-size: 14px; font-style: normal; font-weight: normal; color: #666; line-height: 1.5em; font-family: sans-serif;">@@@MachineName@@@</p></td>
+                                  </tr>
+                                </tbody>
+                              </table></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <table class ="responsive-table" width="10%"  cellspacing="0" cellpadding="0" align="left" style="margin: 5px 10px 5px 0px;">
+                        <!-- Table container for each image and description in catalog -->
+                        <tbody>
+                          <tr>
+
+                          </tr>
+                        </tbody>
+                      </table>
+                      <table class ="responsive-table" width="40%"  cellspacing="0" cellpadding="0" align="left" style="margin: 5px 0px 5px 0px;">
+                        <!-- Table container for each image and description in catalog -->
+                        <tbody>
+                          <tr>
+                            <td><table class="table.responsiveImage" width="100%"  cellspacing="0" cellpadding="0" align="left">
+                                <!-- Table container for image -->
+                                
+                              </table>
+                              <table class="table.responsiveContent" width="100%"  cellspacing="0" cellpadding="0" align="left">
+                                <!-- Table container for content -->
+                                <tbody>
+                                  <tr>
+                                    <td><p style="font-size: 16px; font-style: normal; font-weight: 600; color: #047AD4">Installed Components:</p><p style="font-size: 14px; font-style: normal; font-weight: normal; color: #666; line-height: 1.5em; font-family: sans-serif;">@@@tblComponents@@@</p>
+                                  </tr>
+                                </tbody>
+                              </table></td>
+                          </tr>
+                        </tbody>
+                      </table></td>
+                  </tr>
+
+                </table></td>
+            </tr>
+            
+            <tr> 
+              <!-- HTML spacer row -->
+              <td style="font-size: 14px; line-height: 24px; padding: 10px; background-color: #EAEFF3">
+				<table style="width:100%; border-collapse: collapse;" id=tblHardening>
+				  <tr text-align="center">
+					<th width="30%">Hardening Check</th>
+					<th width="50">Status</th>
+					<th width="50%">Result</th>
+					<th width="15%">Documentation Link</th>
+				  </tr>				  
+				  @@@tblHardening@@@
+				</table></td>
+            </tr>
+            <tr>
+            	<td height="20" style="background-color: #fff"></td>
+            </tr>
+            <tr bgcolor="#021737">
+              <td><table class="footer" width="48%"  align="left" cellpadding="0" cellspacing="0">
+                  <!-- First column of footer content -->
+                  <tr>
+                    <td width="300px"><p align="center"  style="font-size: 22px; font-weight:300; line-height: 22px; color: #84FFFF; font-family: sans-serif;">Hardening health check</p></td>
+                  </tr>
+                </table>
+                <table class="footer" width="48%"  align="left" cellpadding="0" cellspacing="0">
+                  <!-- Second column of footer content -->
+                  <tr>
+                    <td><p style="font-size: 16px; font-style: normal; font-weight:normal; color: #ffffff; line-height: 24px; text-align:justify;padding-top:10px; margin-left:20px; margin-right:20px; font-family: sans-serif;">Performed on: @@@DateTime@@@</p>               
+                    </td>
+                    </tr>
+                    </table>
+                    <table width="100%">
+                    <tr>
+                    <td width="300px"><p style="text-align: left; color: #fff; padding-top:10px; margin-left:20px; margin-right:20px;"><img src="data:image/png;base64,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" width="126" height="26" alt=""/></p></td>
+						<td><p style="text-align: left; color: #fff;">CyberArk Health Check</p></td>
+                  </tr>
+                  </table>
+                </td>
+            </tr>
+          </tbody>
+        </table></td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>

@@ -1,0 +1,35 @@
+Machine Name,Policy Target,Subcategory,Subcategory GUID,Inclusion Setting,Exclusion Setting,Setting Value
+,System,Credential Validation,{0CCE923F-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Other Account Logon Events,{0CCE9241-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Application Group Management,{0CCE9239-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Computer Account Management,{0CCE9236-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Distribution Group Management,{0CCE9238-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Other Account Management Events,{0CCE923A-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Security Group Management,{0CCE9237-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,User Account Management,{0CCE9235-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Account Lockout,{0CCE9217-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Logoff,{0CCE9216-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Logon,{0CCE9215-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Network Policy Server,{0CCE9243-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Other Logon/Logoff Events,{0CCE921C-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Special Logon,{0CCE921B-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Application Generated,{0CCE9222-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Certification Services,{0CCE9221-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,File Share,{0CCE9224-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,File System,{0CCE921D-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Kernel Object,{0CCE921F-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Registry,{0CCE921E-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,SAM,{0CCE9220-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Audit Policy Change,{0CCE922F-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Authentication Policy Change,{0CCE9230-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Authorization Policy Change,{0CCE9231-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Filtering Platform Policy Change,{0CCE9233-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,MPSSVC Rule-Level Policy Change,{0CCE9232-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Non Sensitive Privilege Use,{0CCE9229-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Other System Events,{0CCE9214-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Security State Change,{0CCE9210-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Security System Extension,{0CCE9211-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,System Integrity,{0CCE9212-69AE-11D9-BED3-505054503030},Success and Failure,,3
+,System,Removable Storage,{0CCE9245-69AE-11D9-BED3-505054503030},Success,,1
+,System,Detailed File Share,{0CCE9244-69AE-11D9-BED3-505054503030},Failure,,2
+,System,Sensitive Privilege Use,{0CCE9228-69AE-11D9-BED3-505054503030},Failure,,2

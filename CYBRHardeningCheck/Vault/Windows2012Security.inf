@@ -1,0 +1,276 @@
+[Unicode]
+Unicode=yes
+[System Access]
+MinimumPasswordAge = 2
+MaximumPasswordAge = 42
+MinimumPasswordLength = 12
+PasswordComplexity = 1
+PasswordHistorySize = 24
+LockoutBadCount = 10
+ResetLockoutCount = 15
+LockoutDuration = 15
+LSAAnonymousNameLookup = 0
+EnableGuestAccount = 0
+[Event Audit]
+AuditObjectAccess = 2
+AuditPrivilegeUse = 2
+[Version]
+signature="$CHICAGO$"
+Revision=1
+[System Log]
+MaximumLogSize = 16384
+AuditLogRetentionPeriod = 0
+RestrictGuestAccess = 1
+[Security Log]
+MaximumLogSize = 81920
+AuditLogRetentionPeriod = 0
+RestrictGuestAccess = 1
+[Application Log]
+MaximumLogSize = 16384
+AuditLogRetentionPeriod = 0
+RestrictGuestAccess = 1
+[Privilege Rights]
+SeTcbPrivilege =
+SeIncreaseQuotaPrivilege = *S-1-5-32-544,*S-1-5-19,*S-1-5-20
+SeBackupPrivilege = *S-1-5-32-544
+SeChangeNotifyPrivilege = *S-1-5-20,*S-1-5-19,*S-1-5-11,*S-1-5-32-544
+SeSystemTimePrivilege = *S-1-5-19,*S-1-5-32-544
+SeCreatePagefilePrivilege = *S-1-5-32-544
+SeCreateTokenPrivilege =
+SeCreateGlobalPrivilege = *S-1-5-6,*S-1-5-20,*S-1-5-19,*S-1-5-32-544
+SeCreatePermanentPrivilege =
+SeDebugPrivilege =
+SeDenyNetworkLogonRight = *S-1-5-32-546
+SeEnableDelegationPrivilege = *S-1-5-32-544
+SeRemoteShutdownPrivilege = *S-1-5-32-544
+SeImpersonatePrivilege = *S-1-5-32-544,*S-1-5-6,*S-1-5-19,*S-1-5-20
+SeIncreaseBasePriorityPrivilege = *S-1-5-32-544
+SeLoadDriverPrivilege = *S-1-5-32-544
+SeLockMemoryPrivilege =
+SeSecurityPrivilege = *S-1-5-32-544
+SeSystemEnvironmentPrivilege = *S-1-5-32-544
+SeManageVolumePrivilege = *S-1-5-32-544
+SeProfileSingleProcessPrivilege = *S-1-5-32-544
+SeSystemProfilePrivilege = *S-1-5-32-544
+SeUndockPrivilege = *S-1-5-32-544
+SeAssignPrimaryTokenPrivilege = *S-1-5-19,*S-1-5-20
+SeShutdownPrivilege = *S-1-5-32-544
+SeInteractiveLogonRight = *S-1-5-32-544
+SeRemoteInteractiveLogonRight =
+SeTimeZonePrivilege = *S-1-5-19,*S-1-5-32-544
+SeCreateSymbolicLinkPrivilege = *S-1-5-32-544
+SeDenyBatchLogonRight = *S-1-5-32-546
+SeDenyServiceLogonRight =
+SeDenyInteractiveLogonRight = *S-1-5-32-546
+SeDenyRemoteInteractiveLogonRight = *S-1-5-32-546
+SeAuditPrivilege = *S-1-5-19,*S-1-5-20
+SeIncreaseWorkingSetPrivilege = *S-1-5-32-544,*S-1-5-19
+SeBatchLogonRight = *S-1-5-32-544
+SeRestorePrivilege = *S-1-5-32-544
+SeTakeOwnershipPrivilege = *S-1-5-32-544
+SeTrustedCredManAccessPrivilege =
+SeRelabelPrivilege = *S-1-5-32-544
+SeNetworkLogonRight = *S-1-5-32-544
+SeMachineAccountPrivilege =
+[Registry Values]
+MACHINE\System\CurrentControlSet\Services\Tcpip6\Parameters\TcpMaxDataRetransmissions=4,3
+MACHINE\System\CurrentControlSet\Services\Tcpip6\Parameters\DisableIPSourceRouting=4,2
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\EnableUIADesktopToggle=4,0
+MACHINE\Software\Policies\Microsoft\Windows\Safer\CodeIdentifiers\AuthenticodeEnabled=4,1
+MACHINE\System\CurrentControlSet\Control\Session Manager\SubSystems\optional=7,
+MACHINE\Software\Policies\Microsoft\Cryptography\ForceKeyProtection=4,2
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\EnableVirtualization=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\PromptOnSecureDesktop=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\EnableLUA=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\EnableSecureUIAPaths=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ValidateAdminCodeSignatures=4,0
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\EnableInstallerDetection=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ConsentPromptBehaviorUser=4,0
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ConsentPromptBehaviorAdmin=4,4
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\FilterAdministratorToken=4,1
+MACHINE\System\CurrentControlSet\Control\Session Manager\ProtectionMode=4,1
+MACHINE\System\CurrentControlSet\Control\Session Manager\Kernel\ObCaseInsensitive=4,1
+MACHINE\System\CurrentControlSet\Control\Lsa\FIPSAlgorithmPolicy\Enabled=4,0
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ShutdownWithoutLogon=4,0
+MACHINE\System\CurrentControlSet\Control\Session Manager\Memory Management\ClearPageFileAtShutdown=4,0
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Setup\RecoveryConsole\setcommand=4,0
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Setup\RecoveryConsole\securitylevel=4,0
+MACHINE\System\CurrentControlSet\Control\Lsa\MSV1_0\NTLMMinClientSec=4,537395200
+MACHINE\System\CurrentControlSet\Services\LDAP\LDAPClientIntegrity=4,1
+MACHINE\System\CurrentControlSet\Control\Lsa\LmCompatibilityLevel=4,5
+MACHINE\System\CurrentControlSet\Control\Lsa\NoLMHash=4,1
+MACHINE\System\CurrentControlSet\Control\Lsa\ForceGuest=4,0
+MACHINE\System\CurrentControlSet\Services\msiserver\Start=4,4
+MACHINE\System\CurrentControlSet\Services\AppXSvc\Start=4,4
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\NullSessionShares=7,
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\RestrictNullSessAccess=4,1
+MACHINE\System\CurrentControlSet\Control\SecurePipeServers\Winreg\AllowedExactPaths\Machine=7,System\CurrentControlSet\Control\ProductOptions,System\CurrentControlSet\Control\Server Applications,Software\Microsoft\Windows NT\CurrentVersion
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\NullSessionPipes=7,browser
+MACHINE\System\CurrentControlSet\Control\Lsa\EveryoneIncludesAnonymous=4,0
+MACHINE\System\CurrentControlSet\Control\Lsa\RestrictAnonymous=4,1
+MACHINE\System\CurrentControlSet\Control\Lsa\RestrictAnonymousSAM=4,1
+MACHINE\SYSTEM\CurrentControlSet\Services\Eventlog\Security\WarningLevel=4,90
+MACHINE\System\CurrentControlSet\Services\Tcpip\Parameters\TcpMaxDataRetransmissions=4,3
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\ScreenSaverGracePeriod=1,"0"
+MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\SafeDllSearchMode=4,1
+MACHINE\System\CurrentControlSet\Services\Tcpip\Parameters\PerformRouterDiscovery=4,0
+MACHINE\System\CurrentControlSet\Control\FileSystem\NtfsDisable8dot3NameCreation=4,1
+MACHINE\System\CurrentControlSet\Services\Netbt\Parameters\NoNameReleaseOnDemand=4,1
+MACHINE\System\CurrentControlSet\Services\IPSEC\NoDefaultExempt=4,3
+MACHINE\System\CurrentControlSet\Services\Tcpip\Parameters\KeepAliveTime=4,300000
+MACHINE\System\CurrentControlSet\Services\Tcpip\Parameters\EnableICMPRedirect=4,0
+MACHINE\System\CurrentControlSet\Services\Tcpip\Parameters\DisableIPSourceRouting=4,2
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\AutoAdminLogon=1,"0"
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\enableforcedlogoff=4,1
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\enablesecuritysignature=4,1
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\requiresecuritysignature=4,1
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\autodisconnect=4,15
+MACHINE\System\CurrentControlSet\Services\LanmanWorkstation\Parameters\EnablePlainTextPassword=4,0
+MACHINE\System\CurrentControlSet\Services\LanmanWorkstation\Parameters\EnableSecuritySignature=4,1
+MACHINE\System\CurrentControlSet\Services\LanmanWorkstation\Parameters\RequireSecuritySignature=4,1
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\ScRemoveOption=1,"1"
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\ForceUnlockLogon=4,1
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\PasswordExpiryWarning=4,14
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\CachedLogonsCount=1,"0"
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\DisableCAD=4,0
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\DontDisplayLastUserName=4,1
+MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\requirestrongkey=4,1
+MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\maximumpasswordage=4,30
+MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\disablepasswordchange=4,0
+MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\signsecurechannel=4,1
+MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\sealsecurechannel=4,1
+MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\requiresignorseal=4,1
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\AllocateFloppies=1,"1"
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\AllocateCDRoms=1,"0"
+MACHINE\System\CurrentControlSet\Control\Print\Providers\LanMan Print Services\Servers\AddPrinterDrivers=4,1
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\AllocateDASD=1,"0"
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\UndockWithoutLogon=4,0
+MACHINE\System\CurrentControlSet\Control\Lsa\SCENoApplyLegacyAuditPolicy=4,1
+MACHINE\System\CurrentControlSet\Control\Lsa\CrashOnAuditFail=4,0
+MACHINE\System\CurrentControlSet\Control\Lsa\FullPrivilegeAuditing=3,0
+MACHINE\System\CurrentControlSet\Control\Lsa\AuditBaseObjects=4,0
+MACHINE\System\CurrentControlSet\Control\Lsa\LimitBlankPasswordUse=4,1
+MACHINE\System\CurrentControlSet\Control\SecurePipeServers\Winreg\AllowedPaths\Machine=7,System\CurrentControlSet\Control\Print\Printers,System\CurrentControlSet\Services\Eventlog,Software\Microsoft\OLAP Server,Software\Microsoft\Windows NT\CurrentVersion\Print,Software\Microsoft\Windows NT\CurrentVersion\Windows,System\CurrentControlSet\Control\ContentIndex,System\CurrentControlSet\Control\Terminal Server,System\CurrentControlSet\Control\Terminal Server\UserConfig,System\CurrentControlSet\Control\Terminal Server\DefaultUserConfiguration,Software\Microsoft\Windows NT\CurrentVersion\Perflib,System\CurrentControlSet\Services\SysmonLog
+MACHINE\System\CurrentControlSet\Control\Lsa\MSV1_0\NTLMMinServerSec=4,537395200
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\LegalNoticeText=7,Access is restricted to authorized users only.,Quit immediately if you are not authorized to logon this machine!
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\LegalNoticeCaption=1,"AUTHORIZATION WARNING"
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\InactivityTimeoutSecs=4,900
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\MaxDevicePasswordFailedAttempts=4,10
+[Service General Setting]
+"AppIDSvc",4,""
+"ALG",4,""
+"AppMgmt",4,""
+"CertPropSvc",4,""
+"KeyIso",4,""
+"COMSysApp",4,""
+"VaultSvc",4,""
+"WdiServiceHost",4,""
+"WdiSystemHost",4,""
+"defragsvc",4,""
+"EFS",4,""
+"EapHost",4,""
+"fdPHost",4,""
+"FDResPub",4,""
+"hkmsvc",4,""
+"hidserv",4,""
+"IKEEXT",4,""
+"UI0Detect",4,""
+"SharedAccess",4,""
+"PolicyAgent",4,""
+"KtmRm",4,""
+"lltdsvc",4,""
+"clr_optimization_v2.0.50727_64",4,""
+"clr_optimization_v2.0.50727_32",4,""
+"FCRegSvc",4,""
+"MSiSCSI",4,""
+"swprv",4,""
+"MMCSS",4,""
+"Netlogon",4,""
+"napagent",4,""
+"PerfHost",4,""
+"pla",4,""
+"IPBusEnum",4,""
+"WPDBusEnum",4,""
+"wercplsupport",4,""
+"RasAuto",4,""
+"RasMan",4,""
+"SessionEnv",4,""
+"RpcLocator",4,""
+"RSoPProv",4,""
+"RemoteAccess",4,""
+"seclogon",4,""
+"SstpSvc",4,""
+"SCardSvr",4,""
+"SCPolicySvc",4,""
+"SNMPTRAP",4,""
+"sacsvr",4,""
+"SSDPSRV",4,""
+"TapiSrv",4,""
+"THREADORDER",4,""
+"TBS",4,""
+"upnphost",4,""
+"VSS",4,""
+"Audiosrv",4,""
+"AudioEndpointBuilder",4,""
+"WcsPlugInService",4,""
+"wudfsvc",4,""
+"Wecsvc",4,""
+"FontCache",4,""
+"W32Time",4,""
+"dot3svc",4,""
+"wmiApSrv",4,""
+"wuauserv",4,""
+"BITS",4,""
+"Browser",4,""
+"CryptSvc",4,""
+"TrkWks",4,""
+"MSDTC",4,""
+"Dnscache",2,""
+"iphlpsvc",4,""
+"Spooler",4,""
+"RemoteRegistry",4,""
+"LanmanServer",4,""
+"ShellHWDetection",4,""
+"lmhosts",4,""
+"LanmanWorkstation",4,""
+"W3SVC",4,""
+"UxSms",4,""
+"ProtectedStorage",4,""
+"WinRM",4,""
+"Dhcp",2,""
+"WinHttpAutoProxySvc",4,""
+"TrustedInstaller",4,""
+"DPS",4,""
+"MpsSvc",2,""
+"BFE",2,""
+"BrokerInfrastructure",2,""
+"LSM",2,""
+"UALSVC",4,""
+"WSService",4,""
+"AllUserInstallAgent",4,""
+"DeviceAssociationService",4,""
+"DeviceInstall",4,""
+"DsmSvc",4,""
+"KPSSVC",4,""
+"NcaSvc",4,""
+"PrintNotify",4,""
+"SysMain",4,""
+"Wcmsvc",4,""                             
+"WEPHOSTSVC",4,""                 
+"AppReadiness",4,""                                           
+"Eaphost",4,""                             
+"IEEtwCollectorService",4,"" 
+"ScDeviceEnum",4,""                
+"svsvc",4,""                                  
+"TieringEngineService",4,""   
+"Themes",4,""                             
+"smphost",4,""                           
+"vmicguestinterface",4,""     
+"vmicheartbeat",4,""
+"vmickvpexchange",4,""
+"vmicrdv",4,""
+"vmicshutdown",4,""
+"vmictimesync",4,""
+"vmicvss",4,""
+[Profile Description]
+Description=This policy is designated to stand-alone computers that serve as a vault  server. 

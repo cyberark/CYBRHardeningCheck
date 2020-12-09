@@ -1,0 +1,53 @@
+<Stage Name="Hardening" Version="1.0">
+
+   <Step Name="ImportingINFConfiguration" DisplayName="Importing INF Configuration" ScriptName="ImportingINFConfiguration" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Automatic%20Hardening%20in%20'Out%20of%20Domain'%20Deployments.htm#Manualimplementation">
+	<Parameters>
+		<!-- Use if CPM installed without PVWA
+		<Parameter Name="INFconfigFileName" Value="CyberArk CPM Hardening - Local Security Templates.inf" />
+		-->
+		<Parameter Name="INFconfigFileName" Value="CyberArk CPM+PVWA Hardening - Local Security Templates.inf" />
+	</Parameters>
+   </Step>
+
+   <Step Name="ValidateServerRoles" DisplayName="Validate Server Roles" ScriptName="ValidateServerRoles"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Validate%20Proper%20Server%20Roles.htm#ValidateProperServerRoles" >
+      <Parameters>
+         <Parameter Name="IsPSMInstalled" Value="False"/>
+      </Parameters>
+   </Step>
+   
+   <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableScreenSaver" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#ScreenSaver" />
+
+   <Step Name="AdvancedAuditPolicyConfiguration" DisplayName="Advanced Audit Policy Configuration" ScriptName="AdvancedAuditPolicyConfiguration"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Advancedauditpolicyconfiguration">
+		<Parameters>
+			<Parameter Name="AuditConfigFileName" Value="ComponentsAudit.csv" />
+		</Parameters>
+   </Step>
+
+   <Step Name= "RemoteDesktopServices" DisplayName="Remote Desktop Services" ScriptName="RemoteDesktopServices" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Remotedesktopservices"/>
+   
+   <Step Name="EventLogSizeAndRetention" DisplayName="EventLog Size And Retention" ScriptName="EventLogSizeAndRetention" Enable="Yes" Description=""/>
+
+   <Step Name="RegistryAudits" DisplayName="Registry Audits" ScriptName="RegistryAudits"  Enable="Yes" Description=""/>
+
+   <Step Name= "RegistryPermissions" DisplayName="Registry Permissions" ScriptName="RegistryPermissions" Enable="Yes" Description=""/>
+
+   <Step Name="FileSystemPermissions" DisplayName="FileSystem Permissions" ScriptName="FileSystemPermissions" Enable="Yes" Description=""/>
+
+   <Step Name="FileSystemAudit" DisplayName="FileSystem Audit" ScriptName="FileSystemAudit"  Enable="Yes" Description=""/>
+
+   <Step Name="PasswordManagerServicesLocalUser" DisplayName="CPM Password Manager Services LocalUser" ScriptName="CPM_Password_Manager_Services_LocalUser" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Additionalmanualsteps">
+	  <Parameters>
+         <Parameter Name="CPMServiceUserName" Value="PasswordManagerUser"/>
+         <Parameter Name="CPMServiceUserDescription" Value="CyberArk Password Manager User used by CyberArk Password Manager and Scanner services"/>
+      </Parameters>
+   </Step>
+
+   <Step Name="DisableServices" DisplayName="Disable Services" ScriptName="DisableServices" Enable="Yes" Description=""/>
+  
+   <Step Name="EnableFIPSCryptography" DisplayName="CPM Enable FIPS Cryptography" ScriptName="CPM_EnableFIPSCryptography" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/CryptographySettings.htm#CryptographyModeSettingsCPMonly"/>
+
+   <Step Name="DisableDEPForExecutables" DisplayName="CPM Disable DEP For Executables" ScriptName="CPM_DisableDEPForExecutables" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/Following-Central-Policy-Manager-Installation.htm#DisableDEPonfilesusedbytheCPM"/>
+
+   <Step Name="CredFileHardening" DisplayName="Credential File Hardening" ScriptName="CPM_CredFileHardening"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PASIMP/CreateCredFile-Utility.htm"/>
+
+</Stage>
