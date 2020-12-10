@@ -2660,27 +2660,33 @@ Function Test-CredFileVerificationType
             try{
                 $verificationsFlag = $(get-content $CredentialFilePath | Select-String 'VerificationsFlag') -replace 'VerificationsFlag=',''
                 $vaultUser = $(get-content $CredentialFilePath | Select-String 'Username') -replace 'Username=',''
-                $credentialFileName = Split-path $CredentialFilePath -leaf
-
+                $credFileType = $(get-content $CredentialFilePath | Select-String 'CredFileType') -replace 'CredFileType=',''
+				
+				# Check Credential File Type
+				$typeOfCredFile = @{"Password" = "No"; "EnhancedPasswordMachine" = "Machine"; "EnhancedPasswordUser" = "User"}
+				$credTypeMsg = "Using {0} OS Protected Storage" -f $typeOfCredFile.Get_Item($CredFileType)
+				
+				# Check Cred File Verifications
 				$typeOfVerification = @{0 = "No" ; 1 = "Client Type" ; 2 = "Execution Path" ; 4 = "IP" ; 8 = "OS User" ; 32 = "Hostname"}
-				$verificationsflag = 19
 				If($verificationsflag -gt 16)
 				{
-					$retMsg = $($typeOfVerification.Keys | Where-Object { $_ -band $verificationsflag } | ForEach-Object { $typeOfVerification.Get_Item($_) }) -join ', '
-					If($retMsg.Contains(','))
+					$verificationMsg = $($typeOfVerification.Keys | Where-Object { $_ -band $verificationsflag } | ForEach-Object { $typeOfVerification.Get_Item($_) }) -join ', '
+					If($verificationMsg.Contains(','))
 					{
 						# Organizae the text a bit in case of list
-						$retMsg = $retMsg.Remove($retMsg.LastIndexOf(','),$retMsg.Length-$retMsg.LastIndexOf(','))+$retMsg.Substring($retMsg.LastIndexOf(',')).Replace(','," and")
+						$verificationMsg = $verificationMsg.Remove($verificationMsg.LastIndexOf(','),$verificationMsg.Length-$verificationMsg.LastIndexOf(','))+$verificationMsg.Substring($verificationMsg.LastIndexOf(',')).Replace(','," and")
 					}
+					$retValue = "Good"
 				} Else {
-				   $retMsg = $typeOfVerification.Get_Item(0)
+				   $verificationMsg = $typeOfVerification.Get_Item(0)
+				   $retValue = "Warning"
 				}
+				
+				$retMsg = "$verificationMsg restriction(s) set on the '$(Split-path $CredentialFilePath -leaf)' credential file for the vault user '$vaultUser'."
+				$retMsg += $credTypeMsg
 
-				[ref]$outStatus.Value = "$retMsg restriction(s) set on the '$credentialFileName' credential file for the vault user '$vaultUser'"
-				$retValue = "Good"
-            }
-
-           	catch{
+				[ref]$outStatus.Value = $retMsg
+            } catch {
 				Write-LogMessage -Type Error -Msg "Error comparing Registry Value. Error: $(Join-ExceptionMessage $_.Exception)"
 				[ref]$outStatus.Value = "Error comparing Registry Value. Error: $($_.Exception.Message)"
 				$retValue = "Bad"
