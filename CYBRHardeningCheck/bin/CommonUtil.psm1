@@ -579,6 +579,12 @@ function PolEntryTypeToRegistryValueKind
 #endregion
 
 #region Policy Commands
+<# 
+Apache License Notice:
+	Function Get-PolicyFileEntry and PolFileEditor.dll are part of: https://github.com/dlwyatt/PolicyFileEditor
+	The function and DLL were not modified in anyway and are used as is in this project
+#>
+
 <#
 .SYNOPSIS
    Retrieves the current setting(s) from a .pol file.
@@ -619,7 +625,6 @@ function PolEntryTypeToRegistryValueKind
 .LINK
    about_RegistryValuesForAdminTemplates
 #>
-
 function Get-PolicyFileEntry
 {
     [CmdletBinding(DefaultParameterSetName = 'ByKeyAndValue')]

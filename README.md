@@ -114,3 +114,4 @@ Please see our [`CONTRIBUTING`](CONTRIBUTING.md) for more details.
 
 ## Licensing
 
+This repository is licensed under GNU GENERAL PUBLIC LICENSE Version 3 - see [`LICENSE`](LICENSE) for more details.
