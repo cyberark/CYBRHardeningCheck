@@ -679,11 +679,11 @@ Function HidePSMDrives
 			# Define the HKEY_USERS root as a new drive
 			New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS -Scope Global
 			# Get a list of all User SID to check
-			$arrRegUsers = Get-ChildItem -Path HKU:\ -ErrorAction Ignore | Select-Object Name -Error
+			$arrRegUsers = Get-ChildItem -Path HKU:\ -ErrorAction Ignore | Select-Object Name -ErrorAction Ignore
 
 			ForEach($user in $arrRegUsers)
 			{
-				$userSID = $user.Replace("HKEY_USERS\","")
+				$userSID = $user.Name.Replace("HKEY_USERS\","")
 				Write-LogMessage -Type Debug -Msg "Checking NoDrives for user $userSID..."
 				# Check PSM Local drives configuration
 				$regNoDrives = @{
