@@ -716,7 +716,7 @@ Function HidePSMDrives
 		}
 	}
 	End {
-
+		Remove-PSDrive -Name HKU
 	}
 }
 
