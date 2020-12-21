@@ -44,7 +44,7 @@
 
    <Step Name="DisableServices" DisplayName="Disable Services" ScriptName="DisableServices" Enable="Yes" Description=""/>
   
-   <Step Name="EnableFIPSCryptography" DisplayName="CPM Enable FIPS Cryptography" ScriptName="CPM_EnableFIPSCryptography" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/CryptographySettings.htm#CryptographyModeSettingsCPMonly"/>
+   <Step Name="EnableFIPSCryptography" DisplayName="CPM Enable FIPS Cryptography" ScriptName="CPM_EnableFIPSCryptography" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20General%20Configuration%20for%20all%20Deployments.htm#cpm"/>
 
    <Step Name="DisableDEPForExecutables" DisplayName="CPM Disable DEP For Executables" ScriptName="CPM_DisableDEPForExecutables" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/Following-Central-Policy-Manager-Installation.htm#DisableDEPonfilesusedbytheCPM"/>
 
