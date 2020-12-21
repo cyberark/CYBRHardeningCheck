@@ -679,7 +679,7 @@ Function HidePSMDrives
 			# Define the HKEY_USERS root as a new drive
 			New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS -Scope Global
 			# Get a list of all User SID to check
-			$arrRegUsers = Get-ChildItem -Path HKU:\ -ErrorAction Ignore | Select-Object Name -Erro
+			$arrRegUsers = Get-ChildItem -Path HKU:\ -ErrorAction Ignore | Select-Object Name -Error
 
 			ForEach($user in $arrRegUsers)
 			{
