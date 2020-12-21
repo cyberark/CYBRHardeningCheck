@@ -35,7 +35,7 @@
 
    <Step Name="FileSystemAudit" DisplayName="FileSystem Audit" ScriptName="FileSystemAudit"  Enable="Yes" Description=""/>
 
-   <Step Name="PasswordManagerServicesLocalUser" DisplayName="CPM Password Manager Services LocalUser" ScriptName="CPM_Password_Manager_Services_LocalUser" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Additionalmanualsteps">
+   <Step Name="PasswordManagerServicesLocalUser" DisplayName="CPM Password Manager Services LocalUser" ScriptName="CPM_Password_Manager_Services_LocalUser" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#AdditionalManualSteps">
 	  <Parameters>
          <Parameter Name="CPMServiceUserName" Value="PasswordManagerUser"/>
          <Parameter Name="CPMServiceUserDescription" Value="CyberArk Password Manager User used by CyberArk Password Manager and Scanner services"/>
