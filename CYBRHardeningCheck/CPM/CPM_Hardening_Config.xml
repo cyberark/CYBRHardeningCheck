@@ -9,7 +9,7 @@
 	</Parameters>
    </Step>
 
-   <Step Name="ValidateServerRoles" DisplayName="Validate Server Roles" ScriptName="ValidateServerRoles"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Validate%20Proper%20Server%20Roles.htm#ValidateProperServerRoles" >
+   <Step Name="ValidateServerRoles" DisplayName="Validate Server Roles" ScriptName="ValidateServerRoles"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20General%20Configuration%20for%20all%20Deployments.htm#ValidateProperServerRoles" >
       <Parameters>
          <Parameter Name="IsPSMInstalled" Value="False"/>
       </Parameters>
