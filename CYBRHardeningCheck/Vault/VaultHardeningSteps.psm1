@@ -103,7 +103,7 @@ Function Vault_StaticIP
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify Vault has static IP"
-			$getdhcpstatus = Get-NetIPAddress -InterfaceAlias "Ethernet" -AddressFamily IPv4
+			$getdhcpstatus = Get-NetIPAddress -AddressFamily IPv4
 			ForEach ($item in $getdhcpstatus)
 			{
 				if ($item.PrefixOrigin -eq "Dhcp")
