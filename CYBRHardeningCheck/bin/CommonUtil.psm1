@@ -209,7 +209,7 @@ Function Get-Reg
 #>
 	param(
 		[Parameter(Mandatory=$true)]
-		[ValidateSet("HKLM:","LocalMachine", "Users", "CurrentUser")]
+		[ValidateSet("HKLM:","LocalMachine", "HKU:", "Users", "CurrentUser")]
 		[String]$Hive,
 		[Parameter(Mandatory=$true)]
 		[String]$Key,
