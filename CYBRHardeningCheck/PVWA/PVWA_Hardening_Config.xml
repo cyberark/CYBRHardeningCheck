@@ -2,11 +2,16 @@
 
    <Step Name="ImportingINFConfiguration" DisplayName="Importing INF Configuration" ScriptName="ImportingINFConfiguration" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Automatic%20Hardening%20in%20'Out%20of%20Domain'%20Deployments.htm#Manualimplementation">
 	<Parameters>
-		<!-- Use if PVWA installed without CPM
-		<Parameter Name="INFconfigFileName" Value="CyberArk PVWA Hardening - Local Security Templates.inf" />
-		-->
-		<Parameter Name="INFconfigFileName" Value="CyberArk CPM+PVWA Hardening - Local Security Templates.inf" />
+		<Parameter Name="LocalINFconfigFileName" Value="CyberArk @Component@ Hardening - Local Security Templates.inf" />
+		<Parameter Name="DomainINFconfigFileName" Value="CyberArk @Component@ Hardening - Domain GPO Security Templates.inf" />
 	</Parameters>
+   </Step>
+   
+   <Step Name="AdvancedAuditPolicyConfiguration" DisplayName="Advanced Audit Policy Configuration" ScriptName="AdvancedAuditPolicyConfiguration"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Advancedauditpolicyconfiguration">
+		<Parameters>
+			<Parameter Name="LocalAuditConfigFileName" Value="CyberArk Components - Local Advanced Audit.csv" />
+			<Parameter Name="DomainAuditConfigFileName" Value="CyberArk @Component@ Hardening - Domain GPO Advanced Audit.csv" />
+		</Parameters>
    </Step>
 
    <Step Name="ValidateServerRoles" DisplayName="Validate Server Roles" ScriptName="ValidateServerRoles"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Validate%20Proper%20Server%20Roles.htm#ValidateProperServerRoles">
@@ -28,12 +33,6 @@
    <Step Name= "PVWA_Cryptography_Settings" DisplayName="PVWA Cryptography Mode Settings" ScriptName="PVWA_Cryptography_Settings" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/CryptographySettingsPVWA.htm#CryptographyModeSettingsforPVWA"/>
    
    <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableScreenSaver" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#ScreenSaver"/>
-
-   <Step Name="AdvancedAuditPolicyConfiguration" DisplayName="Advanced Audit Policy Configuration" ScriptName="AdvancedAuditPolicyConfiguration"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Advancedauditpolicyconfiguration">
-		<Parameters>
-			<Parameter Name="AuditConfigFileName" Value="ComponentsAudit.csv" />
-		</Parameters>
-   </Step>
 
    <Step Name= "RemoteDesktopServices" DisplayName="Remote Desktop Services" ScriptName="RemoteDesktopServices" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Remotedesktopservices"/>
    

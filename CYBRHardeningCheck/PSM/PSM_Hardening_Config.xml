@@ -1,18 +1,20 @@
 <Stage Name="Hardening" Version="1.0">
 
-   <Step Name="ImportingINFConfiguration" DisplayName="Importing INF Configuration" ScriptName="ImportingINFConfiguration" Enable="Yes">
+   <Step Name="ImportingINFConfiguration" DisplayName="Importing INF Configuration" ScriptName="ImportingINFConfiguration" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Automatic%20Hardening%20in%20'Out%20of%20Domain'%20Deployments.htm#Manualimplementation">
 	<Parameters>
-		<Parameter Name="INFconfigFileName" Value="CyberArk PSM Hardening - Local Security Templates.inf" />
+		<Parameter Name="LocalINFconfigFileName" Value="CyberArk @Component@ Hardening - Local Security Templates.inf" />
+		<Parameter Name="DomainINFconfigFileName" Value="CyberArk @Component@ Hardening - Domain GPO Security Templates.inf" />
 	</Parameters>
    </Step>
    
-   <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableTheScreenSaverForThePSMLocalUsers" Enable="Yes"/>
-
-   <Step Name="AdvancedAuditPolicyConfiguration" DisplayName="Advanced Audit Policy Configuration" ScriptName="AdvancedAuditPolicyConfiguration"  Enable="Yes">
+   <Step Name="AdvancedAuditPolicyConfiguration" DisplayName="Advanced Audit Policy Configuration" ScriptName="AdvancedAuditPolicyConfiguration"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Advancedauditpolicyconfiguration">
 		<Parameters>
-			<Parameter Name="AuditConfigFileName" Value="CyberArk PSM Hardening - Advanced Audit.csv" />
+			<Parameter Name="LocalAuditConfigFileName" Value="CyberArk Components - Local Advanced Audit.csv" />
+			<Parameter Name="DomainAuditConfigFileName" Value="CyberArk @Component@ Hardening - Domain GPO Advanced Audit.csv" />
 		</Parameters>
    </Step>
+   
+   <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableTheScreenSaverForThePSMLocalUsers" Enable="Yes"/>
 
 	<!-- The following step configures properties for users PSMConnect and PSMAdminConnect-->
 	<Step Name ="ConfigurePSMUsers" DisplayName="Configure users for PSM sessions" ScriptName="ConfigureUsersForPSMSessions" Enable="Yes"/>
