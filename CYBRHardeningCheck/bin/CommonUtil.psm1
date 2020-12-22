@@ -1379,6 +1379,140 @@ Function Get-ParsedFileNameByOS
 Export-ModuleMember -Function Get-ParsedFileNameByOS
 
 # @FUNCTION@ ======================================================================================================================
+# Name...........: Get-ParsedFileNameByComponent
+# Description....: Return the file name parsed by installed components
+# Parameters.....: fileName
+# Return Values..: Parsed File name (with all installed components)
+# =================================================================================================================================
+Function Get-ParsedFileNameByComponent
+{
+<#
+.SYNOPSIS
+	Return the file name parsed by installed components
+.DESCRIPTION
+	Return the file name parsed by installed components
+.PARAMETER fileName
+	The File Name to parse
+#>
+	param(
+	   [parameter(Mandatory=$true)]
+	   [ValidateNotNullOrEmpty()]$fileName
+	)
+
+	Begin {
+		if($fileName -notmatch "@Component@")
+		{
+			return $fileName
+		}
+	}
+	Process {
+		if($fileName -match "@Component@")
+		{
+			return ($fileName -Replace "@Component@", $((Get-DetectedComponents).Name -join " "))
+		}
+		else
+		{
+			return $fileName
+		}
+	}
+	End {
+
+	}
+}
+Export-ModuleMember -Function Get-ParsedFileNameByComponent
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Set-DetectedComponents
+# Description....: Sets the Detected Components in a Script scope
+# Parameters.....: None
+# Return Values..: None
+# =================================================================================================================================
+Function Set-DetectedComponents
+{
+<#
+.SYNOPSIS
+	Sets the Detected Components in a Script scope
+.DESCRIPTION
+	Sets the Detected Components in a Script scope
+#>
+	Write-LogMessage -Type Info -MSG "Detecting installed components" -LogFile $LOG_FILE_PATH
+	$_detectedComponents = Find-Components
+	# Add  indication if the server is a domain member
+	$_detectedComponents | Add-Member -NotePropertyName DomainMember -NotePropertyValue $(Test-InDomain)
+	# Make Detected Components availble in Script scope
+	Set-Variable -Name DetectedComponents -Value $_detectedComponents -Scope Script
+}
+Export-ModuleMember -Function Set-DetectedComponents
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Get-DetectedComponents
+# Description....: Gets the Detected Components in a Script scope
+# Parameters.....: None
+# Return Values..: Detected Components
+# =================================================================================================================================
+Function Get-DetectedComponents
+{
+<#
+.SYNOPSIS
+	Gets the Detected Components in a Script scope
+.DESCRIPTION
+	Gets the Detected Components in a Script scope
+#>
+	return $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
+}
+Export-ModuleMember -Function Get-DetectedComponents
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Set-CurrentComponentFolderPath
+# Description....: Sets the current component folder path
+# Parameters.....: None
+# Return Values..: None
+# =================================================================================================================================
+Function Set-CurrentComponentFolderPath
+{
+<#
+.SYNOPSIS
+	Sets the current component folder path
+.DESCRIPTION
+	Sets the current component folder path
+#>
+	param(
+		[Parameter(Mandatory=$true)]
+		$ComponentPath
+	)
+	Write-LogMessage -Type Verbose -MSG "Setting current component path: $ComponentPath" -LogFile $LOG_FILE_PATH
+	Set-Variable -Name CurrentComponentPath -Scope Script -Value $ComponentPath
+}
+Export-ModuleMember -Function Set-CurrentComponentFolderPath
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Get-CurrentComponentFolderPath
+# Description....: Returns the parsed current component folder path for a relative file
+# Parameters.....: Relative File name
+# Return Values..: Full path of the relative file name in the current component folder
+# =================================================================================================================================
+Function Get-CurrentComponentFolderPath
+{
+<#
+.SYNOPSIS
+	Returns the parsed current component folder path for a relative file
+.DESCRIPTION
+	Returns the parsed current component folder path for a relative file
+#>
+	param(
+		[Parameter(Mandatory=$true)]
+		$FileName
+	)
+	$componentPath = $(Get-Variable -Name CurrentComponentPath -Scope Script -ValueOnly)
+	If([string]::IsNullOrEmpty($componentPath))
+	{
+		Throw "Component Path is empty"
+	}
+	return $(Join-Path -Path $componentPath -ChildPath $FileName)
+}
+Export-ModuleMember -Function Get-CurrentComponentFolderPath
+
+# @FUNCTION@ ======================================================================================================================
 # Name...........: Compare-ServiceStatus
 # Description....: Compares the service status to the required status
 # Parameters.....: Service Name, Service required status
@@ -2149,16 +2283,23 @@ Function Compare-AdvancedAuditPolicySubCategory
 			$verifySuccess = $true
 			$verifyFailure = $true
 			$auditLineOutput = ""
-			$auditCommandOutput = auditpol /get /subcategory:$subcategory | Where-Object {$_ -match $subcategory}
+			$_subCategory = $subcategory
+			# Avoid "Error 0x00000057 occurred"
+			If($subcategory -match "(?:^Audit\s)(.*)")
+			{
+				# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
+				$_subCategory = $Matches[1]
+			}
+			$auditCommandOutput = auditpol /get /subCategory:"$_subCategory" | Where-Object {$_ -match $_subCategory}
 			ForEach($item in $auditCommandOutput)
 			{
 				if($item -ne "")
 				{
 					$auditLineOutput = $item.Trim()
 					Write-LogMessage -Type Debug -Msg "Found Audit Policy: $auditLineOutput"
-					$auditPolicy = $item.Trim() -split '($subcategory\s+)'
+					$auditPolicy = $item.Trim() -split "($_subCategory\s+)"
 					# Assuming $auditPolicy[0] is empty
-					if($auditPolicy[1] -eq $subcategory)
+					if($auditPolicy[1] -eq $_subCategory)
 					{
 						# $auditPolicy[2] is where the Success, Failure data will be
 						$verifySuccess = Test-EnabledPolicySetting -PolicyStatus $success -MatchValue $auditPolicy[2] -NotMatchCriteria "Success"
@@ -2169,13 +2310,13 @@ Function Compare-AdvancedAuditPolicySubCategory
 			}
 			if($verifySuccess -and $verifyFailure)
 			{
-				Write-LogMessage -Type Debug -Msg "Advance Audit Policy Sub Category for '$subcategory' has the correct settings for Success and Failure"
+				Write-LogMessage -Type Debug -Msg "Advance Audit Policy Sub Category for '$_subCategory' has the correct settings for Success and Failure"
 				$returnVal = "Good"
-				[ref]$outStatus.Value = "Advance Audit Policy Sub Category for '$subcategory' has the correct settings for Success and Failure<BR>$auditLineOutput"
+				[ref]$outStatus.Value = "Advance Audit Policy Sub Category for '$_subCategory' has the correct settings for Success and Failure<BR>$auditLineOutput"
 			}
 		} Catch {
-			Write-LogMessage -Type Error -Msg "Could not get Advance Audit Policy Sub Category for '$subcategory'. Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$outStatus.Value = "Could not get Advance Audit Policy Sub Category for '$subcategory'. Error: $($_.Exception.Message)"
+			Write-LogMessage -Type Error -Msg "Could not get Advance Audit Policy Sub Category for '$_subCategory'. Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$outStatus.Value = "Could not get Advance Audit Policy Sub Category for '$_subCategory'. Error: $($_.Exception.Message)"
 			$returnVal = "Bad"
 		}
 		return $returnVal

@@ -24,7 +24,7 @@ $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 
 # Script Version
-$ScriptVersion = "2.8"
+$ScriptVersion = "2.8.1"
 
 # Set Log file path
 $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
@@ -51,9 +51,6 @@ $MODULE_VAULT_STEPS = "$ScriptLocation\Vault\VaultHardeningSteps.psm1"
 
 # Output file template
 $REPORT_TEMPLATE_PATH = "$ScriptLocation\Hardening_HealthCheck_Report.html"
-
-# Global Parameter for Components Path
-$global:CurrentComponentPath = ""
 
 #region Helper Functions
 # @FUNCTION@ ======================================================================================================================
@@ -303,63 +300,40 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 	return
 }
 
+#region Prepare Hardening modules dictionary
+$dicComponentHardening = @{
+	"Vault" = @{"Module" = $MODULE_VAULT_STEPS; "Configuration" = $VAULT_HARDENING_CONFIG};
+	"CPM" = @{"Module" = $MODULE_CPM_STEPS; "Configuration" = $CPM_HARDENING_CONFIG};
+	"PVWA" = @{"Module" = $MODULE_PVWA_STEPS; "Configuration" = $PVWA_HARDENING_CONFIG};
+	"PSM" = @{"Module" = $MODULE_PSM_STEPS; "Configuration" = $PSM_HARDENING_CONFIG};
+	"AIM" = @{"Module" = ""; "Configuration" = ""};
+	"EPM" = @{"Module" = ""; "Configuration" = ""};
+}
+#endregion
+
 Write-LogMessage -Type Info -MSG "Getting Machine Name" -LogFile $LOG_FILE_PATH
 $machineName = Get-DnsHost
 Write-LogMessage -Type Debug -Msg "Machine Name: $machineName"
 
-Write-LogMessage -Type Info -MSG "Detecting installed components" -LogFile $LOG_FILE_PATH
-$detectedComponents = Find-Components
+# Set the detected components varialble
+Set-DetectedComponents
 
 $hardeningStepsStatus = @()
-ForEach ($comp in $detectedComponents)
+ForEach ($comp in $(Get-DetectedComponents))
 {
 	Write-LogMessage -Type Info -MSG "Running Hardening Validations for component $($comp.Name)" -LogFile $LOG_FILE_PATH
-	Switch($comp.Name)
+	If(![string]::IsNullOrEmpty($dicComponentHardening[$comp.Name].Module))
 	{
-		"Vault"
-		{
-			$moduleInfo = Import-Module $MODULE_VAULT_STEPS -PassThru
-			Set-Variable -Name CurrentComponentPath -Scope Global -Value (Join-Path -Path $ScriptLocation -ChildPath "Vault")
-			$vaultHardeningStepsStatus = Start-HardeningSteps $VAULT_HARDENING_CONFIG
-			$vaultHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "Vault"
-			$hardeningStepsStatus += $vaultHardeningStepsStatus
-			Remove-ScriptModule $moduleInfo
-		}
-		"CPM"
-		{
-			$moduleInfo = Import-Module $MODULE_CPM_STEPS -PassThru
-			Set-Variable -Name CurrentComponentPath -Scope Global -Value (Join-Path -Path $ScriptLocation -ChildPath "CPM")
-			$cpmHardeningStepsStatus = Start-HardeningSteps $CPM_HARDENING_CONFIG
-			$cpmHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "CPM"
-			$hardeningStepsStatus += $cpmHardeningStepsStatus
-			Remove-ScriptModule $moduleInfo
-		}
-		"PVWA"
-		{
-			$moduleInfo = Import-Module $MODULE_PVWA_STEPS -PassThru
-			Set-Variable -Name CurrentComponentPath -Scope Global -Value (Join-Path -Path $ScriptLocation -ChildPath "PVWA")
-			$pvwaHardeningStepsStatus = Start-HardeningSteps $PVWA_HARDENING_CONFIG
-			$pvwaHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "PVWA"
-			$hardeningStepsStatus += $pvwaHardeningStepsStatus
-			Remove-ScriptModule $moduleInfo
-		}
-		"PSM"
-		{
-			$moduleInfo = Import-Module $MODULE_PSM_STEPS -PassThru
-			Set-Variable -Name CurrentComponentPath -Scope Global -Value (Join-Path -Path $ScriptLocation -ChildPath "PSM")
-			$psmHardeningStepsStatus = Start-HardeningSteps $PSM_HARDENING_CONFIG
-			$psmHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "PSM"
-			$hardeningStepsStatus += $psmHardeningStepsStatus
-			Remove-ScriptModule $moduleInfo
-		}
-		"AIM"
-		{
-			throw [System.NotImplementedException]::New('This Hardening Component check is not implemented.')
-		}
-		"EPM"
-		{
-			throw [System.NotImplementedException]::New('This Hardening Component check is not implemented.')
-		}
+		$moduleInfo = Import-Module $($dicComponentHardening[$comp.Name].Module) -PassThru
+		Set-CurrentComponentFolderPath -ComponentPath $(Join-Path -Path $ScriptLocation -ChildPath $comp.Name)
+		$compHardeningStepsStatus = Start-HardeningSteps $($dicComponentHardening[$comp.Name].Configuration)
+		$compHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue $comp.Name
+		$hardeningStepsStatus += $compHardeningStepsStatus
+		Remove-ScriptModule $moduleInfo		
+	}
+	Else
+	{
+		throw [System.NotImplementedException]::New('This Hardening Component check is not implemented.')
 	}
 }
 

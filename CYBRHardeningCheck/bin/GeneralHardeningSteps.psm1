@@ -24,9 +24,9 @@ Function ImportingINFConfiguration
 	)
 
 	Begin {
-		$SDBFileName = Join-Path -Path $CurrentComponentPath -ChildPath "CYBR_Hardening_secedit_DB.sdb"
+		$SDBFileName = Get-CurrentComponentFolderPath -FileName "CYBR_Hardening_secedit_DB.sdb"
 		$logName = "CYBR_Hardening_secedit_$((Get-Date -Format $g_DateTimePattern).Replace("/","-").Replace(":","-").Replace(" ","_")).log"
-		$AnalyzeLogName = Join-Path -Path $CurrentComponentPath -ChildPath $logName
+		$AnalyzeLogName = Get-CurrentComponentFolderPath -FileName $logName
 		$myRef = ""
 	}
 	Process {
@@ -34,17 +34,30 @@ Function ImportingINFConfiguration
 			Write-LogMessage -Type Info -Msg "Start comparing security configurations"
 			Write-LogMessage -Type Verbose -Msg "Passing $($Parameters.Count) parameters"
 
-			Write-LogMessage -Type Debug -Msg "Analyzing secedit INF file with the Local Machine security policy"
-			$INFconfigFileName = $($Parameters | Where-Object Name -eq "INFconfigFileName").Value
+			If($(Get-DetectedComponents).DomainMember)
+			{
+				Write-LogMessage -Type Debug -Msg "Analyzing secedit INF file with the Domain GPO Machine security policy"
+				$INFconfigFileName = $($Parameters | Where-Object { $_.Name -eq "DomainINFconfigFileName" }).Value
+			}
+			Else
+			{				
+				Write-LogMessage -Type Debug -Msg "Analyzing secedit INF file with the Local Machine security policy"
+				$INFconfigFileName = $($Parameters | Where-Object { ($_.Name -eq "INFconfigFileName") -or ($_.Name -eq "LocalINFconfigFileName") }).Value
+			}
 			# OS Specific treatment
 			If($INFconfigFileName -match "@OS@")
 			{
 				$INFconfigFileName = Get-ParsedFileNameByOS -fileName $INFconfigFileName
 			}
+			# Components specific treatment
+			If($INFconfigFileName -match "@Component@")
+			{
+				$INFconfigFileName = Get-ParsedFileNameByComponent -fileName $INFconfigFileName
+			}
 
 			# Get the Component relative INF file path
-			$INFconfigFilePath = Join-Path -Path $CurrentComponentPath -ChildPath $INFconfigFileName
-
+			$INFconfigFilePath = Get-CurrentComponentFolderPath -FileName $INFconfigFileName
+			
 			$seceditRetVaule = secedit /import /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet
 
 			if ((-not (Test-Path $SDBFileName)) -Or ($LASTEXITCODE -eq 1))
@@ -284,15 +297,27 @@ Function AdvancedAuditPolicyConfiguration
 		Try {
 			Write-LogMessage -Type Info -Msg "Start validating Advanced Audit Policy Configuration"
 			Write-LogMessage -Type Verbose -Msg "Passing $($Parameters.Count) parameters"
-			$AuditConfigFile = $($Parameters | Where-Object Name -eq "AuditConfigFileName").Value
+			If($(Get-DetectedComponents).DomainMember)
+			{
+				$AuditConfigFile = $($Parameters | Where-Object { $_.Name -eq "DomainAuditConfigFileName" }).Value
+			}
+			Else
+			{				
+				$AuditConfigFile = $($Parameters | Where-Object { ($_.Name -eq "AuditConfigFileName") -or ($_.Name -eq "LocalAuditConfigFileName") }).Value
+			}
 			# OS Specific treatment
 			If($AuditConfigFile -match "@OS@")
 			{
 				$AuditConfigFile = Get-ParsedFileNameByOS -fileName $AuditConfigFile
 			}
+			# Components specific treatment
+			If($AuditConfigFile -match "@Component@")
+			{
+				$AuditConfigFile = Get-ParsedFileNameByComponent -fileName $AuditConfigFile
+			}
 
 			# Get the Component relative INF file path
-			$AuditConfigFilePath = Join-Path -Path $CurrentComponentPath -ChildPath $AuditConfigFile
+			$AuditConfigFilePath = Get-CurrentComponentFolderPath -FileName $AuditConfigFile
 
 			ForEach ($audit in $(Import-Csv $AuditConfigFilePath))
 			{
