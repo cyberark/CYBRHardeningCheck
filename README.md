@@ -1,3 +1,6 @@
+[![GitHub release][release-img]][release]
+[![License][license-img]][license]
+
 # CyberArk Hardening Health Check
 One of the most important recommendations for any application, and especially for security applications is to harden the server.
 CyberArk provides recommendations and automation scripts to harden its servers to make sure best security.
