@@ -948,7 +948,7 @@ Function Test-InDomain
 	Begin {}
 	Process{
 		try{
-			return $(Get-WMIItem -Class "Win32_ComputerSystem" -Item "PartOfDomain" -RemoteComputer $machineName)
+			return $(Get-WMIItem -Class "Win32_ComputerSystem" -Item "PartOfDomain" -RemoteComputer $machineName).PartOfDomain
 		}
 		catch{
 			Write-LogMessage -Type Error -Msg "Failed to check if the machine is a domain member. Error: $(Join-ExceptionMessage $_.Exception)"
