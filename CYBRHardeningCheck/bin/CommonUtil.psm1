@@ -256,7 +256,7 @@ Function Get-Reg
 		catch{
 			Throw $(New-Object System.Exception ("Get-Reg: Registry Error",$_.Exception))
 		}
-		if($Value -eq $null) # Enumerate Keys
+		if($null -eq $Value) # Enumerate Keys
 		{
 			If(Test-Path $regPath)
 			{
@@ -1267,7 +1267,7 @@ Function Get-ServiceInstallPath
 		try{
 			if ($null -eq $m_ServiceList)
 			{
-				$m_ServiceList = Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.pspath }
+				Set-Variable -Name m_ServiceList -Value $(Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.pspath }) -Scope Script
 				#$m_ServiceList = Get-Reg -Hive "LocalMachine" -Key System\CurrentControlSet\Services -Value $null
 			}
 			$regPath =  $m_ServiceList | Where-Object {$_.PSChildName -eq $ServiceName}
