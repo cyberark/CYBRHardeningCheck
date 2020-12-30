@@ -37,7 +37,7 @@ Function Write-LogMessage
 		[Parameter(Mandatory=$false)]
 		[Switch]$Footer,
 		[Parameter(Mandatory=$false)]
-		[Switch]$WriteLog = $true,
+		[Bool]$WriteLog = $true,
 		[Parameter(Mandatory=$false)]
 		[ValidateSet("Info","Warning","Error","Debug","Verbose", "Success", "LogOnly")]
 		[String]$type = "Info",

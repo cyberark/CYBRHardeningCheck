@@ -359,8 +359,8 @@ Function PVWA_DirectoryBrowsing
 			{
 				if($item.enabled)
 				{
-					[ref]$refOutput.Value = "PVWA is using Directory Brosing feature. Disable this feature."
-					Write-LogMessage -Type Info -Msg "PVWA is using Directory Brosing feature. Disable this feature."
+					[ref]$refOutput.Value = "PVWA is using Directory Browsing feature. Disable this feature."
+					Write-LogMessage -Type Info -Msg "PVWA is using Directory Browsing feature. Disable this feature."
 					$res = "Warning"
 				}
 			}
