@@ -181,7 +181,8 @@ Function Test-Service
 	The Service Name to Check Status for
 #>
 	param (
-		$ServiceName
+		[Parameter(Mandatory=$true)]
+		[string]$ServiceName
 	)
 	Begin {
 
@@ -935,7 +936,16 @@ Function Test-EnabledPolicySetting
 .PARAMETER NotMatchCriteria
 	The NOT verification criteria
 #>
-    Param ($PolicyStatus, $MatchValue, $NotMatchCriteria)
+    Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateSet("enable","disable")]	
+		[string]$PolicyStatus, 
+		[Parameter(Mandatory=$true)]
+		[string]$MatchValue, 
+		[Parameter(Mandatory=$true)]
+		[ValidateSet("Success","Failure")]	
+		[string]$NotMatchCriteria
+	)
 	$retValue = $true
 
 	if(($PolicyStatus -eq "enable") -and !($MatchValue -match $NotMatchCriteria))
@@ -963,7 +973,8 @@ Function Test-InDomain
 	Returns True if machine is part of a domain
 #>
 	Param(
-		$machineName = "."
+		[Parameter(Mandatory=$false)]
+		[string]$machineName = "."
 	)
 	Begin {}
 	Process{
@@ -994,7 +1005,8 @@ Function Test-LocalUser
 	Returns True if the input user name exists on the machine
 #>
 	Param(
-		$userName
+		[Parameter(Mandatory=$true)]
+		[string]$userName
 	)
 	Begin {}
 	Process{
