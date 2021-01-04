@@ -596,7 +596,10 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 	Process {
 		try{
 			# Disable Screen Saver on server
-			DisableScreenSaver -refOutput ([ref]$tmpStatus)
+			If((DisableScreenSaver -refOutput ([ref]$myRef)) -ne "Good")
+			{
+				$tmpStatus += $myRef.Value
+			}
 			
 			Write-LogMessage -Type Info -Msg "Start verify DisableTheScreenSaverForThePSMLocalUsers"
 
