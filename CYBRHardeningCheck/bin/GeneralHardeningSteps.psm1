@@ -874,3 +874,63 @@ Function DisableServices
 		# Write output to HTML
 	}
 }
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: LocalPrivilegedUsers
+# Description....: Check the local Privielged users
+# Parameters.....:
+# Return Values..:
+# =================================================================================================================================
+Function LocalPrivilegedUsers
+{
+<#
+.SYNOPSIS
+	Method to check the local Privielged users
+.DESCRIPTION
+	Checks the number of privileged users on the machine
+.PARAMETER Parameters
+	(Optional) Parameters from the Configuration
+.PARAMETER Reference Status
+	Reference to the Step Status
+#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[array]$Parameters = $null,
+		[Parameter(Mandatory=$false)]
+		[ref]$refOutput
+	)
+
+	Begin {
+		# Pre-Checks
+		$myRef = ""
+		$res = "Good"
+		$tmpStatus = ""
+		$localAdminGroup = Get-LocalAdministrators
+	}
+	Process {
+
+		Write-LogMessage -Type Info -Msg "Start verification of privielged users in local Administrators group ($localAdminGroup)"
+		try{
+			$arrPrivUsers = @()
+			([ADSI]"WinNT://./$localAdminGroup").psbase.Invoke('Members') | ForEach-Object {
+				$arrPrivUsers += ([ADSI]$_).InvokeGet('adspath').Replace("WinNT://","")
+			}
+			
+			#TODO: add more logic here on what should be the process
+			Write-LogMessage -Type Debug -Msg "There are $($arrPrivUsers.count) users and groups in the local administrators group"
+
+			Write-LogMessage -Type Info -Msg "Finish verification of privielged users in local Administrators group ($localAdminGroup)"
+		}
+		catch
+		{
+			Write-LogMessage -Type "Error" -Msg "Failed to verify privielged users in local Administrators group ($localAdminGroup)."
+			[ref]$refOutput.Value = "Failed to verify privielged users in local Administrators group ($localAdminGroup)."
+			$res = "Bad"
+		}
+		return $res
+	}
+	End {
+		# Write output to HTML
+	}
+}
+

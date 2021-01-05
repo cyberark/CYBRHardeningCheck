@@ -1217,6 +1217,11 @@ Function Get-LocalSystem
 }
 Export-ModuleMember -Function Get-LocalSystem
 
+Function Get-LocalGroupMember
+{
+	
+}
+
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Get-ServiceInstallPath
 # Description....: Get the installation path of a service
