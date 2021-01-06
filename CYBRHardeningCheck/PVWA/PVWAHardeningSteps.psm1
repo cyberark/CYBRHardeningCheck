@@ -698,14 +698,14 @@ Function PVWA_Scheduled_Task_Service_LocalUser
 			}
 
 			# Verify Local Administrator has Full Control rights on the PVWA installation path
-			$userPermissions["Identity"] = $(Get-LocalAdministrators)
+			$userPermissions["Identity"] = $(Get-LocalAdministratorsGroupName)
 			if((Compare-UserPermissions @userPermissions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$changeStatus = $true
 			}
 			# Verify Local System has Full Control rights on the PVWA installation path
-			$userPermissions["Identity"] = $(Get-LocalSystem)
+			$userPermissions["Identity"] = $(Get-LocalSystemGroupName)
 			if((Compare-UserPermissions @userPermissions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"

@@ -610,7 +610,7 @@ Function RegistryPermissions
 
 			$path = "HKLM:\System\CurrentControlSet\Control\SecurePipeServers\Winreg"
 
-			$res = Compare-UserPermissions -Path $path -Identity $(Get-LocalAdministrators) -Rights "FullControl" -outStatus ([ref]$myRef)
+			$res = Compare-UserPermissions -Path $path -Identity $(Get-LocalAdministratorsGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)
 			[ref]$refOutput.Value = $myRef.Value
 
 			Write-LogMessage -Type Info -Msg "Finish validating Registry Permissions"
@@ -666,24 +666,24 @@ Function FileSystemPermissions
 			Write-LogMessage -Type Info -Msg "Start validating File System Permissions"
 
 			# Check Administrators Access
-			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalAdministrators) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalAdministratorsGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$changeStatus = $true
 			}
-			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalAdministrators) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalAdministratorsGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$changeStatus = $true
 			}
 
 			# Check System Access
-			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalSystem) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalSystemGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$changeStatus = $true
 			}
-			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalSystem) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalSystemGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$changeStatus = $true
@@ -905,7 +905,7 @@ Function LocalPrivilegedUsers
 		$myRef = ""
 		$res = "Good"
 		$tmpStatus = ""
-		$localAdminGroup = Get-LocalAdministrators
+		$localAdminGroup = (Get-LocalAdministratorsGroupName).replace("BUILTIN\","")
 	}
 	Process {
 
@@ -917,13 +917,32 @@ Function LocalPrivilegedUsers
 			}
 			
 			#TODO: add more logic here on what should be the process
-			Write-LogMessage -Type Debug -Msg "There are $($arrPrivUsers.count) users and groups in the local administrators group"
-
+			Write-LogMessage -Type Debug -Msg "There are total of $($arrPrivUsers.count) users and groups in the local administrators group"
+			$numOfOtherAdmins = 0
+			ForEach($user in $arrPrivUsers)
+			{
+				# Skip local Administrator
+				if($user -contains "/")
+				{
+					If(!(Test-LocalAdminUser -name $($user.split("/")[1])))
+					{
+						$numOfOtherAdmins++
+					}
+				}
+				Elseif($user.StartsWith("S-"))
+				{
+					If(!(Test-LocalAdminUser -sid $user))
+					{
+						$numOfOtherAdmins++
+					}
+				}
+				Write-LogMessage -Type Debug -Msg "There are $numOfOtherAdmins users and groups (beside the local Administrator) in the local administrators group"
+			}
 			Write-LogMessage -Type Info -Msg "Finish verification of privielged users in local Administrators group ($localAdminGroup)"
 		}
 		catch
 		{
-			Write-LogMessage -Type "Error" -Msg "Failed to verify privielged users in local Administrators group ($localAdminGroup)."
+			Write-LogMessage -Type "Error" -Msg "Failed to verify privielged users in local Administrators group ($localAdminGroup). Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Failed to verify privielged users in local Administrators group ($localAdminGroup)."
 			$res = "Bad"
 		}
@@ -933,4 +952,4 @@ Function LocalPrivilegedUsers
 		# Write output to HTML
 	}
 }
-
+Export-ModuleMember -Function LocalPrivilegedUsers

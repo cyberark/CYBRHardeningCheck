@@ -974,7 +974,7 @@ Function Test-LocalUser
 	Returns True if the input user name exists on the machine
 #>
 	Param(
-		$userName
+		[string]$userName
 	)
 	Begin {}
 	Process{
@@ -989,6 +989,47 @@ Function Test-LocalUser
 	End {}
 }
 Export-ModuleMember -Function Test-LocalUser
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Test-LocalAdminUser
+# Description....: Returns if a local user is the local Administrator user
+# Parameters.....: User Name to check
+# Return Values..: True / False
+# =================================================================================================================================
+Function Test-LocalAdminUser
+{
+	param(
+		[parameter(Mandatory=$false)]
+		[ValidateNotNullOrEmpty()]
+		[Alias("name")]
+		[string]$userName,
+		[parameter(Mandatory=$false)]
+		[ValidateNotNullOrEmpty()]
+		[Alias("sid")]
+		[string]$userSID
+	)
+	try{
+		if([string]::IsNullOrEmpty($userName) -and [string]::IsNullOrEmpty($userSID)) { Throw "At least one parameter should be used (userName or userSID)" }
+		if(![string]::IsNullOrEmpty($userName))
+		{
+			$userSID = Convert-NameToSID $userName
+		}
+		
+		If($userSID.StartsWith("S-1-5-") -and $userSID.EndsWith("-500"))
+		{
+			return $true
+		}
+		else
+		{
+			return $false
+		}
+	}
+	catch{
+		Write-LogMessage -Type Error -Msg "Failed to check if user $userName is the local Admin. Error: $(Join-ExceptionMessage $_.Exception)"
+		return $false
+	}
+}
+Export-ModuleMember -Function Test-LocalAdminUser
 
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Test-InstalledWindowsRole
@@ -1156,12 +1197,12 @@ Function Get-DnsHost
 Export-ModuleMember -Function Get-DnsHost
 
 # @FUNCTION@ ======================================================================================================================
-# Name...........: Get-LocalAdministrators
+# Name...........: Get-LocalAdministratorsGroupName
 # Description....: Returns the Local Administrators Group Name
 # Parameters.....: None
 # Return Values..: Local Administrators Group Name
 # =================================================================================================================================
-Function Get-LocalAdministrators
+Function Get-LocalAdministratorsGroupName
 {
 <#
 .SYNOPSIS
@@ -1184,15 +1225,15 @@ Function Get-LocalAdministrators
 	}
 	End {}
 }
-Export-ModuleMember -Function Get-LocalAdministrators
+Export-ModuleMember -Function Get-LocalAdministratorsGroupName
 
 # @FUNCTION@ ======================================================================================================================
-# Name...........: Get-LocalSystem
+# Name...........: Get-LocalSystemGroupName
 # Description....: Returns the local SYSTEM account Name
 # Parameters.....: None
 # Return Values..: local SYSTEM account name
 # =================================================================================================================================
-Function Get-LocalSystem
+Function Get-LocalSystemGroupName
 {
 <#
 .SYNOPSIS
@@ -1215,11 +1256,11 @@ Function Get-LocalSystem
 	}
 	End {}
 }
-Export-ModuleMember -Function Get-LocalSystem
+Export-ModuleMember -Function Get-LocalSystemGroupName
 
 Function Get-LocalGroupMember
 {
-	
+
 }
 
 # @FUNCTION@ ======================================================================================================================

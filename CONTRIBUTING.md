@@ -49,8 +49,8 @@ Two main files are the Hardening steps script (saved as \*.psm1) and the hardeni
 - Test-InstalledWindowsRole
 - Test-ServiceRunWithLocalUser
 - Get-DnsHost
-- Get-LocalAdministrators
-- Get-LocalSystem
+- Get-LocalAdministratorsGroupName
+- Get-LocalSystemGroupName
 - Get-ServiceInstallPath
 - Get-SeceditAnalysisResults
 - Get-ParsedFileNameByOS
