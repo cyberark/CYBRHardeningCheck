@@ -7,14 +7,12 @@
 # =================================================================================================================================
 Function Write-LogMessage
 {
-<#
-.SYNOPSIS
+<# 
+.SYNOPSIS 
 	Method to log a message on screen and in a log file
-
 .DESCRIPTION
-	Logging The input Message to the Screen and the Log File.
+	Logging The input Message to the Screen and the Log File. 
 	The Message Type is presented in colours on the screen based on the type
-
 .PARAMETER LogFile
 	The Log File to write to. By default using the LOG_FILE_PATH
 .PARAMETER MSG
@@ -39,69 +37,91 @@ Function Write-LogMessage
 		[Parameter(Mandatory=$false)]
 		[Switch]$Footer,
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("Info","Warning","Error","Debug","Verbose")]
+		[Switch]$WriteLog = $true,
+		[Parameter(Mandatory=$false)]
+		[ValidateSet("Info","Warning","Error","Debug","Verbose", "Success", "LogOnly")]
 		[String]$type = "Info",
 		[Parameter(Mandatory=$false)]
 		[String]$LogFile = $LOG_FILE_PATH
 	)
 	Try{
-		If ($Header) {
-			"=======================================" | Out-File -Append -FilePath $LogFile
-			Write-Host "======================================="
+		If([string]::IsNullOrEmpty($LogFile) -and $WriteLog)
+		{
+			# User wanted to write logs, but did not provide a log file - Create a temporary file
+			$LogFile = Join-Path -Path $ENV:Temp -ChildPath "$((Get-Date).ToShortDateString().Replace('/','_')).log"
+			Write-Host "No log file path inputed, created a temporary file at: '$LogFile'"
 		}
-		ElseIf($SubHeader) {
-			"------------------------------------" | Out-File -Append -FilePath $LogFile
-			Write-Host "------------------------------------"
+		If ($Header -and $WriteLog) {
+			"=======================================" | Out-File -Append -FilePath $LogFile 
+			Write-Host "=======================================" -ForegroundColor Magenta
 		}
-
-		$msgToWrite = "[$(Get-Date -Format "yyyy-MM-dd hh:mm:ss")]`t"
-		$writeToFile = $true
+		ElseIf($SubHeader -and $WriteLog) { 
+			"------------------------------------" | Out-File -Append -FilePath $LogFile 
+			Write-Host "------------------------------------" -ForegroundColor Magenta
+		}
+		
+		# Replace empty message with 'N/A'
+		if([string]::IsNullOrEmpty($Msg)) { $Msg = "N/A" }
+		$msgToWrite = ""
+		
+		# Mask Passwords
+		if($Msg -match '((?:password|credentials|secret)\s{0,}["\:=]{1,}\s{0,}["]{0,})(?=([\w`~!@#$%^&*()-_\=\+\\\/|;:\.,\[\]{}]+))')
+		{
+			$Msg = $Msg.Replace($Matches[2],"****")
+		}
 		# Check the message type
 		switch ($type)
 		{
-			"Info" {
-				Write-Host $MSG.ToString()
-				$msgToWrite += "[INFO]`t$Msg"
-				break
+			{($_ -eq "Info") -or ($_ -eq "LogOnly")} 
+			{ 
+				If($_ -eq "Info")
+				{
+					Write-Host $MSG.ToString() -ForegroundColor $(If($Header -or $SubHeader) { "Magenta" } Else { "White" })
+				}
+				$msgToWrite = "[INFO]`t$Msg"
+			}
+			"Success" { 
+				Write-Host $MSG.ToString() -ForegroundColor Green
+				$msgToWrite = "[SUCCESS]`t$Msg"
 			}
 			"Warning" {
-				Write-Host $MSG.ToString() -ForegroundColor DarkYellow
-				$msgToWrite += "[WARNING]`t$Msg"
-				break
+				Write-Host $MSG.ToString() -ForegroundColor Yellow
+				$msgToWrite = "[WARNING]`t$Msg"
 			}
 			"Error" {
 				Write-Host $MSG.ToString() -ForegroundColor Red
-				$msgToWrite += "[ERROR]`t$Msg"
-				break
+				$msgToWrite = "[ERROR]`t$Msg"
 			}
-			"Debug" {
-				if($InDebug -or $InVerbose)
+			"Debug" { 
+				if(($DebugPreference -ne "SilentlyContinue") -or ($VerbosePreference -ne "SilentlyContinue"))
 				{
 					Write-Debug $MSG
-					$msgToWrite += "[DEBUG]`t$Msg"
-					break
+					$msgToWrite = "[DEBUG]`t$Msg"
 				}
-				else { $writeToFile = $False }
 			}
-			"Verbose" {
-				if($InVerbose)
+			"Verbose" { 
+				if(($VerbosePreference -ne "SilentlyContinue"))
 				{
-					Write-Verbose $MSG
-					$msgToWrite += "[VERBOSE]`t$Msg"
-					break
+					Write-Verbose -Msg $MSG
+					$msgToWrite = "[VERBOSE]`t$Msg"
 				}
-				else { $writeToFile = $False }
 			}
 		}
 
-		If($writeToFile) { $msgToWrite | Out-File -Append -FilePath $LogFile }
-		If ($Footer) {
-			"=======================================" | Out-File -Append -FilePath $LogFile
-			Write-Host "======================================="
+		If($WriteLog) 
+		{ 
+			If(![string]::IsNullOrEmpty($msgToWrite))
+			{				
+				"[$(Get-Date -Format "yyyy-MM-dd hh:mm:ss")]`t$msgToWrite" | Out-File -Append -FilePath $LogFile
+			}
+		}
+		If ($Footer -and $WriteLog) { 
+			"=======================================" | Out-File -Append -FilePath $LogFile 
+			Write-Host "=======================================" -ForegroundColor Magenta
 		}
 	}
 	catch{
-		Throw $(New-Object System.Exception ("Cannot write log message",$_.Exception))
+		Throw $(New-Object System.Exception ("Cannot write message"),$_.Exception)
 	}
 }
 Export-ModuleMember -Function Write-LogMessage
