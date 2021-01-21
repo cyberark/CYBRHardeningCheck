@@ -11,7 +11,7 @@
 # This can be used to verify a component Security policy in domain
 #
 ###########################################################################
-[CmdletBinding())]
+[CmdletBinding()]
 param
 (
 	[Parameter(Mandatory=$true,HelpMessage="Please enter the GPO Zip file path to extract INF and Audit from")]
