@@ -244,6 +244,7 @@ Function EnableUsersToPrintPSMSessions
 	}
 }
 
+
 # @FUNCTION@ ======================================================================================================================
 # Name...........: SupportWebApplications
 # Description....:
@@ -272,12 +273,50 @@ Function SupportWebApplications
 	Begin {
 		$res = "Good"
 		$myRef = ""
+		$tmpStatus = ""
+		$changeStatus = $false
+		$PSM_IE_Hardening = Resolve-Path -Path .\PSMIEHardening.csv
+		$PSM_Chrome_Hardening = Resolve-Path -Path .\PSMChromeHardening.csv
 	}
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify SupportWebApplications"
-
-			throw [System.NotImplementedException]::New("SupportWebApplications")
+			# Check the hardening of the Installed browsers
+			Write-LogMessage -Type Debug -Msg "Checking IE hardening"
+			$hardeningData = @()
+			If(Test-Path $PSM_IE_Hardening)
+			{
+				$hardeningData += Import-Csv $PSM_IE_Hardening -Header Path,ValueName,ValueType,ValueData
+			}
+			# Check if Chrome is installed
+			If(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe")
+			{
+				If(Test-Path $PSM_Chrome_Hardening)
+				{
+					$hardeningData += Import-Csv $PSM_Chrome_Hardening -Header Path,ValueName,ValueType,ValueData
+				}	
+			}
+			ForEach($line in $hardeningData)
+			{
+				$regHardening = @{
+					"Path" = "HKLM:\"+$line.Path;
+					"ValueName" = $line.ValueName;
+					"ValueData" = $line.ValueData;
+					"outStatus" = ([ref]$myRef);
+				}
+		
+				if((Compare-RegistryValue @regHardening) -ne "Good")
+				{
+					$tmpStatus += $myRef.Value + "<BR>"
+					$changeStatus = $true
+				}
+			}
+			
+			If($changeStatus)
+			{
+				$res = "Warning"
+				[ref]$refOutput.Value = $tmpStatus
+			}
 
 			Write-LogMessage -Type Info -Msg "Finish verify SupportWebApplications"
 
@@ -429,10 +468,18 @@ Function RunApplocker
 	Begin {
 		$res = "Good"
 		$myRef = ""
+		$PSM_ApplockerConfiguration = (Find-Components -Component "PSM").Path+"\PSMConfigureAppLocker.xml"
 	}
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify RunApplocker"
+			# Get current applocker configuration (incase it wasn't configured, an empty policy will be returned)
+			$xmlAppLockerConfiguration = [xml](get-AppLockerPolicy -effective -xml)
+			# get rule collections
+			$colExeRuleCollection = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='Exe']")
+			$colScrRuleCollection = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='Script']")
+			$colMsiRuleCollection = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='Msi']")
+			$colDllRuleCollection = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='Dll']")
 
 			throw [System.NotImplementedException]::New("RunApplocker")
 
@@ -1212,66 +1259,6 @@ Function PSM_CredFileHardening
         } catch {
 			Write-LogMessage -Type "Error" -Msg "Could not validate the PSM component credential file.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate PSM component credential file [0]."
-			return "Bad"
-		}
-	}
-	End {
-		# Write output to HTML
-	}
-}
-
-# @FUNCTION@ ======================================================================================================================
-# Name...........: PSM_CredFileHardening
-# Description....: Return type of restrictions added the the credential file
-# Parameters.....: Credential file location
-# Return Values..: Verification Type
-# =================================================================================================================================
-Function PSM_CredFileHardening
-{
-<#
-.SYNOPSIS
-	Return verficiation type on credential file
-.DESCRIPTION
-	Return the verification type on the credential file used by the components to log back in to the vault
-.PARAMETER parameters
-	Credential file location
-#>
-	param(
-		[Parameter(Mandatory=$false)]
-		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
-		[ref]$refOutput
-	)
-
-	Begin {
-        $res = 'Good'
-        $myRef = ""
-        $PSMPath = ""
-        $tmpValue = ""
-    }
-
-    Process {
-        Try{
-   			Write-LogMessage -Type Info -Msg "Start validating hardening of PSM credential file"
-            $PSMPath = (Find-Components -Component "PSM").Path
-            $credentialsfolder = join-path -Path $PSMPath -ChildPath "Vault\CredFiles"
-			# Go over all PSM Cred Files in the folder
-			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.ini))
-			{
-				Write-LogMessage -Type Debug -Msg "Checking '$($credFile.Name)' credential file"
-				if((Test-CredFileVerificationType -CredentialFilePath $credFile.FullName -outStatus ([ref]$myRef)) -ne "Good")
-				{
-					$res = "Warning"
-				}
-				$tmpValue += $myRef.value + "<BR>"
-			}
-
-            [ref]$refOutput.Value = $tmpValue
-            Write-LogMessage -Type Info -Msg "Finish validating PSM component credential files"
-   			return $res
-        } catch {
-			Write-LogMessage -Type "Error" -Msg "Could not validate the PSM component credential files.  Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$refOutput.Value = "Could not validate PSM component credential files."
 			return "Bad"
 		}
 	}
