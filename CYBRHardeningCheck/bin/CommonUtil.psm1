@@ -1436,7 +1436,7 @@ Function Set-DetectedComponents
 	Sets the Detected Components in a Script scope
 #>
 	Write-LogMessage -Type Info -MSG "Detecting installed components" -LogFile $LOG_FILE_PATH
-	$_detectedComponents = Find-Components
+	$_detectedComponents = Find-Components -Component "All"
 	# Add  indication if the server is a domain member
 	$_detectedComponents | Add-Member -NotePropertyName DomainMember -NotePropertyValue $(Test-InDomain)
 	# Make Detected Components availble in Script scope
