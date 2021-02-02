@@ -467,22 +467,42 @@ Function RunApplocker
 
 	Begin {
 		$res = "Good"
-		$myRef = ""
+		$tmpStatus = ""
+		$changeStatus = $false
 		$PSM_ApplockerConfiguration = (Find-Components -Component "PSM").Path+"\PSMConfigureAppLocker.xml"
+		$ruleTypesList = @("Exe","Script","Msi","Dll")
 	}
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify RunApplocker"
 			# Get current applocker configuration (incase it wasn't configured, an empty policy will be returned)
 			$xmlAppLockerConfiguration = [xml](get-AppLockerPolicy -effective -xml)
-			# get rule collections
-			$colExeRuleCollection = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='Exe']")
-			$colScrRuleCollection = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='Script']")
-			$colMsiRuleCollection = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='Msi']")
-			$colDllRuleCollection = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='Dll']")
+			# Load the current PSM AppLocker Configuration
+			$xmlPSM_ApplockerConfig = [xml](Get-Content $PSM_ApplockerConfiguration)
+			# For each type check that all rules exist
+			ForEach($type in $ruleTypesList)
+			{
+				$psmApplockerConfig = $xmlPSM_ApplockerConfig.PSMAppLockerConfiguration.SelectNodes("//Application[@Type='$type']")
+				$currentApplockerConfig = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='$type']")
+				$compareResult = Compare-Object -ReferenceObject $currentApplockerConfig.Conditions.FilePathCondition.Path -DifferenceObject $psmApplockerConfig.Path
+				If($compareResult.Count -gt 0)
+				{
+					$tmpStatus += "The following '$type' rules are different between the current AppLocker configuration and the PSM AppLocker configuration file<BR><ul>"
+					# Get the rules missing from the PSM AppLocker config
+					$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "<="}) -join "<li>(Effective)"
+					# Get the rules missing in the effective AppLocker config
+					$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "=>"}) -join "<li>(PSM Config)"
+					$tmpStatus += "</ul>"
+					$changeStatus = $true
+				}
+			}
 
-			throw [System.NotImplementedException]::New("RunApplocker")
-
+			If($changeStatus)
+			{
+				$res = "Warning"
+				[ref]$refOutput.Value = $tmpStatus
+			}
+			
 			Write-LogMessage -Type Info -Msg "Finish verify RunApplocker"
 
 			return $res

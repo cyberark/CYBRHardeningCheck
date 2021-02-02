@@ -39,7 +39,7 @@ Function CPM_Password_Manager_Services_LocalUser
 			$CPMServiceUserName = $($Parameters | Where-Object Name -eq "CPMServiceUserName").Value
 
 			# Get the CPM working directories
-			$cpmServicesPath = (Get-ServiceInstallPath $ScannerserviceName).Replace("Scanner\CACPMScanner.exe","").Replace('"',"").Trim()
+			$cpmServicesPath = (Find-Components -Component "CPM").Path
 			$drive = Split-Path -Path $cpmServicesPath -Qualifier
             $python27Path = Join-Path -Path $drive -ChildPath "Python27"
             $oraclePath = Join-Path -Path $drive -ChildPath "oracle"

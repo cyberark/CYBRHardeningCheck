@@ -2794,11 +2794,9 @@ Function Test-CredFileVerificationType
 
 	Begin {
             $retValue = "Good"
-            $myref = ""
             $typeOfVerification = ""
             $verificationsFlag = ""
             $vaultUser = ""
-
 	}
 	Process {
         if(Test-Path $CredentialFilePath)
