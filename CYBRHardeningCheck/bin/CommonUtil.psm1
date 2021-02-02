@@ -7,14 +7,12 @@
 # =================================================================================================================================
 Function Write-LogMessage
 {
-<#
-.SYNOPSIS
+<# 
+.SYNOPSIS 
 	Method to log a message on screen and in a log file
-
 .DESCRIPTION
-	Logging The input Message to the Screen and the Log File.
+	Logging The input Message to the Screen and the Log File. 
 	The Message Type is presented in colours on the screen based on the type
-
 .PARAMETER LogFile
 	The Log File to write to. By default using the LOG_FILE_PATH
 .PARAMETER MSG
@@ -39,69 +37,97 @@ Function Write-LogMessage
 		[Parameter(Mandatory=$false)]
 		[Switch]$Footer,
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("Info","Warning","Error","Debug","Verbose")]
+		[Bool]$WriteLog = $true,
+		[Parameter(Mandatory=$false)]
+		[ValidateSet("Info","Warning","Error","Debug","Verbose", "Success", "LogOnly")]
 		[String]$type = "Info",
 		[Parameter(Mandatory=$false)]
 		[String]$LogFile = $LOG_FILE_PATH
 	)
 	Try{
-		If ($Header) {
-			"=======================================" | Out-File -Append -FilePath $LogFile
-			Write-Host "======================================="
+		If([string]::IsNullOrEmpty($LogFile) -and $WriteLog)
+		{
+			# User wanted to write logs, but did not provide a log file - Create a temporary file
+			$LogFile = Join-Path -Path $ENV:Temp -ChildPath "$((Get-Date).ToShortDateString().Replace('/','_')).log"
+			Write-Host "No log file path inputed, created a temporary file at: '$LogFile'"
 		}
-		ElseIf($SubHeader) {
-			"------------------------------------" | Out-File -Append -FilePath $LogFile
-			Write-Host "------------------------------------"
+		If ($Header -and $WriteLog) {
+			"=======================================" | Out-File -Append -FilePath $LogFile 
+			Write-Host "=======================================" -ForegroundColor Magenta
 		}
-
-		$msgToWrite = "[$(Get-Date -Format "yyyy-MM-dd hh:mm:ss")]`t"
-		$writeToFile = $true
+		ElseIf($SubHeader -and $WriteLog) { 
+			"------------------------------------" | Out-File -Append -FilePath $LogFile 
+			Write-Host "------------------------------------" -ForegroundColor Magenta
+		}
+		
+		# Replace empty message with 'N/A'
+		if([string]::IsNullOrEmpty($Msg)) { $Msg = "N/A" }
+		$msgToWrite = ""
+		
+		# Mask Passwords
+		if($Msg -match '((?:password|credentials|secret)\s{0,}["\:=]{1,}\s{0,}["]{0,})(?=([\w`~!@#$%^&*()-_\=\+\\\/|;:\.,\[\]{}]+))')
+		{
+			$Msg = $Msg.Replace($Matches[2],"****")
+		}
 		# Check the message type
 		switch ($type)
 		{
-			"Info" {
-				Write-Host $MSG.ToString()
-				$msgToWrite += "[INFO]`t$Msg"
+			{($_ -eq "Info") -or ($_ -eq "LogOnly")} 
+			{ 
+				If($_ -eq "Info")
+				{
+					Write-Host $MSG.ToString() -ForegroundColor $(If($Header -or $SubHeader) { "Magenta" } Else { "White" })
+				}
+				$msgToWrite = "[INFO]`t$Msg"
+				break
+			}
+			"Success" { 
+				Write-Host $MSG.ToString() -ForegroundColor Green
+				$msgToWrite = "[SUCCESS]`t$Msg"
 				break
 			}
 			"Warning" {
-				Write-Host $MSG.ToString() -ForegroundColor DarkYellow
-				$msgToWrite += "[WARNING]`t$Msg"
+				Write-Host $MSG.ToString() -ForegroundColor Yellow
+				$msgToWrite = "[WARNING]`t$Msg"
 				break
 			}
 			"Error" {
 				Write-Host $MSG.ToString() -ForegroundColor Red
-				$msgToWrite += "[ERROR]`t$Msg"
+				$msgToWrite = "[ERROR]`t$Msg"
 				break
 			}
-			"Debug" {
-				if($InDebug -or $InVerbose)
+			"Debug" { 
+				if(($DebugPreference -ne "SilentlyContinue") -or ($VerbosePreference -ne "SilentlyContinue"))
 				{
 					Write-Debug $MSG
-					$msgToWrite += "[DEBUG]`t$Msg"
-					break
+					$msgToWrite = "[DEBUG]`t$Msg"
 				}
-				else { $writeToFile = $False }
+				break
 			}
-			"Verbose" {
-				if($InVerbose)
+			"Verbose" { 
+				if(($VerbosePreference -ne "SilentlyContinue"))
 				{
-					Write-Verbose $MSG
-					$msgToWrite += "[VERBOSE]`t$Msg"
-					break
+					Write-Verbose -Msg $MSG
+					$msgToWrite = "[VERBOSE]`t$Msg"
 				}
-				else { $writeToFile = $False }
+				break
 			}
 		}
 
-		If($writeToFile) { $msgToWrite | Out-File -Append -FilePath $LogFile }
-		If ($Footer) {
-			"=======================================" | Out-File -Append -FilePath $LogFile
-			Write-Host "======================================="
+		If($WriteLog) 
+		{ 
+			If(![string]::IsNullOrEmpty($msgToWrite))
+			{				
+				"[$(Get-Date -Format "yyyy-MM-dd hh:mm:ss")]`t$msgToWrite" | Out-File -Append -FilePath $LogFile
+			}
+		}
+		If ($Footer -and $WriteLog) { 
+			"=======================================" | Out-File -Append -FilePath $LogFile 
+			Write-Host "=======================================" -ForegroundColor Magenta
 		}
 	}
 	catch{
-		Throw $(New-Object System.Exception ("Cannot write log message",$_.Exception))
+		Throw $(New-Object System.Exception ("Cannot write message"),$_.Exception)
 	}
 }
 Export-ModuleMember -Function Write-LogMessage
@@ -161,7 +187,8 @@ Function Test-Service
 	The Service Name to Check Status for
 #>
 	param (
-		$ServiceName
+		[Parameter(Mandatory=$true)]
+		[string]$ServiceName
 	)
 	Begin {
 
@@ -209,7 +236,7 @@ Function Get-Reg
 #>
 	param(
 		[Parameter(Mandatory=$true)]
-		[ValidateSet("HKLM:","LocalMachine", "Users", "CurrentUser")]
+		[ValidateSet("HKLM:","LocalMachine", "HKU:", "Users", "CurrentUser")]
 		[String]$Hive,
 		[Parameter(Mandatory=$true)]
 		[String]$Key,
@@ -236,7 +263,7 @@ Function Get-Reg
 		catch{
 			Throw $(New-Object System.Exception ("Get-Reg: Registry Error",$_.Exception))
 		}
-		if($Value -eq $null) # Enumerate Keys
+		if($null -eq $Value) # Enumerate Keys
 		{
 			If(Test-Path $regPath)
 			{
@@ -915,7 +942,16 @@ Function Test-EnabledPolicySetting
 .PARAMETER NotMatchCriteria
 	The NOT verification criteria
 #>
-    Param ($PolicyStatus, $MatchValue, $NotMatchCriteria)
+    Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateSet("enable","disable")]	
+		[string]$PolicyStatus, 
+		[Parameter(Mandatory=$true)]
+		[string]$MatchValue, 
+		[Parameter(Mandatory=$true)]
+		[ValidateSet("Success","Failure")]	
+		[string]$NotMatchCriteria
+	)
 	$retValue = $true
 
 	if(($PolicyStatus -eq "enable") -and !($MatchValue -match $NotMatchCriteria))
@@ -943,12 +979,13 @@ Function Test-InDomain
 	Returns True if machine is part of a domain
 #>
 	Param(
-		$machineName = "."
+		[Parameter(Mandatory=$false)]
+		[string]$machineName = "."
 	)
 	Begin {}
 	Process{
 		try{
-			return $(Get-WMIItem -Class "Win32_ComputerSystem" -Item "PartOfDomain" -RemoteComputer $machineName)
+			return $(Get-WMIItem -Class "Win32_ComputerSystem" -Item "PartOfDomain" -RemoteComputer $machineName).PartOfDomain
 		}
 		catch{
 			Write-LogMessage -Type Error -Msg "Failed to check if the machine is a domain member. Error: $(Join-ExceptionMessage $_.Exception)"
@@ -974,7 +1011,8 @@ Function Test-LocalUser
 	Returns True if the input user name exists on the machine
 #>
 	Param(
-		$userName
+		[Parameter(Mandatory=$true)]
+		[string]$userName
 	)
 	Begin {}
 	Process{
@@ -1247,7 +1285,7 @@ Function Get-ServiceInstallPath
 		try{
 			if ($null -eq $m_ServiceList)
 			{
-				$m_ServiceList = Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.pspath }
+				Set-Variable -Name m_ServiceList -Value $(Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.pspath }) -Scope Script
 				#$m_ServiceList = Get-Reg -Hive "LocalMachine" -Key System\CurrentControlSet\Services -Value $null
 			}
 			$regPath =  $m_ServiceList | Where-Object {$_.PSChildName -eq $ServiceName}
@@ -2667,6 +2705,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"CPM"
 				{
@@ -2684,6 +2723,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"PVWA"
 				{
@@ -2700,6 +2740,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"PSM"
 				{
@@ -2716,6 +2757,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"AIM"
 				{
@@ -2732,6 +2774,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"EPM"
 				{
@@ -2748,6 +2791,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"All"
 				{
@@ -2760,6 +2804,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 			}
 		}
