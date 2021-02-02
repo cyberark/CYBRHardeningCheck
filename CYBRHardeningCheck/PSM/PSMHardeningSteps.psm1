@@ -31,7 +31,7 @@ Function ConfigureUsersForPSMSessions
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$user_names = ($PSM_CONNECT, $PSM_ADMIN_CONNECT)
 		$DONT_EXPIRE_PASSWD = "65536"
@@ -44,31 +44,31 @@ Function ConfigureUsersForPSMSessions
 				if((Compare-UserFlags -userName $user -flagName "UserFlags" -userflagValue "DONT_EXPIRE_PASSWD" -flagValue $DONT_EXPIRE_PASSWD -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 				if((Compare-UserFlags -userName $user -flagName "MaxDisconnectionTime" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 				if((Compare-UserFlags -userName $user -flagName "MaxConnectionTime" -flagValue 0 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 				if((Compare-UserFlags -userName $user -flagName "ReconnectionAction" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 				if((Compare-UserFlags -userName $user -flagName "BrokenConnectionAction" -flagValue 0 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -117,7 +117,7 @@ Function PSMForWebApplications
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -135,7 +135,7 @@ Function PSMForWebApplications
 			if((Compare-RegistryValue @regESC) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Check Prevent-RunningFirstRunWizard
@@ -149,10 +149,10 @@ Function PSMForWebApplications
 			if((Compare-RegistryValue @regFRW) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -201,7 +201,7 @@ Function EnableUsersToPrintPSMSessions
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$user_names = ($PSM_CONNECT, $PSM_ADMIN_CONNECT)
 	}
@@ -214,16 +214,16 @@ Function EnableUsersToPrintPSMSessions
 				if((Compare-UserFlags -userName $user -flagName "ConnectClientPrintersAtLogon" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 				if((Compare-UserFlags -userName $user -flagName "DefaultToMainPrinter" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -546,7 +546,7 @@ Function ConfigureOutOfDomainPSMServer
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$user_names = ($PSM_CONNECT, $PSM_ADMIN_CONNECT)
 		# Check which path to use
@@ -584,28 +584,28 @@ Function ConfigureOutOfDomainPSMServer
 			if((Compare-UserRight -userName $PSM_SHADOW_USERS -userRight "SeInteractiveLogonRight" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			ForEach($user in $user_names)
 			{
 				if((Compare-UserRight -userName $user -userRight "SeRemoteInteractiveLogonRight" -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			}
 			if((Compare-RegistryValue @regTimeLimitForIdleSessions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			if((Compare-RegistryValue @regRemoteSessionControl) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -654,7 +654,7 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$user_names = ($PSM_CONNECT, $PSM_ADMIN_CONNECT)
 		$RegPath = "Software\Policies\Microsoft\Windows\Control Panel\Desktop"
@@ -663,8 +663,11 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 	Process {
 		try{
 			# Disable Screen Saver on server
-			DisableScreenSaver
-			
+			If((DisableScreenSaver -refOutput ([ref]$myRef)) -ne "Good")
+			{
+				$tmpStatus += $myRef.Value
+			}
+
 			Write-LogMessage -Type Info -Msg "Start verify DisableTheScreenSaverForThePSMLocalUsers"
 
 			ForEach ($user in $user_names)
@@ -675,7 +678,7 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 				}
 				catch{
 					$tmpStatus += $($_.Exception.Message) + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 				if($null -ne $usrSID)
 				{
@@ -683,12 +686,12 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 					if((Compare-PolicyEntry -EntryTitle "Disable screen saver" -UserDir $currUserDir -RegPath $RegPath -RegName 'ScreenSaveActive' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
-						$changeStatus = $true
+						$statusChanged = $true
 					}
 				}
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -737,7 +740,7 @@ Function HidePSMDrives
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -746,11 +749,11 @@ Function HidePSMDrives
 			# Define the HKEY_USERS root as a new drive
 			New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS -Scope Global
 			# Get a list of all User SID to check
-			$arrRegUsers = Get-ChildItem -Path HKU:\ -ErrorAction Ignore | Select-Object Name -Erro
+			$arrRegUsers = Get-ChildItem -Path HKU:\ -ErrorAction Ignore | Select-Object Name -ErrorAction Ignore
 
 			ForEach($user in $arrRegUsers)
 			{
-				$userSID = $user.Replace("HKEY_USERS\","")
+				$userSID = $user.Name.Replace("HKEY_USERS\","")
 				Write-LogMessage -Type Debug -Msg "Checking NoDrives for user $userSID..."
 				# Check PSM Local drives configuration
 				$regNoDrives = @{
@@ -763,10 +766,10 @@ Function HidePSMDrives
 				if((Compare-RegistryValue @regNoDrives) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			}
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -783,7 +786,7 @@ Function HidePSMDrives
 		}
 	}
 	End {
-
+		Remove-PSDrive -Name HKU
 	}
 }
 
@@ -815,7 +818,7 @@ Function BlockIETools
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -833,7 +836,7 @@ Function BlockIETools
 			if((Compare-RegistryValue @regIEDevTools) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Check that IE context menu is blocked
@@ -847,10 +850,10 @@ Function BlockIETools
 			if((Compare-RegistryValue @regIEContext) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -899,7 +902,7 @@ Function HardenRDS
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -918,7 +921,7 @@ Function HardenRDS
 			if((Compare-RegistryValue @regMinEncrypt) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Check that IE context menu is blocked
@@ -932,10 +935,10 @@ Function HardenRDS
 			if((Compare-RegistryValue @regSecurityLayer) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -984,7 +987,7 @@ Function HardenPSMUsersAccess
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 
         $PSM_PATH = (Find-Components -Component "PSM").Path
@@ -1056,7 +1059,7 @@ Function HardenPSMUsersAccess
 					If((Compare-UserPermissions @userPermissions) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
-						$changeStatus = $true
+						$statusChanged = $true
 					}
 				}
 			}
@@ -1071,7 +1074,7 @@ Function HardenPSMUsersAccess
 					If((Compare-UserPermissions @userPermissions) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
-						$changeStatus = $true
+						$statusChanged = $true
 					}
 				}
 			}
@@ -1087,12 +1090,12 @@ Function HardenPSMUsersAccess
 					If((Compare-UserPermissions @userPermissions) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
-						$changeStatus = $true
+						$statusChanged = $true
 					}
 				}
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -1141,7 +1144,7 @@ Function HardenSMBServices
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -1159,7 +1162,7 @@ Function HardenSMBServices
 			if((Compare-RegistryValue @regSMB1) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Verify MRXSMB10 client service is Disabled
@@ -1173,7 +1176,7 @@ Function HardenSMBServices
 			if((Compare-RegistryValue @regSMB10) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Check if the XB Services are installed
@@ -1192,7 +1195,7 @@ Function HardenSMBServices
 				if((Compare-RegistryValue @regXbl) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			}
 
@@ -1202,11 +1205,11 @@ Function HardenSMBServices
 				if((Compare-RegistryValue @regXbl) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus

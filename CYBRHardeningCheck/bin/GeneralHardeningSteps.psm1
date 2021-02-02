@@ -189,7 +189,7 @@ Function DisableScreenSaver
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -202,47 +202,47 @@ Function DisableScreenSaver
 				if((Compare-PolicyEntry -EntryTitle "Enable screen saver" -UserDir $UserDir -RegPath $RegPath -RegName 'ScreenSaveActive' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			} catch {
 				Write-LogMessage -Type "Error" -Msg "DisableScreenSaver: Could not validate 'Enable screen saver' property.  Error: $(Join-ExceptionMessage $_.Exception)"
 				$tmpStatus += "Error validating 'Enable screen saver' property<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			try{
 				if((Compare-PolicyEntry -EntryTitle "Force specific screen saver" -UserDir $UserDir -RegPath $RegPath -RegName 'SCRNSAVE.EXE' -RegData 'C:\Windows\System32\Ribbons.scr' -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			} catch {
 				Write-LogMessage -Type "Error" -Msg "DisableScreenSaver: Could not validate 'Force specific screen saver' property.  Error: $(Join-ExceptionMessage $_.Exception)"
 				$tmpStatus += "Error validating 'Force specific screen saver' property<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			try{
 				if((Compare-PolicyEntry -EntryTitle "Password protect the screen saver" -UserDir $UserDir -RegPath $RegPath -RegName 'ScreenSaverIsSecure' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			} catch {
 				Write-LogMessage -Type "Error" -Msg "DisableScreenSaver: Could not validate 'Password protect the screen saver' property.  Error: $(Join-ExceptionMessage $_.Exception)"
 				$tmpStatus += "Error validating 'Password protect the screen saver' property<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			try{
 				if((Compare-PolicyEntry -EntryTitle "Screen saver timeout" -UserDir $UserDir -RegPath $RegPath -RegName 'ScreenSaveTimeOut' -RegData '600' -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			} catch {
 				Write-LogMessage -Type "Error" -Msg "DisableScreenSaver: Could not validate 'Screen saver timeout' property.  Error: $(Join-ExceptionMessage $_.Exception)"
 				$tmpStatus += "Error validating 'Screen saver timeout' property<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -291,7 +291,7 @@ Function AdvancedAuditPolicyConfiguration
 		$myRef = ""
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 	}
 	Process {
 		Try {
@@ -327,35 +327,39 @@ Function AdvancedAuditPolicyConfiguration
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "disable" -failure "disable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
-							$changeStatus = $true
+							$statusChanged = $true
 						}
+						break
 					}
 					1 {
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "enable" -failure "disable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
-							$changeStatus = $true
+							$statusChanged = $true
 						}
+						break
 					}
 					2 {
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "disable" -failure "enable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
-							$changeStatus = $true
+							$statusChanged = $true
 						}
+						break
 					}
 					3 {
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "enable" -failure "enable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
-							$changeStatus = $true
+							$statusChanged = $true
 						}
+						break
 					}
 				}
 				$output += $myRef.Value
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -403,7 +407,7 @@ Function RemoteDesktopServices
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -416,28 +420,28 @@ Function RemoteDesktopServices
 			if((Compare-PolicyEntry -EntryTitle "Set rules for remote control of Remote Desktop Services user sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'Shadow' -RegData '4' -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			if((Compare-PolicyEntry -EntryTitle "Set time limit for active but idle Remote Desktop Services sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'MaxIdleTime' -RegData '1800000' -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			if((Compare-PolicyEntry -EntryTitle "Do not allow Clipboard redirection" -UserDir $UserDir -RegPath $RegPath -RegName 'fDisableClip' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			if((Compare-PolicyEntry -EntryTitle "End session when time limits are reached" -UserDir $UserDir -RegPath $RegPath -RegName 'fResetBroken' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -553,7 +557,7 @@ Function RegistryAudits
 		# Pre-Checks
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -570,16 +574,16 @@ Function RegistryAudits
 			{
 				$tmpStatus += "SOFTWARE registry Key does not have the required access control rules."
 				$tmpStatus += $myRef.output + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			If((Compare-AuditRulesFromPath -Path "HKLM:\SYSTEM" -AccessRules $AccessRulesArray -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += "SYSTEM registry Key does not have the required access control rules."
 				$tmpStatus += $myRef.output + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -694,39 +698,39 @@ Function FileSystemPermissions
 			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalAdministrators) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalAdministrators) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Check System Access
 			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalSystem) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalSystem) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Verify if Administrators and System are the only ones that has permissions
 			If((Compare-AmountOfUserPermissions -Path $ConfigPath -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			If((Compare-AmountOfUserPermissions -Path $ConfigRegBackPath -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -776,7 +780,7 @@ Function FileSystemAudit
 
 	Begin{
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$res = "Good"
 	}
@@ -798,15 +802,15 @@ Function FileSystemAudit
 				If((Compare-AuditRulesFromPath -path $systemConfig -accessRules $AccessRulesArray -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 				If((Compare-AuditRulesFromPath -path $ConfigRegBackPath -accessRules $AccessRulesArray -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 
-				If($changeStatus)
+				If($statusChanged)
 				{
 					$res = "Warning"
 					[ref]$refOutput.Value = $tmpStatus
@@ -855,7 +859,7 @@ Function DisableServices
 		$myRef = ""
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$serviceList = @("Routing and Remote Access", "Smart Card", "Smart Card Removal Policy",
 						 "SNMP Trap", "Special Administration Console Helper","Windows Error Reporting Service",
 						 "WinHTTP Web Proxy Auto-Discovery Service")
@@ -870,16 +874,16 @@ Function DisableServices
 					If((Compare-ServiceStatus -ServiceName $svc -ServiceStartMode "Disabled" -outStatus ([ref]$myRef)) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
-						$changeStatus = $true
+						$statusChanged = $true
 					}
 				} Catch {
 					Write-LogMessage -Type "Error" -Msg "Could not validate service '$svc' status.  Error: $(Join-ExceptionMessage $_.Exception)"
 					$tmpStatus += "Could not validate service '$svc' status."
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus

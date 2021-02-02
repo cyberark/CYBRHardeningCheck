@@ -14,7 +14,7 @@
 		</Parameters>
    </Step>
 
-   <Step Name="ValidateServerRoles" DisplayName="Validate Server Roles" ScriptName="ValidateServerRoles"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Validate%20Proper%20Server%20Roles.htm#ValidateProperServerRoles" >
+   <Step Name="ValidateServerRoles" DisplayName="Validate Server Roles" ScriptName="ValidateServerRoles"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20General%20Configuration%20for%20all%20Deployments.htm#ValidateProperServerRoles" >
       <Parameters>
          <Parameter Name="IsPSMInstalled" Value="False"/>
       </Parameters>
@@ -34,7 +34,7 @@
 
    <Step Name="FileSystemAudit" DisplayName="FileSystem Audit" ScriptName="FileSystemAudit"  Enable="Yes" Description=""/>
 
-   <Step Name="PasswordManagerServicesLocalUser" DisplayName="CPM Password Manager Services LocalUser" ScriptName="CPM_Password_Manager_Services_LocalUser" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Additionalmanualsteps">
+   <Step Name="PasswordManagerServicesLocalUser" DisplayName="CPM Password Manager Services LocalUser" ScriptName="CPM_Password_Manager_Services_LocalUser" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#AdditionalManualSteps">
 	  <Parameters>
          <Parameter Name="CPMServiceUserName" Value="PasswordManagerUser"/>
          <Parameter Name="CPMServiceUserDescription" Value="CyberArk Password Manager User used by CyberArk Password Manager and Scanner services"/>
@@ -43,7 +43,7 @@
 
    <Step Name="DisableServices" DisplayName="Disable Services" ScriptName="DisableServices" Enable="Yes" Description=""/>
   
-   <Step Name="EnableFIPSCryptography" DisplayName="CPM Enable FIPS Cryptography" ScriptName="CPM_EnableFIPSCryptography" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/CryptographySettings.htm#CryptographyModeSettingsCPMonly"/>
+   <Step Name="EnableFIPSCryptography" DisplayName="CPM Enable FIPS Cryptography" ScriptName="CPM_EnableFIPSCryptography" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20General%20Configuration%20for%20all%20Deployments.htm#cpm"/>
 
    <Step Name="DisableDEPForExecutables" DisplayName="CPM Disable DEP For Executables" ScriptName="CPM_DisableDEPForExecutables" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/Following-Central-Policy-Manager-Installation.htm#DisableDEPonfilesusedbytheCPM"/>
 
