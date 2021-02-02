@@ -79,18 +79,22 @@ Function Write-LogMessage
 					Write-Host $MSG.ToString() -ForegroundColor $(If($Header -or $SubHeader) { "Magenta" } Else { "White" })
 				}
 				$msgToWrite = "[INFO]`t$Msg"
+				break
 			}
 			"Success" { 
 				Write-Host $MSG.ToString() -ForegroundColor Green
 				$msgToWrite = "[SUCCESS]`t$Msg"
+				break
 			}
 			"Warning" {
 				Write-Host $MSG.ToString() -ForegroundColor Yellow
 				$msgToWrite = "[WARNING]`t$Msg"
+				break
 			}
 			"Error" {
 				Write-Host $MSG.ToString() -ForegroundColor Red
 				$msgToWrite = "[ERROR]`t$Msg"
+				break
 			}
 			"Debug" { 
 				if(($DebugPreference -ne "SilentlyContinue") -or ($VerbosePreference -ne "SilentlyContinue"))
@@ -98,6 +102,7 @@ Function Write-LogMessage
 					Write-Debug $MSG
 					$msgToWrite = "[DEBUG]`t$Msg"
 				}
+				break
 			}
 			"Verbose" { 
 				if(($VerbosePreference -ne "SilentlyContinue"))
@@ -105,6 +110,7 @@ Function Write-LogMessage
 					Write-Verbose -Msg $MSG
 					$msgToWrite = "[VERBOSE]`t$Msg"
 				}
+				break
 			}
 		}
 
@@ -2558,6 +2564,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"CPM"
 				{
@@ -2575,6 +2582,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"PVWA"
 				{
@@ -2591,6 +2599,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"PSM"
 				{
@@ -2607,6 +2616,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"AIM"
 				{
@@ -2623,6 +2633,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"EPM"
 				{
@@ -2639,6 +2650,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"All"
 				{
@@ -2651,6 +2663,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 			}
 		}

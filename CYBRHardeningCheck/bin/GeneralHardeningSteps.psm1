@@ -304,6 +304,7 @@ Function AdvancedAuditPolicyConfiguration
 							$tmpStatus += $myRef.Value + "<BR>"
 							$changeStatus = $true
 						}
+						break
 					}
 					1 {
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "enable" -failure "disable" -outStatus ([ref]$myRef)) -ne "Good")
@@ -311,6 +312,7 @@ Function AdvancedAuditPolicyConfiguration
 							$tmpStatus += $myRef.Value + "<BR>"
 							$changeStatus = $true
 						}
+						break
 					}
 					2 {
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "disable" -failure "enable" -outStatus ([ref]$myRef)) -ne "Good")
@@ -318,6 +320,7 @@ Function AdvancedAuditPolicyConfiguration
 							$tmpStatus += $myRef.Value + "<BR>"
 							$changeStatus = $true
 						}
+						break
 					}
 					3 {
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "enable" -failure "enable" -outStatus ([ref]$myRef)) -ne "Good")
@@ -325,6 +328,7 @@ Function AdvancedAuditPolicyConfiguration
 							$tmpStatus += $myRef.Value + "<BR>"
 							$changeStatus = $true
 						}
+						break
 					}
 				}
 				$output += $myRef.Value

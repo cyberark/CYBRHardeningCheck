@@ -242,13 +242,14 @@ Function CPM_DisableDEPForExecutables
 				# 1 | AlwaysOn | DEP is enabled for all processes
 				# 0 | AlwaysOff | DEP is not enabled for any processes
 
-				0 { $retDEPSettings = "DEP is not enabled for any processes (Always Off)"; $res = "Bad" }
+				0 { $retDEPSettings = "DEP is not enabled for any processes (Always Off)"; $res = "Bad"; break }
 				1 {
                     $retDEPSettings += "DEP is enabled for all processes (Always On)" + "<BR>"; $res = "Warning"
                     $retDEPSettings += "The PMTerminal application may not work, "
-                    $retDEPSettings += "PMTerminal's replacement (TPC) does not require DEP exceptions"
+					$retDEPSettings += "PMTerminal's replacement (TPC) does not require DEP exceptions"
+					break
                   }
-				2 { $retDEPSettings = "Only Windows system components and services have DEP applied (OptIn [default])"; $res = "Warning" }
+				2 { $retDEPSettings = "Only Windows system components and services have DEP applied (OptIn [default])"; $res = "Warning"; break }
 				3 {
 					$retDEPSettings += "DEP is enabled for all processes. Administrators can manually create a list of specific applications which do not have DEP applied (OptOut)"
                     $retDEPSettings += "This is required for PMTerminal but not for the replacement application TPC."
@@ -260,7 +261,8 @@ Function CPM_DisableDEPForExecutables
 					$retDEPSettings += "</ul>"
                     $res = "Warning"
                     $retDEPSettings += "Note that PMTerminal is end of life in September 2020"
-                    $retDEPSettings += "'TPC' is the replacement application that does not require DEP exceptions"
+					$retDEPSettings += "'TPC' is the replacement application that does not require DEP exceptions"
+					break
 				  }
 			}
 
