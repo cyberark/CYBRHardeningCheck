@@ -1417,6 +1417,97 @@ Function Get-ParsedFileNameByOS
 Export-ModuleMember -Function Get-ParsedFileNameByOS
 
 # @FUNCTION@ ======================================================================================================================
+# Name...........: Set-DetectedComponents
+# Description....: Sets the Detected Components in a Script scope
+# Parameters.....: None
+# Return Values..: None
+# =================================================================================================================================
+Function Set-DetectedComponents
+{
+<#
+.SYNOPSIS
+	Sets the Detected Components in a Script scope
+.DESCRIPTION
+	Sets the Detected Components in a Script scope
+#>
+	Write-LogMessage -Type Info -MSG "Detecting installed components" -LogFile $LOG_FILE_PATH
+	$_detectedComponents = Find-Components -Component "All"
+	# Add  indication if the server is a domain member
+	$_detectedComponents | Add-Member -NotePropertyName DomainMember -NotePropertyValue $(Test-InDomain)
+	# Make Detected Components availble in Script scope
+	Set-Variable -Name DetectedComponents -Value $_detectedComponents -Scope Script
+}
+Export-ModuleMember -Function Set-DetectedComponents
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Get-DetectedComponents
+# Description....: Gets the Detected Components in a Script scope
+# Parameters.....: None
+# Return Values..: Detected Components
+# =================================================================================================================================
+Function Get-DetectedComponents
+{
+<#
+.SYNOPSIS
+	Gets the Detected Components in a Script scope
+.DESCRIPTION
+	Gets the Detected Components in a Script scope
+#>
+	return $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
+}
+Export-ModuleMember -Function Get-DetectedComponents
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Set-CurrentComponentFolderPath
+# Description....: Sets the current component folder path
+# Parameters.....: None
+# Return Values..: None
+# =================================================================================================================================
+Function Set-CurrentComponentFolderPath
+{
+<#
+.SYNOPSIS
+	Sets the current component folder path
+.DESCRIPTION
+	Sets the current component folder path
+#>
+	param(
+		[Parameter(Mandatory=$true)]
+		$ComponentPath
+	)
+	Write-LogMessage -Type Verbose -MSG "Setting current component path: $ComponentPath" -LogFile $LOG_FILE_PATH
+	Set-Variable -Name CurrentComponentPath -Scope Script -Value $ComponentPath
+}
+Export-ModuleMember -Function Set-CurrentComponentFolderPath
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Get-CurrentComponentFolderPath
+# Description....: Returns the parsed current component folder path for a relative file
+# Parameters.....: Relative File name
+# Return Values..: Full path of the relative file name in the current component folder
+# =================================================================================================================================
+Function Get-CurrentComponentFolderPath
+{
+<#
+.SYNOPSIS
+	Returns the parsed current component folder path for a relative file
+.DESCRIPTION
+	Returns the parsed current component folder path for a relative file
+#>
+	param(
+		[Parameter(Mandatory=$true)]
+		$FileName
+	)
+	$componentPath = $(Get-Variable -Name CurrentComponentPath -Scope Script -ValueOnly)
+	If([string]::IsNullOrEmpty($componentPath))
+	{
+		Throw "Component Path is empty"
+	}
+	return $(Join-Path -Path $componentPath -ChildPath $FileName)
+}
+Export-ModuleMember -Function Get-CurrentComponentFolderPath
+
+# @FUNCTION@ ======================================================================================================================
 # Name...........: Compare-ServiceStatus
 # Description....: Compares the service status to the required status
 # Parameters.....: Service Name, Service required status
