@@ -265,7 +265,7 @@ Function Vault_LogicContainerServiceLocalUser
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$serviceName = "CyberArk Logic Container"
 	}
@@ -287,7 +287,7 @@ Function Vault_LogicContainerServiceLocalUser
 			if((Test-ServiceRunWithLocalUser @lcService) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			$userPermissions = @{
@@ -303,17 +303,17 @@ Function Vault_LogicContainerServiceLocalUser
 			if((Compare-UserPermissions @userPermissions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			# Verify Local user has Full Control rights on the Archive Logs path
 			$userPermissions["Path"] = $lcServiceArchiveLogsPath
 			if((Compare-UserPermissions @userPermissions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus

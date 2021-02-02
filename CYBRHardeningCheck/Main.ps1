@@ -333,6 +333,7 @@ ForEach ($comp in $detectedComponents)
 			$cpmHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "CPM"
 			$hardeningStepsStatus += $cpmHardeningStepsStatus
 			Remove-ScriptModule $moduleInfo
+			break
 		}
 		"PVWA"
 		{
@@ -342,6 +343,7 @@ ForEach ($comp in $detectedComponents)
 			$pvwaHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "PVWA"
 			$hardeningStepsStatus += $pvwaHardeningStepsStatus
 			Remove-ScriptModule $moduleInfo
+			break
 		}
 		"PSM"
 		{
@@ -351,6 +353,7 @@ ForEach ($comp in $detectedComponents)
 			$psmHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "PSM"
 			$hardeningStepsStatus += $psmHardeningStepsStatus
 			Remove-ScriptModule $moduleInfo
+			break
 		}
 		"AIM"
 		{

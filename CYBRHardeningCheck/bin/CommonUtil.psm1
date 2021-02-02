@@ -37,7 +37,7 @@ Function Write-LogMessage
 		[Parameter(Mandatory=$false)]
 		[Switch]$Footer,
 		[Parameter(Mandatory=$false)]
-		[Switch]$WriteLog = $true,
+		[Bool]$WriteLog = $true,
 		[Parameter(Mandatory=$false)]
 		[ValidateSet("Info","Warning","Error","Debug","Verbose", "Success", "LogOnly")]
 		[String]$type = "Info",
@@ -79,18 +79,22 @@ Function Write-LogMessage
 					Write-Host $MSG.ToString() -ForegroundColor $(If($Header -or $SubHeader) { "Magenta" } Else { "White" })
 				}
 				$msgToWrite = "[INFO]`t$Msg"
+				break
 			}
 			"Success" { 
 				Write-Host $MSG.ToString() -ForegroundColor Green
 				$msgToWrite = "[SUCCESS]`t$Msg"
+				break
 			}
 			"Warning" {
 				Write-Host $MSG.ToString() -ForegroundColor Yellow
 				$msgToWrite = "[WARNING]`t$Msg"
+				break
 			}
 			"Error" {
 				Write-Host $MSG.ToString() -ForegroundColor Red
 				$msgToWrite = "[ERROR]`t$Msg"
+				break
 			}
 			"Debug" { 
 				if(($DebugPreference -ne "SilentlyContinue") -or ($VerbosePreference -ne "SilentlyContinue"))
@@ -98,6 +102,7 @@ Function Write-LogMessage
 					Write-Debug $MSG
 					$msgToWrite = "[DEBUG]`t$Msg"
 				}
+				break
 			}
 			"Verbose" { 
 				if(($VerbosePreference -ne "SilentlyContinue"))
@@ -105,6 +110,7 @@ Function Write-LogMessage
 					Write-Verbose -Msg $MSG
 					$msgToWrite = "[VERBOSE]`t$Msg"
 				}
+				break
 			}
 		}
 
@@ -181,7 +187,8 @@ Function Test-Service
 	The Service Name to Check Status for
 #>
 	param (
-		$ServiceName
+		[Parameter(Mandatory=$true)]
+		[string]$ServiceName
 	)
 	Begin {
 
@@ -256,7 +263,7 @@ Function Get-Reg
 		catch{
 			Throw $(New-Object System.Exception ("Get-Reg: Registry Error",$_.Exception))
 		}
-		if($Value -eq $null) # Enumerate Keys
+		if($null -eq $Value) # Enumerate Keys
 		{
 			If(Test-Path $regPath)
 			{
@@ -935,7 +942,16 @@ Function Test-EnabledPolicySetting
 .PARAMETER NotMatchCriteria
 	The NOT verification criteria
 #>
-    Param ($PolicyStatus, $MatchValue, $NotMatchCriteria)
+    Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateSet("enable","disable")]	
+		[string]$PolicyStatus, 
+		[Parameter(Mandatory=$true)]
+		[string]$MatchValue, 
+		[Parameter(Mandatory=$true)]
+		[ValidateSet("Success","Failure")]	
+		[string]$NotMatchCriteria
+	)
 	$retValue = $true
 
 	if(($PolicyStatus -eq "enable") -and !($MatchValue -match $NotMatchCriteria))
@@ -963,7 +979,8 @@ Function Test-InDomain
 	Returns True if machine is part of a domain
 #>
 	Param(
-		$machineName = "."
+		[Parameter(Mandatory=$false)]
+		[string]$machineName = "."
 	)
 	Begin {}
 	Process{
@@ -994,7 +1011,8 @@ Function Test-LocalUser
 	Returns True if the input user name exists on the machine
 #>
 	Param(
-		$userName
+		[Parameter(Mandatory=$true)]
+		[string]$userName
 	)
 	Begin {}
 	Process{
@@ -1267,7 +1285,7 @@ Function Get-ServiceInstallPath
 		try{
 			if ($null -eq $m_ServiceList)
 			{
-				$m_ServiceList = Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.pspath }
+				Set-Variable -Name m_ServiceList -Value $(Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.pspath }) -Scope Script
 				#$m_ServiceList = Get-Reg -Hive "LocalMachine" -Key System\CurrentControlSet\Services -Value $null
 			}
 			$regPath =  $m_ServiceList | Where-Object {$_.PSChildName -eq $ServiceName}
@@ -2546,6 +2564,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"CPM"
 				{
@@ -2563,6 +2582,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"PVWA"
 				{
@@ -2579,6 +2599,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"PSM"
 				{
@@ -2595,6 +2616,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"AIM"
 				{
@@ -2611,6 +2633,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"EPM"
 				{
@@ -2627,6 +2650,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 				"All"
 				{
@@ -2639,6 +2663,7 @@ Function Find-Components
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
+					break
 				}
 			}
 		}
