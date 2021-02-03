@@ -164,7 +164,6 @@ Function PVWA_Cryptography_Settings
 
 	Begin {
 		$res = "Good"
-		$myRef = ""
 		$iisPath = "iis:\Sites\Default Web Site\PasswordVault"
 		$filter = "/appSettings/add[@key='AdvancedFIPSCryptography']"
 		$value = "yes"
@@ -982,9 +981,6 @@ Function PVWA_AdditionalAppPool
 
 	Begin {
 		$res = "Good"
-		$tmpStatus = ""
-		$statusChanged = $false
-		$myRef = ""
 	}
 	Process {
 		Try{

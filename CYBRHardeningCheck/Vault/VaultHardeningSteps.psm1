@@ -97,8 +97,6 @@ Function Vault_StaticIP
 
 	Begin {
 		$res = "Good"
-		$myRef = ""
-
 	}
 	Process {
 		try{
@@ -206,7 +204,6 @@ Function Vault_DomainJoined
 
 	Begin {
 		$res = "Good"
-		$myRef = ""
 		$NSLog =  "$($ENV:SystemRoot)\debug\NetSetup.LOG"
 	}
 	Process {
