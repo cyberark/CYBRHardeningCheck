@@ -26,6 +26,7 @@ Function Write-LogMessage
 .PARAMETER Type
 	The type of the message to log (Info, Warning, Error, Debug)
 #>
+[CmdletBinding()]
 	param(
 		[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
 		[AllowEmptyString()]
@@ -44,6 +45,10 @@ Function Write-LogMessage
 		[Parameter(Mandatory=$false)]
 		[String]$LogFile = $LOG_FILE_PATH
 	)
+	Begin{
+
+	}
+	Process{
 	Try{
 		If([string]::IsNullOrEmpty($LogFile) -and $WriteLog)
 		{
@@ -107,7 +112,7 @@ Function Write-LogMessage
 			"Verbose" { 
 				if(($VerbosePreference -ne "SilentlyContinue"))
 				{
-					Write-Verbose -Msg $MSG
+						Write-Verbose $MSG
 					$msgToWrite = "[VERBOSE]`t$Msg"
 				}
 				break
@@ -128,6 +133,10 @@ Function Write-LogMessage
 	}
 	catch{
 		Throw $(New-Object System.Exception ("Cannot write message"),$_.Exception)
+		}
+	}
+	End{
+
 	}
 }
 Export-ModuleMember -Function Write-LogMessage
@@ -148,6 +157,7 @@ Function Join-ExceptionMessage
 .PARAMETER Exception
 	The Exception object to format
 #>
+[CmdletBinding()]
 	param(
 		[Exception]$e
 	)
@@ -186,6 +196,7 @@ Function Test-Service
 .PARAMETER ServiceName
 	The Service Name to Check Status for
 #>
+[CmdletBinding()]
 	param (
 		[Parameter(Mandatory=$true)]
 		[string]$ServiceName
@@ -234,6 +245,7 @@ Function Get-Reg
 .PARAMETER RemoteComputer
 	The Computer Name that we want to Query (Default Value is Local Computer)
 #>
+[CmdletBinding()]
 	param(
 		[Parameter(Mandatory=$true)]
 		[ValidateSet("HKLM:","LocalMachine", "HKU:", "Users", "CurrentUser")]
@@ -316,7 +328,8 @@ Function Get-Reg
 # Parameters.....: Class, RemoteComputer (Default - local computer), Item, Query(Default empty WMI SQL Query), Filter (Default empty Filter is Entered)
 # Return Values..: WMI Item Value
 # =================================================================================================================================
-Function Get-WMIItem {
+Function Get-WMIItem 
+{
 <#
 .SYNOPSIS
 	Method Retrieves a specific Item from a remote computer's WMI
@@ -335,6 +348,7 @@ Function Get-WMIItem {
 .PARAMETER RemoteComputer
 	The Computer Name that we want to Query (Default Value is Local Computer)
 #>
+[CmdletBinding()]
 	param(
 		[Parameter(Mandatory=$true)]
 		[String]$Class,
@@ -395,6 +409,7 @@ Function Get-FileVersion
 .PARAMETER FilePath
 	The path to the file to query
 #>
+[CmdletBinding()]
 	param ($filePath)
 	Begin {
 
@@ -442,6 +457,7 @@ Function Test-CommandExists
 .PARAMETER Command
 	The Command name to check
 #>
+[CmdletBinding()]
     Param ($command)
     $oldPreference = $ErrorActionPreference
     $ErrorActionPreference = 'stop'
@@ -716,6 +732,7 @@ Function Add-PolicyFileEditor
 .DESCRIPTION
 	Adds the policy file editor DLL as reference
 #>
+[CmdletBinding()]
 	param(
 	)
 
@@ -751,6 +768,7 @@ Function Test-InstalledRole
 .PARAMETER RoleName
 	The Role Name to Check Status for
 #>
+[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory=$true)]
 		[string]$roleName
@@ -780,7 +798,8 @@ Function Test-InstalledRole
 #							 Please Notice this needs to be string indicate enum name from System.Security.AccessControl.RegistryRights or System.Security.AccessControl.FileSystemRights enums.
 # Return Values..: $NUll is couldn't create object, otherwise it return the relevant object.
 # =================================================================================================================================
-Function New-AccessControlObject{
+Function New-AccessControlObject
+{
 <#
 .SYNOPSIS
 	Method to get the relevant access control object for this path.
@@ -794,6 +813,7 @@ Function New-AccessControlObject{
 	The rights we want to get to the identity on this path.
 	Please Notice this needs to be string indicate enum name from System.Security.AccessControl.RegistryRights or System.Security.AccessControl.FileSystemRights enums.
 #>
+[CmdletBinding()]
 	param(
 		[parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]$path,
@@ -842,6 +862,7 @@ Function Get-IdentityReference
 .PARAMETER IdentityReference
 	The current Identity Reference we want to get reference to
 #>
+[CmdletBinding()]
 	param(
 		$identityRefernce
 	)
@@ -876,6 +897,7 @@ Function Read-ConfigurationFile
 .PARAMETER ConfigurationFilePath
 	The Configuration file path to parse
 #>
+[CmdletBinding()]
 	param(
 		[Parameter(Mandatory=$true)]
 		[string]$ConfigurationFilePath
@@ -942,6 +964,7 @@ Function Test-EnabledPolicySetting
 .PARAMETER NotMatchCriteria
 	The NOT verification criteria
 #>
+[CmdletBinding()]
     Param (
 		[Parameter(Mandatory=$true)]
 		[ValidateSet("enable","disable")]	
@@ -978,6 +1001,7 @@ Function Test-InDomain
 .DESCRIPTION
 	Returns True if machine is part of a domain
 #>
+[CmdletBinding()]
 	Param(
 		[Parameter(Mandatory=$false)]
 		[string]$machineName = "."
@@ -1010,6 +1034,7 @@ Function Test-LocalUser
 .DESCRIPTION
 	Returns True if the input user name exists on the machine
 #>
+[CmdletBinding()]
 	Param(
 		[Parameter(Mandatory=$true)]
 		[string]$userName
@@ -1044,6 +1069,7 @@ Function Test-InstalledWindowsRole
 .PARAMETER Roles
 	The Windows Role or Feature Name to verify if installed
 #>
+[CmdletBinding()]
 	param(
 		$Roles,
 		[ref]$outStatus
@@ -1108,11 +1134,14 @@ Function Test-ServiceRunWithLocalUser
 .PARAMETER UserName
 	The User Name to Check 'Login as a Service' for
 #>
+[CmdletBinding()]
 	param(
 	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$serviceName,
+	   [ValidateNotNullOrEmpty()]
+	   [string]$serviceName,
 	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$username,
+	   [ValidateNotNullOrEmpty()]
+	   [string]$username,
 	   [Parameter(Mandatory=$true)]
 	   [ref]$outStatus
     )
@@ -1177,6 +1206,7 @@ Function Get-DnsHost
 .DESCRIPTION
 	Returns the DNS (Full Qualified Domain Name) of the machine
 #>
+[CmdletBinding()]
 	Param(
 	)
 	Begin {}
@@ -1207,6 +1237,7 @@ Function Get-LocalAdministrators
 .DESCRIPTION
 	Returns the Local Administrators Group Name of the local Machine
 #>
+[CmdletBinding()]
 	Param(
 	)
 	Begin {}
@@ -1238,6 +1269,7 @@ Function Get-LocalSystem
 .DESCRIPTION
 	Returns the Local local SYSTEM account of the local Machine
 #>
+[CmdletBinding()]
 	Param(
 	)
 	Begin {}
@@ -1276,7 +1308,12 @@ Function Get-ServiceInstallPath
   .PARAMETER ServiceName
   The service name to query. Just one.
  #>
-	param ($ServiceName)
+ [CmdletBinding()]
+	param (
+		[parameter(Mandatory=$true)]
+		[ValidateNotNullOrEmpty()]
+	   	[string]$ServiceName
+	)
 	Begin {
 
 	}
@@ -1322,7 +1359,9 @@ Function Get-SeceditAnalysisResults
 .PARAMETER Path
 	The Service Name to Check Status for
 #>
+[CmdletBinding()]
 	param(
+		[Parameter(Mandatory=$true)]
 	   [ValidateNotNullOrEmpty()]$path,
 	   [Parameter(Mandatory=$true)]
 	   [ref]$outStatus
@@ -1386,6 +1425,7 @@ Function Get-ParsedFileNameByOS
 .PARAMETER fileName
 	The File Name to parse
 #>
+[CmdletBinding()]
 	param(
 	   [parameter(Mandatory=$true)]
 	   [ValidateNotNullOrEmpty()]$fileName
@@ -1432,9 +1472,11 @@ Function Get-ParsedFileNameByComponent
 .PARAMETER fileName
 	The File Name to parse
 #>
+[CmdletBinding()]
 	param(
 	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$fileName
+	   [ValidateNotNullOrEmpty()]
+	   [string]$fileName
 	)
 
 	Begin {
@@ -1514,6 +1556,7 @@ Function Set-CurrentComponentFolderPath
 .DESCRIPTION
 	Sets the current component folder path
 #>
+[CmdletBinding()]
 	param(
 		[Parameter(Mandatory=$true)]
 		$ComponentPath
@@ -1537,9 +1580,10 @@ Function Get-CurrentComponentFolderPath
 .DESCRIPTION
 	Returns the parsed current component folder path for a relative file
 #>
+[CmdletBinding()]
 	param(
 		[Parameter(Mandatory=$true)]
-		$FileName
+		[string]$FileName
 	)
 	$componentPath = $(Get-Variable -Name CurrentComponentPath -Scope Script -ValueOnly)
 	If([string]::IsNullOrEmpty($componentPath))
@@ -1569,15 +1613,16 @@ Function Compare-ServiceStatus
 .PARAMETER ServiceStatus
 	The Service Status to Check
 #>
+[CmdletBinding()]
 	param(
 		[Parameter(Mandatory=$true)]
-		$ServiceName,
+		[string]$ServiceName,
 		[Parameter(Mandatory=$false)]
 		[ValidateSet("Running","Stopped","Paused")]
-		$ServiceStatus,
+		[string]$ServiceStatus,
 		[Parameter(Mandatory=$false)]
 		[ValidateSet("Auto","Manual","Disabled")]
-		$ServiceStartMode,
+		[string]$ServiceStartMode,
 		[Parameter(Mandatory=$true)]
 		[ref]$outStatus
 	)
@@ -1651,14 +1696,13 @@ Function Compare-AuditRulesFromPath
 .PARAMETER AccessRules
 	The Best practice Access Rules to compare to
 #>
+[CmdletBinding()]
     param
     (
         [Parameter(Mandatory=$true)]
         [string]$path,
-
 		[Parameter(Mandatory=$true)]
         $accessRules,
-
 		[Parameter(Mandatory=$true)]
 		[ref]$outStatus
     )
@@ -1741,6 +1785,7 @@ Function Compare-RegistryValue
 .PARAMETER ValueData
 	The Registry Value Data to compare to
 #>
+[CmdletBinding()]
 	param(
 		[Parameter(Mandatory=$true)]
 		[String]$Path,
@@ -1836,9 +1881,11 @@ Function Compare-UserRight
 .PARAMETER UserRight
 	The User right to compare
 #>
+[CmdletBinding()]
 	param(
 	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$userName,
+	   [ValidateNotNullOrEmpty()]
+	   [string]$userName,
 	   [parameter(Mandatory=$true)]
 	   [ValidateNotNullOrEmpty()]$userRight,
 	   [Parameter(Mandatory=$true)]
@@ -1920,6 +1967,7 @@ Function Compare-PolicyEntry
 .PARAMETER RegData
 	Local GPO entry value
 #>
+[CmdletBinding()]
 	param(
 		[parameter(Mandatory=$true)]
 	    [ValidateNotNullOrEmpty()]$EntryTitle,
@@ -1991,6 +2039,7 @@ Function Compare-UserPermissions
 	The rights we want to compare to the identity on this path.
 	Please Notice this needs to be string indicate enum name from System.Security.AccessControl.RegistryRights or System.Security.AccessControl.FileSystemRights enums.
 #>
+[CmdletBinding()]
 	param(
 	   [parameter(Mandatory=$true)]
 	   [ValidateNotNullOrEmpty()]$path,
@@ -2071,6 +2120,7 @@ Function Compare-UserFlags
 .PARAMETER flagValue
 	The flag value we want to compare to.
 #>
+[CmdletBinding()]
 	param(
 	   [parameter(Mandatory=$true)]
 	   [ValidateNotNullOrEmpty()]$userName,
@@ -2234,6 +2284,7 @@ Function Compare-AmountOfUserPermissions
 .PARAMETER Amount
 	The amount of users that needs to have permissions on the path.
 #>
+[CmdletBinding()]
 	param(
 	   [parameter(Mandatory=$true)]
 	   [ValidateNotNullOrEmpty()]$path,
@@ -2300,6 +2351,7 @@ Function Compare-AdvancedAuditPolicySubCategory
 .PARAMETER failure
 	failure enabled/disabled
 #>
+[CmdletBinding()]
 	param(
 		[parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]$subcategory,
@@ -2385,6 +2437,7 @@ Function Compare-EventLogSizeAndRetentionSettings
 .PARAMETER SaveRetention
 	The Event Log retention setting value to Check
 #>
+[CmdletBinding()]
 	param(
 	   [ValidateNotNullOrEmpty()]$LogName,
 	   [ValidateNotNullOrEmpty()]$Size,
@@ -2446,7 +2499,8 @@ Export-ModuleMember -Function Compare-EventLogSizeAndRetentionSettings
 # Parameters.....: $userName - The user name we want his SID value.
 # Return Values..: SID string value
 # =================================================================================================================================
-Function Convert-NameToSID {
+Function Convert-NameToSID 
+{
 <#
 .SYNOPSIS
 	Method to convert user name to SID
@@ -2455,9 +2509,11 @@ Function Convert-NameToSID {
 .PARAMETER UserName
 	The User Name to convert to SID
 #>
+[CmdletBinding()]
 	param(
 	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$userName
+	   [ValidateNotNullOrEmpty()]
+	   [string]$userName
     )
 	Begin {
 
@@ -2489,7 +2545,8 @@ Export-ModuleMember -Function Convert-NameToSID
 # Parameters.....: $sidID - A string indicate the SID id.
 # Return Values..: If found we the value name, otherwise $NULL
 # =================================================================================================================================
-Function Convert-SIDToName{
+Function Convert-SIDToName
+{
 <#
 .SYNOPSIS
 	Method to convert SID to Name
@@ -2498,9 +2555,11 @@ Function Convert-SIDToName{
 .PARAMETER SIDID
 	The User/Group SID to convert to Name
 #>
+[CmdletBinding()]
    param(
    [parameter(Mandatory=$true)]
-   [ValidateNotNullOrEmpty()]$sidID
+   [ValidateNotNullOrEmpty()]
+   [string]$sidID
    )
 	Begin {
 
@@ -2541,6 +2600,7 @@ Function ConvertTo-Bool
 .PARAMETER txt
 	The text to convert to boolean
 #>
+[CmdletBinding()]
 	param (
 		[parameter(Mandatory=$true)]
  	    [ValidateNotNullOrEmpty()]
@@ -2579,6 +2639,7 @@ Function Start-HardeningSteps
 .PARAMETER configStepsPath
 	The full path of the steps config file
 #>
+[CmdletBinding()]
    param(
    [parameter(Mandatory=$true)]
    [ValidateNotNullOrEmpty()]$configStepsPath
@@ -2668,6 +2729,7 @@ Function Find-Components
 .DESCRIPTION
 	Detects all CyberArk Components installed on the local server
 #>
+[CmdletBinding()]
 	param(
 		[Parameter(Mandatory=$false)]
 		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM")]
@@ -2829,10 +2891,10 @@ Function Test-CredFileVerificationType
 .DESCRIPTION
 	This check what (if any) restrictions have been put on to the credential file when it was created, this credential file is utilised by the components to communicate back to the vault
 #>
-
+[CmdletBinding()]
     param (
    		[Parameter(Mandatory=$true)]
-        [String] $CredentialFilePath,
+        [String]$CredentialFilePath,
 		[Parameter(Mandatory=$true)]
 		[ref]$outStatus
     )
