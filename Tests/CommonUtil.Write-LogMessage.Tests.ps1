@@ -45,13 +45,13 @@ Describe -Tags ('Unit') -Name "<function> checks" {
         }
     }
 
-    Context 'Checking Debug message' {
-        Write-LogMessage -Type Debug -Msg "Debug Message" -LogFile $LOG_FILE_PATH -Debug
+    # Context 'Checking Debug message' {
+    #     Write-LogMessage -Type Debug -Msg "Debug Message" -LogFile $LOG_FILE_PATH -Debug
     
-        It 'Log file should contain Debug message' {
-            $LOG_FILE_PATH | Should -FileContentMatch "\[DEBUG\]\sDebug Message"
-        }
-    }
+    #     It 'Log file should contain Debug message' {
+    #         $LOG_FILE_PATH | Should -FileContentMatch "\[DEBUG\]\sDebug Message"
+    #     }
+    # }
 
     Context 'Checking Verbose message' {
         Write-LogMessage -Type Verbose -Msg "Verbose Message" -LogFile $LOG_FILE_PATH -Verbose
