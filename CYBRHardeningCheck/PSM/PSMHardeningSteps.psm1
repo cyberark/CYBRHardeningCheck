@@ -381,7 +381,7 @@ Function ClearRemoteDesktopUsers
 					{
 						try{
 							$Search = New-Object DirectoryServices.DirectorySearcher("(objectSID=$($item.SID))")
-							$Search.PropertiesToLoad.Add("member")
+							$Search.PropertiesToLoad.Add("member") | Out-Null
 							$Results = $Search.FindOne()
 							$MembersOfADGroups += $Results.Properties["Member"]
 						} catch {
@@ -747,7 +747,7 @@ Function HidePSMDrives
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify HidePSMDrives"
 			# Define the HKEY_USERS root as a new drive
-			New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS -Scope Global
+			New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS -Scope Global | out-Null
 			# Get a list of all User SID to check
 			$arrRegUsers = Get-ChildItem -Path HKU:\ -ErrorAction Ignore | Select-Object Name -ErrorAction Ignore
 
@@ -786,7 +786,7 @@ Function HidePSMDrives
 		}
 	}
 	End {
-		Remove-PSDrive -Name HKU
+		Remove-PSDrive -Name HKU | out-null
 	}
 }
 
