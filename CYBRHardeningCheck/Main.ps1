@@ -24,7 +24,7 @@ $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 
 # Script Version
-$ScriptVersion = "2.8.1"
+$ScriptVersion = "2.8.2"
 
 # Set Log file path
 $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
@@ -228,7 +228,8 @@ Function Write-HTMLComponentsTable
 	Write components table to the HTML report output table
 .DESCRIPTION
 	Write components table to the HTML report output table
-.PARAMETER
+.PARAMETER componentsData
+	The list of discovered components
 
 #>
 	param(
@@ -246,6 +247,9 @@ Function Write-HTMLComponentsTable
 			{
 				$retText += "<tr>	<td>$($item.Name)</td>	<td>$($item.Version)</td></tr>"
 			}
+		}
+		else {
+			Write-LogMessage -type verbose -Msg "No components found"
 		}
 		$retText += "</tbody></table>"
 		return $retText
@@ -347,30 +351,32 @@ Write-LogMessage -Type Info -MSG "Getting Machine Name" -LogFile $LOG_FILE_PATH
 $machineName = Get-DnsHost
 Write-LogMessage -Type Debug -Msg "Machine Name: $machineName"
 
-# Set the detected components varialble
-Set-DetectedComponents
-
 $hardeningStepsStatus = @()
 ForEach ($comp in $(Get-DetectedComponents))
 {
-	Write-LogMessage -Type Info -MSG "Running Hardening Validations for component $($comp.Name)" -LogFile $LOG_FILE_PATH
-	If(![string]::IsNullOrEmpty($dicComponentHardening[$comp.Name].Module))
-	{
-		$moduleInfo = Import-Module $($dicComponentHardening[$comp.Name].Module) -PassThru
-		Set-CurrentComponentFolderPath -ComponentPath $(Join-Path -Path $ScriptLocation -ChildPath $comp.Name)
-		$compHardeningStepsStatus = Start-HardeningSteps $($dicComponentHardening[$comp.Name].Configuration)
-		$compHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue $comp.Name
-		$hardeningStepsStatus += $compHardeningStepsStatus
-		Remove-ScriptModule $moduleInfo		
+	try {
+		Write-LogMessage -Type Info -MSG "Running Hardening Validations for component $($comp.Name)" -LogFile $LOG_FILE_PATH
+		If(![string]::IsNullOrEmpty($dicComponentHardening[$comp.Name].Module))
+		{
+			$moduleInfo = Import-Module $($dicComponentHardening[$comp.Name].Module) -PassThru
+			Set-CurrentComponentFolderPath -ComponentPath $(Join-Path -Path $ScriptLocation -ChildPath $comp.Name)
+			$compHardeningStepsStatus = Start-HardeningSteps $($dicComponentHardening[$comp.Name].Configuration)
+			$compHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue $comp.Name
+			$hardeningStepsStatus += $compHardeningStepsStatus
+			Remove-Module $moduleInfo		
+		}
+		Else
+		{
+			throw [System.NotImplementedException]::New('This Hardening Component check is not implemented.')
+		}
 	}
-	Else
-	{
-		throw [System.NotImplementedException]::New('This Hardening Component check is not implemented.')
+	catch {
+		Write-LogMessage -type Error -Msg "Error running hardening validations for component $($comp.Name). Error: $(Join-ExceptionMessage $_.Exception)" -LogFile $LOG_FILE_PATH
 	}
 }
 
 # Export the Report when Finished
-$outputFile = New-HTMLReportOutput -machineName $machineName -components $detectedComponents -hardeningStatus $hardeningStepsStatus
+$outputFile = New-HTMLReportOutput -machineName $machineName -components $(Get-DetectedComponents) -hardeningStatus $hardeningStepsStatus
 
 Write-LogMessage -Type Info -MSG "Hardening Health Check Report located in: $outputFile" -LogFile $LOG_FILE_PATH
 . $outputFile

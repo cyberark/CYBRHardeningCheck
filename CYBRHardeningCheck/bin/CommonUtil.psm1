@@ -311,72 +311,6 @@ Function Get-Reg
 }
 
 # @FUNCTION@ ======================================================================================================================
-# Name...........: Get-WMIItem
-# Description....: Method Retrieves a specific Item from a remote computer's WMI
-# Parameters.....: Class, RemoteComputer (Default - local computer), Item, Query(Default empty WMI SQL Query), Filter (Default empty Filter is Entered)
-# Return Values..: WMI Item Value
-# =================================================================================================================================
-Function Get-WMIItem {
-<#
-.SYNOPSIS
-	Method Retrieves a specific Item from a remote computer's WMI
-
-.DESCRIPTION
-	Returns the Value Data of a specific WMI query on a remote machine
-
-.PARAMETER Class
-	The WMI Class Name
-.PARAMETER Item
-	The Item to query
-.PARAMETER Query
-	A WMI query to run
-.PARAMETER Filter
-	A filter item to filter the results
-.PARAMETER RemoteComputer
-	The Computer Name that we want to Query (Default Value is Local Computer)
-#>
-	param(
-		[Parameter(Mandatory=$true)]
-		[String]$Class,
-		[Parameter(Mandatory=$false)]
-		[String]$RemoteComputer=".", # If not entered Local Computer is Selected
-		[Parameter(Mandatory=$true)]
-		[String]$Item,
-		[Parameter(Mandatory=$false)]
-		[String]$Query="", # If not entered an empty WMI SQL Query is Entered
-		[Parameter(Mandatory=$false)]
-		[String]$Filter="" # If not entered an empty Filter is Entered
-	)
-
-	Begin {
-
-	}
-	Process {
-		$retValue = ""
-		try{
-			if ($Query -eq "") # No Specific WMI SQL Query
-			{
-				# Execute WMI Query, Return only the Requested Items
-				$retValue = (Get-WmiObject -Class $Class -ComputerName $RemoteComputer -Filter $Filter -Property $Item | Select-Object $Item)
-			}
-			else # User Entered a WMI SQL Query
-			{
-				$retValue = (Get-WmiObject -ComputerName $RemoteComputer -Query $Query | Select-Object $Item)
-			}
-		}
-		catch{
-			Throw $(New-Object System.Exception ("WMI Error",$_.Exception))
-		}
-
-		return $retValue
-	}
-	End {
-
-	}
-}
-Export-ModuleMember -Function Get-WMIItem
-
-# @FUNCTION@ ======================================================================================================================
 # Name...........: Get-FileVersion
 # Description....: Method to return a file version
 # Parameters.....: File Path
@@ -448,6 +382,28 @@ Function Test-CommandExists
     try {if(Get-Command $command){RETURN $true}}
     Catch {RETURN $false}
     Finally {$ErrorActionPreference=$oldPreference}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Set-DetectedComponents
+# Description....: Sets the Detected Components in a Script scope
+# Parameters.....: None
+# Return Values..: None
+# =================================================================================================================================
+Function Set-DetectedComponents
+{
+<#
+.SYNOPSIS
+	Sets the Detected Components in a Script scope
+.DESCRIPTION
+	Sets the Detected Components in a Script scope
+#>
+	Write-LogMessage -Type Info -MSG "Detecting installed components" -LogFile $LOG_FILE_PATH
+	$_detectedComponents = Find-Components -Component "All"
+	# Add  indication if the server is a domain member
+	$_detectedComponents | Add-Member -NotePropertyName DomainMember -NotePropertyValue $(Test-InDomain)
+	# Make Detected Components availble in Script scope
+	Set-Variable -Name DetectedComponents -Value $_detectedComponents -Scope Script
 }
 
 #region Policy Common
@@ -1164,6 +1120,72 @@ Function Test-ServiceRunWithLocalUser
 Export-ModuleMember -Function Test-ServiceRunWithLocalUser
 
 # @FUNCTION@ ======================================================================================================================
+# Name...........: Get-WMIItem
+# Description....: Method Retrieves a specific Item from a remote computer's WMI
+# Parameters.....: Class, RemoteComputer (Default - local computer), Item, Query(Default empty WMI SQL Query), Filter (Default empty Filter is Entered)
+# Return Values..: WMI Item Value
+# =================================================================================================================================
+Function Get-WMIItem {
+	<#
+	.SYNOPSIS
+		Method Retrieves a specific Item from a remote computer's WMI
+	
+	.DESCRIPTION
+		Returns the Value Data of a specific WMI query on a remote machine
+	
+	.PARAMETER Class
+		The WMI Class Name
+	.PARAMETER Item
+		The Item to query
+	.PARAMETER Query
+		A WMI query to run
+	.PARAMETER Filter
+		A filter item to filter the results
+	.PARAMETER RemoteComputer
+		The Computer Name that we want to Query (Default Value is Local Computer)
+	#>
+		param(
+			[Parameter(Mandatory=$true)]
+			[String]$Class,
+			[Parameter(Mandatory=$false)]
+			[String]$RemoteComputer=".", # If not entered Local Computer is Selected
+			[Parameter(Mandatory=$true)]
+			[String]$Item,
+			[Parameter(Mandatory=$false)]
+			[String]$Query="", # If not entered an empty WMI SQL Query is Entered
+			[Parameter(Mandatory=$false)]
+			[String]$Filter="" # If not entered an empty Filter is Entered
+		)
+	
+		Begin {
+	
+		}
+		Process {
+			$retValue = ""
+			try{
+				if ($Query -eq "") # No Specific WMI SQL Query
+				{
+					# Execute WMI Query, Return only the Requested Items
+					$retValue = (Get-WmiObject -Class $Class -ComputerName $RemoteComputer -Filter $Filter -Property $Item | Select-Object $Item)
+				}
+				else # User Entered a WMI SQL Query
+				{
+					$retValue = (Get-WmiObject -ComputerName $RemoteComputer -Query $Query | Select-Object $Item)
+				}
+			}
+			catch{
+				Throw $(New-Object System.Exception ("WMI Error",$_.Exception))
+			}
+	
+			return $retValue
+		}
+		End {
+	
+		}
+	}
+	Export-ModuleMember -Function Get-WMIItem
+	
+# @FUNCTION@ ======================================================================================================================
 # Name...........: Get-DnsHost
 # Description....: Returns the DNS (Full Qualified Domain Name) of the machine
 # Parameters.....: None
@@ -1460,29 +1482,6 @@ Function Get-ParsedFileNameByComponent
 Export-ModuleMember -Function Get-ParsedFileNameByComponent
 
 # @FUNCTION@ ======================================================================================================================
-# Name...........: Set-DetectedComponents
-# Description....: Sets the Detected Components in a Script scope
-# Parameters.....: None
-# Return Values..: None
-# =================================================================================================================================
-Function Set-DetectedComponents
-{
-<#
-.SYNOPSIS
-	Sets the Detected Components in a Script scope
-.DESCRIPTION
-	Sets the Detected Components in a Script scope
-#>
-	Write-LogMessage -Type Info -MSG "Detecting installed components" -LogFile $LOG_FILE_PATH
-	$_detectedComponents = Find-Components -Component "All"
-	# Add  indication if the server is a domain member
-	$_detectedComponents | Add-Member -NotePropertyName DomainMember -NotePropertyValue $(Test-InDomain)
-	# Make Detected Components availble in Script scope
-	Set-Variable -Name DetectedComponents -Value $_detectedComponents -Scope Script
-}
-Export-ModuleMember -Function Set-DetectedComponents
-
-# @FUNCTION@ ======================================================================================================================
 # Name...........: Get-DetectedComponents
 # Description....: Gets the Detected Components in a Script scope
 # Parameters.....: None
@@ -1496,7 +1495,13 @@ Function Get-DetectedComponents
 .DESCRIPTION
 	Gets the Detected Components in a Script scope
 #>
-	return $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
+	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
+	If($null -ne $retComponents)
+	{
+		Set-DetectedComponents
+		$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
+	}
+	return $retComponents
 }
 Export-ModuleMember -Function Get-DetectedComponents
 
