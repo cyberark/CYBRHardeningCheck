@@ -275,8 +275,8 @@ Function SupportWebApplications
 		$myRef = ""
 		$tmpStatus = ""
 		$changeStatus = $false
-		$PSM_IE_Hardening = Resolve-Path -Path .\PSMIEHardening.csv
-		$PSM_Chrome_Hardening = Resolve-Path -Path .\PSMChromeHardening.csv
+		$PSM_IE_Hardening = Resolve-Path -Path $(Get-CurrentComponentFolderPath -FileName "PSMIEHardening.csv")
+		$PSM_Chrome_Hardening = Resolve-Path -Path $(Get-CurrentComponentFolderPath -FileName "PSMChromeHardening.csv")
 	}
 	Process {
 		try{
@@ -469,7 +469,7 @@ Function RunApplocker
 		$res = "Good"
 		$tmpStatus = ""
 		$changeStatus = $false
-		$PSM_ApplockerConfiguration = (Find-Components -Component "PSM").Path+"\PSMConfigureAppLocker.xml"
+		$PSM_ApplockerConfiguration = Join-Path -Path $(Find-Components -Component "PSM").Path -ChildPath "PSMConfigureAppLocker.xml"
 		$ruleTypesList = @("Exe","Script","Msi","Dll")
 	}
 	Process {
@@ -991,19 +991,21 @@ Function HardenPSMUsersAccess
 		$myRef = ""
 
         $PSM_PATH = (Find-Components -Component "PSM").Path
-		$PSM_VAULT_FILE_PATH = ($PSM_PATH + "Vault")
+		$PSM_VAULT_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "Vault"
+		$PSM_PVCONF_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "temp\PVConfiguration.xml"
+		$PSM_BASICPSM_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "basic_psm.ini"
 
-        [XML]$xmlPSMconfig = Get-Content -Path "$PSM_PATH\temp\PVConfiguration.xml"
+        [XML]$xmlPSMconfig = Get-Content -Path $PSM_PVCONF_FILE_PATH
         $PSM_RECORDING_PATH = ($xmlPSMconfig | Select-XML -XPath "//RecorderSettings" | Select-Object -ExpandProperty Node).LocalRecordingsFolder
 
-        $PSM_BasicPSM = get-content -Path ($PSM_PATH + 'basic_psm.ini') | Select-String 'LogsFolder'
+        $PSM_BasicPSM = get-content -Path $PSM_BASICPSM_FILE_PATH | Select-String 'LogsFolder'
         $PSM_LOGS_PATH = $PSM_BasicPSM -Replace "LogsFolder=", '' -Replace '"', ''
         $PSM_LOGS_OLD_PATH = (Join-Path -Path $PSM_LOGS_PATH -ChildPath 'old')
 
 		$PVWAInstallationPath = (Find-Components -Component "PVWA").Path
 		If($null -ne $PVWAInstallationPath)
 		{
-			$PVWAWebSitePath = Join-Path -Path (Get-ItemProperty HKLM:\Software\Microsoft\INetStp -Name "PathWWWRoot") -ChildPath "PasswordVault"
+			$PVWAWebSitePath = Join-Path -Path (Get-ItemProperty HKLM:\Software\Microsoft\INetStp -Name "PathWWWRoot").PathWWWRoot -ChildPath "PasswordVault"
 		}
 		$CPMPath = (Find-Components -Component "CPM").Path
 		$AWS_FOLDER_PATH = Join-Path -Path $env:ProgramFiles -ChildPath "Amazon"

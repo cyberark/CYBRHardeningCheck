@@ -97,7 +97,7 @@ Function Write-LogMessage
 				break
 			}
 			"Debug" { 
-				if(($DebugPreference -ne "SilentlyContinue") -or ($VerbosePreference -ne "SilentlyContinue"))
+				if($InDebug -or $InVerbose)
 				{
 					Write-Debug $MSG
 					$msgToWrite = "[DEBUG]`t$Msg"
@@ -105,7 +105,7 @@ Function Write-LogMessage
 				break
 			}
 			"Verbose" { 
-				if(($VerbosePreference -ne "SilentlyContinue"))
+				if($InVerbose)
 				{
 					Write-Verbose -Msg $MSG
 					$msgToWrite = "[VERBOSE]`t$Msg"
