@@ -112,6 +112,40 @@ Function Remove-ScriptModule
 }
 
 # @FUNCTION@ ======================================================================================================================
+# Name...........: Get-SummaryOutput
+# Description....: Returns the relevant summary message output based on the parameters
+# Parameters.....: Component, hardening status, more details
+# Return Values..: None
+# =================================================================================================================================
+Function Get-SummaryOutput
+{
+<#
+.SYNOPSIS
+	Write a new Hardening status row to the HTML report output table
+.DESCRIPTION
+	Write a new Hardening status row to the HTML report output table
+.PARAMETER Component
+	The Component that was tested
+.PARAMETER Status
+	The hardening status of the test
+.PARAMETER Details
+	The additional details on the test
+#>
+param(
+	$Component, $status, $details
+)
+	If([string]::IsNullOrEmpty($details))
+	{
+		return "<b>{0}</b> step was completed with status '{1}'.<BR>" -f `
+			$Component, $Status
+	}
+	else
+	{
+		return "<details><summary><b>{0}</b> step was completed with status '{1}'. See more details</summary><p>{2}</p></details><BR>" -f `
+					$Component, $Status, $Details
+	}
+}
+# @FUNCTION@ ======================================================================================================================
 # Name...........: Write-HTMLHardeningStatusTable
 # Description....: Write the Hardening status rows to the HTML report output table
 # Parameters.....: Hardening Status
@@ -124,8 +158,8 @@ Function Write-HTMLHardeningStatusTable
 	Write a new Hardening status row to the HTML report output table
 .DESCRIPTION
 	Write a new Hardening status row to the HTML report output table
-.PARAMETER
-
+.PARAMETER HardeningStatus
+	The hardening status object to build the report from
 #>
 	param(
 		$hardeningStatus
@@ -150,8 +184,7 @@ Function Write-HTMLHardeningStatusTable
 				Write-LogMessage -Type Verbose -Msg "Handling '$($item.Name)' duplication..."
 				$tempDupStatus = $hardeningStatus | Where-Object { $_.Name -eq $item.Name }
 				$tempOutput = $tempDupStatus | ForEach-Object {
-					"<details><summary><b>{0}</b> step was completed with status '{1}'. See more details</summary><p>{2}</p></details><BR>" -f `
-					$_.Component, $_.Status, $_.Output
+					Get-SummaryOutput -Component $_.Component -Status $_.Status -Details $_.Output
 				}
 				#$tempComponent = "<B>[$($tempDupStatus.Component -join "]</B><B>[")]</B>"
 				Write-LogMessage -Type Verbose -Msg ("Component:{0}`nName:{1}`nStatus:{2}`n" -f $item.Component, $item.Name, $item.Status)
@@ -162,8 +195,7 @@ Function Write-HTMLHardeningStatusTable
 			}
 			Else
 			{
-				$Item.Output = "<details><summary><b>{0}</b> step was completed with status '{1}'. See more details</summary><p>{2}</p></details><BR>" -f `
-					$Item.Component, $Item.Status, $Item.Output
+				$Item.Output = Get-SummaryOutput -Component $Item.Component -Status $Item.Status -Details $Item.Output
 			}
 		}
 

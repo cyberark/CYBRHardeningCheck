@@ -397,16 +397,16 @@ Function ClearRemoteDesktopUsers
 						$res = "Warning"
 						$tmpStatus += "<B>Too many users/groups in Remote Desktop Users group</B><BR>"
 						$tmpStatus += "Current direct members of the 'Remote Desktop Users' group are:<BR>"
-						$tmpStatus += "<ul><li>$($MembersOfRDusersGroup.Name -join "<li>")</ul>"
+						$tmpStatus += ("<ul><li>" + $($MembersOfRDusersGroup.Name -join "<li>") + "</ul>")
 						if($null -ne $MembersOfADGroups)
 						{
-							$tmpStatus += "<b>Members of the AD groups that are members of the 'Remote Desktop Users Group are: </b><br>"
+							$tmpStatus += "<b>Members of the AD groups that are members of the 'Remote Desktop Users' Group are: </b><br>"
 							$tmpStatus += "<ul>"
 							forEach($item in $MembersOfADGroups)
 							{
 								If($item -match "^CN=([\w\s]{1,}),(?:CN|OU|DC)")
 								{
-									$tmpStatus += "<li>" + ($Matches[1].Trim())
+									$tmpStatus += ("<li>" + ($Matches[1].Trim()) + "</li>")
 								}
 							}
 							$tmpStatus += "</ul>"

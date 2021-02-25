@@ -46,5 +46,7 @@
 	
 	<Step Name= "HardenPSMUsersAccess" DisplayName="Harden PSM Users Access" ScriptName="HardenPSMUsersAccess" Enable="Yes"/>
 	
+   <Step Name="CredFileHardening" DisplayName="Credential File Hardening" ScriptName="PSM_CredFileHardening"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PASIMP/CreateCredFile-Utility.htm"/>
+
 	
 </Stage>
