@@ -12,13 +12,21 @@
 # This utility can come in handy in conjunction with the Convert-GPOtoINF utility
 #
 ###########################################################################
-[CmdletBinding()]
+[CmdletBinding(DefaultParametersetName="INF")]
 param
 (
-	[Parameter(Mandatory=$true,HelpMessage="The base INF file, this file settings will be prioritized")]
+    [Parameter(ParameterSetName='INF',Mandatory=$false)][switch]$INF,
+    [Parameter(ParameterSetName='CSV',Mandatory=$false)][switch]$CSV,
+
+	[Parameter(Mandatory=$true)]
+    [Parameter(ParameterSetName='INF',HelpMessage="The base INF file, this file settings will be prioritized")]
+    [Parameter(ParameterSetName='CSV',HelpMessage="The base CSV file, this file settings will be prioritized")]
 	[ValidateScript( { Test-Path -Path $_ -PathType Leaf -IsValid} )]
 	[String]$BaseFile,
-    [Parameter(Mandatory=$true,HelpMessage="The INF file to compare to and merge from")]
+
+    [Parameter(Mandatory=$true)]
+    [Parameter(ParameterSetName='INF',HelpMessage="The INF file to compare to and merge from")]
+    [Parameter(ParameterSetName='CSV',HelpMessage="The CSV file to compare to and merge from")]
 	[ValidateScript( { Test-Path -Path $_ -PathType Leaf -IsValid} )]
 	[String]$SecondaryFile,
 	
@@ -92,7 +100,7 @@ Function Out-IniFile($InputObject, $FilePath)
     }
 }
 
-function Clone-Object {
+function New-CloneObject {
     param($DeepCopyObject)
     $memStream = new-object IO.MemoryStream
     $formatter = new-object Runtime.Serialization.Formatters.Binary.BinaryFormatter
@@ -101,13 +109,50 @@ function Clone-Object {
     $formatter.Deserialize($memStream)
 }
 
-$objBaseFile = Get-IniContent -FilePath $BaseFile
-$objSecondaryFile = Get-IniContent -filePath $SecondaryFile
-$outini = Clone-Object $objSecondaryFile
-foreach ($section in $objBaseFile.keys) {
-    foreach ($item in $objBaseFile[$section].Keys) {
-        # Prioritize based object value over secondary
-        $outini[$section][$item] = $objBaseFile[$section][$item]
-    }
+switch($PsCmdlet.ParameterSetName)
+{
+    "INF" { $INF = $true; break }
+    "CSV" { $CSV = $true; break }
+    Default { $INF = $true; break }
 }
-Out-IniFile -InputObject $outini -FilePath $OutputFile
+
+If($INF)
+{
+    $objBaseFile = Get-IniContent -FilePath $BaseFile
+    $objSecondaryFile = Get-IniContent -filePath $SecondaryFile
+}
+elseif($CSV)
+{
+    $objBaseFile = Import-CSV $BaseFile
+    $objSecondaryFile = Import-CSV $SecondaryFile
+}
+
+$outObject = New-CloneObject $objSecondaryFile
+if($INF)
+{
+    foreach ($section in $objBaseFile.keys) {
+        foreach ($item in $objBaseFile[$section].Keys) {
+            # Prioritize base object value over secondary
+            # If an object does not exist, it will be created
+            $outObject[$section][$item] = $objBaseFile[$section][$item]
+        }
+    }
+    Out-IniFile -InputObject $outObject -FilePath $OutputFile
+}
+elseif($CSV)
+{
+    # Add all lines from 
+    foreach ($line in $objBaseFile) {
+        If($outObject.SubCategory -Contains $line.SubCategory)
+        {
+            # Prioritize base object value over secondary
+            $outObject[$($outObject.Subcategory.indexof($line.SubCategory))] = $line
+        }
+        else {
+            # Add missing lines
+            $outObject += $line
+        }
+    }
+ 
+    $outObject | Export-Csv -Path $OutputFile -NoTypeInformation -NoClobber -Encoding ASCII -Force
+}
