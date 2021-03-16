@@ -345,7 +345,7 @@ If($(Test-CurrentUserLocalAdmin) -eq $false)
 }
 
 # Check if relevant files are blocked
-If($null -eq $(Get-ChildItem -Path $ScriptLocation -Filter *.ps1,*.psm1,*.dll -Recurse | Get-Item -Stream “Zone.Identifier” -ErrorAction SilentlyContinue))
+If($null -eq $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*.dll') -Recurse | Get-Item -Stream “Zone.Identifier” -ErrorAction SilentlyContinue))
 {
 	Write-LogMessage -Type Error -Msg "Some files are marked as blocked"
 	$command = "Get-ChildItem -Path $ScriptLocation -Recurse | Unblock-File"
