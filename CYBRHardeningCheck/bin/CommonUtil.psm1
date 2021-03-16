@@ -1120,6 +1120,29 @@ Function Test-ServiceRunWithLocalUser
 Export-ModuleMember -Function Test-ServiceRunWithLocalUser
 
 # @FUNCTION@ ======================================================================================================================
+# Name...........: Test-CurrentUserLocalAdmin
+# Description....: Check if the current user is a Local Admin
+# Parameters.....: None
+# Return Values..: True/False
+# =================================================================================================================================
+Function Test-CurrentUserLocalAdmin
+{
+<#
+.SYNOPSIS
+	Method to check a service login options and verify that the running user has 'Login as service' rights
+.DESCRIPTION
+	Check if a service is running with a local user and check if the user has the required user rights to run as service
+.PARAMETER ServiceName
+	The Service Name to Check Login info for
+.PARAMETER UserName
+	The User Name to Check 'Login as a Service' for
+#>
+    $user = [Security.Principal.WindowsIdentity]::GetCurrent();
+    return (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.SecurityIdentifier] "S-1-5-32-544")  # Local Administrators group SID
+}
+Export-ModuleMember -Function Test-CurrentUserLocalAdmin
+
+# @FUNCTION@ ======================================================================================================================
 # Name...........: Get-WMIItem
 # Description....: Method Retrieves a specific Item from a remote computer's WMI
 # Parameters.....: Class, RemoteComputer (Default - local computer), Item, Query(Default empty WMI SQL Query), Filter (Default empty Filter is Entered)
@@ -1495,8 +1518,8 @@ Function Get-DetectedComponents
 .DESCRIPTION
 	Gets the Detected Components in a Script scope
 #>
-	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
-	If($null -ne $retComponents)
+	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script -ErrorAction Ignore)
+	If($null -eq $retComponents)
 	{
 		Set-DetectedComponents
 		$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
@@ -1864,7 +1887,7 @@ Function Compare-UserRight
 			if(Test-Path $exportPath) { Remove-Item -Path $exportPath -Force }
 
 			Write-LogMessage -Type Debug -Msg "Export current Local Security Policy to file $exportPath"
-			secedit.exe /export /cfg "$exportPath" | Out-Null
+			secedit.exe /export /areas SECURITYPOLICY USER_RIGHTS REGKEYS /cfg "$exportPath" | Out-Null
 
 			$currentRightKeyValue = (Select-String $exportPath -Pattern "$userRight").Line
 			$currentSidsValue = $currentRightKeyValue.split("=",[System.StringSplitOptions]::RemoveEmptyEntries)[1].Trim()
@@ -2708,7 +2731,7 @@ Function Find-Components
 							return New-Object PSObject -Property @{Name="Vault";Path=$vaultPath;Version=$fileVersion}
 						}
 					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
@@ -2726,7 +2749,7 @@ Function Find-Components
 							return New-Object PSObject -Property @{Name="CPM";Path=$cpmPath;Version=$fileVersion}
 						}
 					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
@@ -2743,7 +2766,7 @@ Function Find-Components
 							return New-Object PSObject -Property @{Name="PVWA";Path=$pvwaPath;Version=$fileVersion}
 						}
 					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
@@ -2760,7 +2783,7 @@ Function Find-Components
 							return New-Object PSObject -Property @{Name="PSM";Path=$PSMPath;Version=$fileVersion}
 						}
 					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
@@ -2777,7 +2800,7 @@ Function Find-Components
 							return New-Object PSObject -Property @{Name="AIM";Path=$AIMPath;Version=$fileVersion}
 						}
 					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
@@ -2794,7 +2817,7 @@ Function Find-Components
 							return New-Object PSObject -Property @{Name="EPM";Path=$EPMPath;Version=$fileVersion}
 						}
 					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
@@ -2807,7 +2830,7 @@ Function Find-Components
 						}
 						return $retArrComponents
 					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
+						Write-LogMessage -Type "Error" -Msg "Error detecting components. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}

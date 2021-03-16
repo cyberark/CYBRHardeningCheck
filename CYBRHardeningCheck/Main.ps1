@@ -336,6 +336,24 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 	return
 }
 
+# Check that you are running with Admin privileges (So that we can access all paths that are hardened)
+If(!Test-CurrentUserLocalAdmin)
+{
+	Write-LogMessage -Type Error -Msg "In order to get all information, plesae run the script again on an Administrator Powershell session (Run as Admin)"
+	Write-LogMessage -Type Info -Msg "Script ended"
+	return
+}
+
+# Check if relevant files are blocked
+If(Get-ChildItem -Path $ScriptLocation -Filter *.ps1,*.psm1,*.dll -Recurse | Get-Item -Stream “Zone.Identifier” -ErrorAction SilentlyContinue)
+{
+	Write-LogMessage -Type Error -Msg "Some files are marked as blocked"
+	$command = "Get-ChildItem -Path $ScriptLocation -Recurse | Unblock-File"
+	Write-LogMessage -Type Info -Msg "To solve this you can run the following command: $command"
+	Write-LogMessage -Type Info -Msg "Script ended"
+	return
+}
+
 #region Prepare Hardening modules dictionary
 $dicComponentHardening = @{
 	"Vault" = @{"Module" = $MODULE_VAULT_STEPS; "Configuration" = $VAULT_HARDENING_CONFIG};
@@ -350,6 +368,7 @@ $dicComponentHardening = @{
 Write-LogMessage -Type Info -MSG "Getting Machine Name" -LogFile $LOG_FILE_PATH
 $machineName = Get-DnsHost
 Write-LogMessage -Type Debug -Msg "Machine Name: $machineName"
+
 
 $hardeningStepsStatus = @()
 ForEach ($comp in $(Get-DetectedComponents))

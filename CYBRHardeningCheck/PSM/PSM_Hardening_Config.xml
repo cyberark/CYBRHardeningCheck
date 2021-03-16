@@ -20,18 +20,18 @@
 	<Step Name ="ConfigurePSMUsers" DisplayName="Configure users for PSM sessions" ScriptName="ConfigureUsersForPSMSessions" Enable="Yes"/>
 
 	<!-- The following step secures the IE browser- Configure IE ESC, Configure the IE first run settings and adding IE.exe and Chrome.exe to PSMConfigureAppLocker.xml-->
-	<Step Name="WebApplications" DisplayName="PSM for web applications" ScriptName="PSMForWebApplications" Enable="No" />
+	<Step Name="WebApplications" DisplayName="PSM for web applications" ScriptName="PSMForWebApplications" Enable="Yes" />
 
 	<!-- The following step changes PSM user properties to enable users to print PSM sessions-->
-	<Step Name="EnablePrintSessions" DisplayName="Enable users to print PSM sessions" ScriptName="EnableUsersToPrintPSMSessions" Enable="No"/>
+	<Step Name="EnablePrintSessions" DisplayName="Enable users to print PSM sessions" ScriptName="EnableUsersToPrintPSMSessions" Enable="Yes"/>
 	
-	<Step Name="SupportWebApplications" DisplayName="Support Web Applications on PSM" ScriptName="SupportWebApplications" Enable="No"/>
+	<Step Name="SupportWebApplications" DisplayName="Support Web Applications on PSM" ScriptName="SupportWebApplications" Enable="Yes"/>
 	
-	<Step Name="ClearRemoteDesktopUsers" DisplayName="Clear Remote Desktop Users group from PSM Server" ScriptName="ClearRemoteDesktopUsers" Enable="No"/>
+	<Step Name="ClearRemoteDesktopUsers" DisplayName="Clear Remote Desktop Users group from PSM Server" ScriptName="ClearRemoteDesktopUsers" Enable="Yes"/>
 	
 	<!-- The following step runs the applocker script to set applocker rules and enable specific application as configured in PSMConfigureApplocker.XML. 
 	 ******Remember to edit PSMConfigureApplocker.XML before running the script.*******-->
-	<Step Name="RunApplocker" DisplayName="Check up AppLocker Rules" ScriptName="RunApplocker" Enable="No"/>
+	<Step Name="RunApplocker" DisplayName="Check up AppLocker Rules" ScriptName="RunApplocker" Enable="Yes"/>
 	
 	<!-- The following step imports the INF file to GPO , applies advanced audit and Configures PSMConnect PSMAdminConnect and PSMShadow users group to enable them to connect to the machine as recommended by Cyberark-->	 
 	<Step Name= "OutOfDomainHardening" DisplayName="Configure Out Of Domain PSM Server" ScriptName="ConfigureOutOfDomainPSMServer" Enable="Yes"/>
