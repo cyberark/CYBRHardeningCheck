@@ -337,7 +337,7 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 }
 
 # Check that you are running with Admin privileges (So that we can access all paths that are hardened)
-If(!Test-CurrentUserLocalAdmin)
+If($(Test-CurrentUserLocalAdmin) -eq $false)
 {
 	Write-LogMessage -Type Error -Msg "In order to get all information, plesae run the script again on an Administrator Powershell session (Run as Admin)"
 	Write-LogMessage -Type Info -Msg "Script ended"
@@ -345,7 +345,7 @@ If(!Test-CurrentUserLocalAdmin)
 }
 
 # Check if relevant files are blocked
-If(Get-ChildItem -Path $ScriptLocation -Filter *.ps1,*.psm1,*.dll -Recurse | Get-Item -Stream “Zone.Identifier” -ErrorAction SilentlyContinue)
+If($null -eq $(Get-ChildItem -Path $ScriptLocation -Filter *.ps1,*.psm1,*.dll -Recurse | Get-Item -Stream “Zone.Identifier” -ErrorAction SilentlyContinue))
 {
 	Write-LogMessage -Type Error -Msg "Some files are marked as blocked"
 	$command = "Get-ChildItem -Path $ScriptLocation -Recurse | Unblock-File"
