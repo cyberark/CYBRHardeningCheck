@@ -469,7 +469,7 @@ Function RunApplocker
 		$res = "Good"
 		$tmpStatus = ""
 		$changeStatus = $false
-		$PSM_ApplockerConfiguration = Join-Path -Path $(Find-Components -Component "PSM").Path -ChildPath "PSMConfigureAppLocker.xml"
+		$PSM_ApplockerConfiguration = Join-Path -Path $(Get-DetectedComponents -Component "PSM").Path -ChildPath "PSMConfigureAppLocker.xml"
 		$ruleTypesList = @("Exe","Script","Msi","Dll")
 	}
 	Process {
@@ -996,7 +996,7 @@ Function HardenPSMUsersAccess
 		$statusChanged = $false
 		$myRef = ""
 
-        $PSM_PATH = (Find-Components -Component "PSM").Path
+        $PSM_PATH = (Get-DetectedComponents -Component "PSM").Path
 		$PSM_VAULT_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "Vault"
 		$PSM_PVCONF_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "temp\PVConfiguration.xml"
 		$PSM_BASICPSM_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "basic_psm.ini"
@@ -1008,12 +1008,12 @@ Function HardenPSMUsersAccess
         $PSM_LOGS_PATH = $PSM_BasicPSM -Replace "LogsFolder=", '' -Replace '"', ''
         $PSM_LOGS_OLD_PATH = (Join-Path -Path $PSM_LOGS_PATH -ChildPath 'old')
 
-		$PVWAInstallationPath = (Find-Components -Component "PVWA").Path
+		$PVWAInstallationPath = (Get-DetectedComponents -Component "PVWA").Path
 		If($null -ne $PVWAInstallationPath)
 		{
 			$PVWAWebSitePath = Join-Path -Path (Get-ItemProperty HKLM:\Software\Microsoft\INetStp -Name "PathWWWRoot").PathWWWRoot -ChildPath "PasswordVault"
 		}
-		$CPMPath = (Find-Components -Component "CPM").Path
+		$CPMPath = (Get-DetectedComponents -Component "CPM").Path
 		$AWS_FOLDER_PATH = Join-Path -Path $env:ProgramFiles -ChildPath "Amazon"
 		$AZURE_FOLDER_PATH = "C:\WindowsAzure"
 		$AZURE_PACKAGES_FOLDER_PATH = "C:\Packages"
@@ -1271,7 +1271,7 @@ Function PSM_CredFileHardening
     Process {
         Try{
    			Write-LogMessage -Type Info -Msg "Start validating hardening of PSM credential file"
-            $PSMPath = (Find-Components -Component "PSM").Path
+            $PSMPath = (Get-DetectedComponents -Component "PSM").Path
             $credentialsfolder = join-path -Path $PSMPath -ChildPath 'Vault'
 			# Go over all PSM Cred Files in the folder
 			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.cred))
