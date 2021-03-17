@@ -65,9 +65,8 @@ Function CPM_Password_Manager_Services_LocalUser
 
 			if((Compare-UserPermissions -path $cpmServicesPath -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
-
-            $CPMFolderLocalAdmins = $false
-            $res = "Warning"
+	            $CPMFolderLocalAdmins = $false
+    	        $res = "Warning"
 			}
             $tmpStatus += "<li>" + $myRef.Value + "</li>"
 
