@@ -917,6 +917,165 @@ Function Test-EnabledPolicySetting
 
 	return $retValue
 }
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Find-Components
+# Description....: Detects all CyberArk Components installed on the local server
+# Parameters.....: None
+# Return Values..: Array of detected components on the local server
+# =================================================================================================================================
+Function Find-Components
+{
+<#
+.SYNOPSIS
+	Method to query a local server for CyberArk components
+.DESCRIPTION
+	Detects all CyberArk Components installed on the local server
+#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM")]
+		[String]$Component = "All"
+	)
+
+	Begin {
+		$retArrComponents = @()
+		# COMPONENTS SERVICE NAMES
+		$REGKEY_VAULTSERVICE_NEW = "CyberArk Logic Container"
+		$REGKEY_VAULTSERVICE_OLD = "Cyber-Ark Event Notification Engine"
+		$REGKEY_CPMSERVICE_NEW = "CyberArk Central Policy Manager Scanner"
+		$REGKEY_CPMSERVICE_OLD = "CyberArk Password Manager"
+		$REGKEY_PVWASERVICE = "CyberArk Scheduled Tasks"
+		$REGKEY_PSMSERVICE = "Cyber-Ark Privileged Session Manager"
+		$REGKEY_AIMSERVICE = "CyberArk Application Password Provider"
+		$REGKEY_EPMSERVICE = "VfBackgroundWorker"
+	}
+	Process {
+		if(![string]::IsNullOrEmpty($Component))
+		{
+			Switch ($Component) {
+				"Vault"
+				{
+					try{
+						# Check if Vault is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for Vault..."
+						if(($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_NEW))))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found Vault installation"
+							$vaultPath = $componentPath.Replace("LogicContainer\BLServiceApp.exe","").Replace("Event Notification Engine\ENE.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$vaultPath\dbmain.exe"
+							return New-Object PSObject -Property @{Name="Vault";Path=$vaultPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"CPM"
+				{
+					try{
+						# Check if CPM is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for CPM..."
+						if(($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_NEW))))
+						{
+							# Get the CPM Installation Path
+							Write-LogMessage -Type "Info" -MSG "Found CPM installation"
+							$cpmPath = $componentPath.Replace("Scanner\CACPMScanner.exe","").Replace("PMEngine.exe","").Replace("/SERVICE","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$cpmPath\PMEngine.exe"
+							return New-Object PSObject -Property @{Name="CPM";Path=$cpmPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"PVWA"
+				{
+					try{
+						# Check if PVWA is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for PVWA..."
+						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PVWASERVICE)))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found PVWA installation"
+							$pvwaPath = $componentPath.Replace("Services\CyberArkScheduledTasks.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$pvwaPath\Services\CyberArkScheduledTasks.exe"
+							return New-Object PSObject -Property @{Name="PVWA";Path=$pvwaPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"PSM"
+				{
+					try{
+						# Check if PSM is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for PSM..."
+						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PSMSERVICE)))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found PSM installation"
+							$PSMPath = $componentPath.Replace("CAPSM.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$PSMPath\CAPSM.exe"
+							return New-Object PSObject -Property @{Name="PSM";Path=$PSMPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"AIM"
+				{
+					try{
+						# Check if AIM is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for AIM..."
+						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_AIMSERVICE)))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found AIM installation"
+							$AIMPath = $componentPath.Replace("/mode SERVICE","").Replace("AppProvider.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$AIMPath\AppProvider.exe"
+							return New-Object PSObject -Property @{Name="AIM";Path=$AIMPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"EPM"
+				{
+					try{
+						# Check if EPM Server is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for EPM Server..."
+						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_EPMSERVICE)))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found EPM Server installation"
+							$EPMPath = $componentPath.Replace("VfBackgroundWorker.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$EPMPath\VfBackgroundWorker.exe"
+							return New-Object PSObject -Property @{Name="EPM";Path=$EPMPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"All"
+				{
+					try{
+						ForEach($comp in @("Vault","CPM","PVWA","PSM","AIM","EPM"))
+						{
+							$retArrComponents += Find-Components -Component $comp
+						}
+						return $retArrComponents
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting components. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+			}
+		}
+	}
+	End {
+	}
+}
 #endregion
 
 #region Exported Functions
@@ -1518,13 +1677,26 @@ Function Get-DetectedComponents
 .DESCRIPTION
 	Gets the Detected Components in a Script scope
 #>
+	param(
+		# Component naem
+		[Parameter(Mandatory=$false)]
+		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM")]
+		[string]$Component = "All"
+	)
 	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script -ErrorAction Ignore)
 	If($null -eq $retComponents)
 	{
 		Set-DetectedComponents
 		$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
 	}
-	return $retComponents
+	# Check if we need to return a specific component
+	If($Component -ne "All")
+	{
+		return ($retComponents | Where-Object { $_.Name -eq $Component })
+	}
+	else {
+		return $retComponents
+	}
 }
 Export-ModuleMember -Function Get-DetectedComponents
 
@@ -2681,166 +2853,6 @@ Function Start-HardeningSteps
    }
 }
 Export-ModuleMember -Function Start-HardeningSteps
-
-# @FUNCTION@ ======================================================================================================================
-# Name...........: Find-Components
-# Description....: Detects all CyberArk Components installed on the local server
-# Parameters.....: None
-# Return Values..: Array of detected components on the local server
-# =================================================================================================================================
-Function Find-Components
-{
-<#
-.SYNOPSIS
-	Method to query a local server for CyberArk components
-.DESCRIPTION
-	Detects all CyberArk Components installed on the local server
-#>
-	param(
-		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM")]
-		[String]$Component = "All"
-	)
-
-	Begin {
-		$retArrComponents = @()
-		# COMPONENTS SERVICE NAMES
-		$REGKEY_VAULTSERVICE_NEW = "CyberArk Logic Container"
-		$REGKEY_VAULTSERVICE_OLD = "Cyber-Ark Event Notification Engine"
-		$REGKEY_CPMSERVICE_NEW = "CyberArk Central Policy Manager Scanner"
-		$REGKEY_CPMSERVICE_OLD = "CyberArk Password Manager"
-		$REGKEY_PVWASERVICE = "CyberArk Scheduled Tasks"
-		$REGKEY_PSMSERVICE = "Cyber-Ark Privileged Session Manager"
-		$REGKEY_AIMSERVICE = "CyberArk Application Password Provider"
-		$REGKEY_EPMSERVICE = "VfBackgroundWorker"
-	}
-	Process {
-		if(![string]::IsNullOrEmpty($Component))
-		{
-			Switch ($Component) {
-				"Vault"
-				{
-					try{
-						# Check if Vault is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for Vault..."
-						if(($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_NEW))))
-						{
-							Write-LogMessage -Type "Info" -MSG "Found Vault installation"
-							$vaultPath = $componentPath.Replace("LogicContainer\BLServiceApp.exe","").Replace("Event Notification Engine\ENE.exe","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$vaultPath\dbmain.exe"
-							return New-Object PSObject -Property @{Name="Vault";Path=$vaultPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"CPM"
-				{
-					try{
-						# Check if CPM is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for CPM..."
-						if(($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_NEW))))
-						{
-							# Get the CPM Installation Path
-							Write-LogMessage -Type "Info" -MSG "Found CPM installation"
-							$cpmPath = $componentPath.Replace("Scanner\CACPMScanner.exe","").Replace("PMEngine.exe","").Replace("/SERVICE","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$cpmPath\PMEngine.exe"
-							return New-Object PSObject -Property @{Name="CPM";Path=$cpmPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"PVWA"
-				{
-					try{
-						# Check if PVWA is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for PVWA..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PVWASERVICE)))
-						{
-							Write-LogMessage -Type "Info" -MSG "Found PVWA installation"
-							$pvwaPath = $componentPath.Replace("Services\CyberArkScheduledTasks.exe","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$pvwaPath\Services\CyberArkScheduledTasks.exe"
-							return New-Object PSObject -Property @{Name="PVWA";Path=$pvwaPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"PSM"
-				{
-					try{
-						# Check if PSM is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for PSM..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PSMSERVICE)))
-						{
-							Write-LogMessage -Type "Info" -MSG "Found PSM installation"
-							$PSMPath = $componentPath.Replace("CAPSM.exe","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$PSMPath\CAPSM.exe"
-							return New-Object PSObject -Property @{Name="PSM";Path=$PSMPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"AIM"
-				{
-					try{
-						# Check if AIM is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for AIM..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_AIMSERVICE)))
-						{
-							Write-LogMessage -Type "Info" -MSG "Found AIM installation"
-							$AIMPath = $componentPath.Replace("/mode SERVICE","").Replace("AppProvider.exe","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$AIMPath\AppProvider.exe"
-							return New-Object PSObject -Property @{Name="AIM";Path=$AIMPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"EPM"
-				{
-					try{
-						# Check if EPM Server is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for EPM Server..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_EPMSERVICE)))
-						{
-							Write-LogMessage -Type "Info" -MSG "Found EPM Server installation"
-							$EPMPath = $componentPath.Replace("VfBackgroundWorker.exe","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$EPMPath\VfBackgroundWorker.exe"
-							return New-Object PSObject -Property @{Name="EPM";Path=$EPMPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"All"
-				{
-					try{
-						ForEach($comp in @("Vault","CPM","PVWA","PSM","AIM","EPM"))
-						{
-							$retArrComponents += Find-Components -Component $comp
-						}
-						return $retArrComponents
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting components. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-			}
-		}
-	}
-	End {
-	}
-}
-Export-ModuleMember -Function Find-Components
 
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Test-CredFileRestrictions

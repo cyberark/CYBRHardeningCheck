@@ -39,7 +39,7 @@ Function CPM_Password_Manager_Services_LocalUser
 			$CPMServiceUserName = $($Parameters | Where-Object Name -eq "CPMServiceUserName").Value
 
 			# Get the CPM working directories
-			$cpmServicesPath = (Find-Components -Component "CPM").Path
+			$cpmServicesPath = (Get-DetectedComponents -Component "CPM").Path
 			$drive = Split-Path -Path $cpmServicesPath -Qualifier
             $python27Path = Join-Path -Path $drive -ChildPath "Python27"
             $oraclePath = Join-Path -Path $drive -ChildPath "oracle"
@@ -71,7 +71,7 @@ Function CPM_Password_Manager_Services_LocalUser
 			}
             $tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-			if((Compare-UserPermissions -path $cpmServicesPath -identity $CPMServiceUserName -rights "ReadAndExecute" -outStatus ([ref]$myRef)) -ne "Good")
+			if((Compare-UserPermissions -path $cpmServicesPath -identity $CPMServiceUserName -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 			    $CPMFolderLocalCPMUser = $false
 				$res = "Warning"
@@ -324,7 +324,7 @@ Function CPM_CredFileHardening
     Process {
         Try{
    			Write-LogMessage -Type Info -Msg "Start validating hardening of CPM credential file"
-            $cpmPath = (Find-Components -Component "CPM").Path
+            $cpmPath = (Get-DetectedComponents -Component "CPM").Path
             $credentialsfolder = join-path -Path $cpmPath -ChildPath 'Vault'
 			# Go over all CPM Cred Files in the folder
 			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.ini -File | Where-Object { $_.Name -ne "Vault.ini" }))

@@ -673,7 +673,7 @@ Function PVWA_Scheduled_Task_Service_LocalUser
 			$PVWAServiceUserName = $($Parameters | Where-Object Name -eq "PVWAServiceUserName").Value
 
 			# Get the PVWA working directory
-            $pvwaPath = (Find-Components -Component "PVWA").Path
+            $pvwaPath = (Get-DetectedComponents -Component "PVWA").Path
 			$pvwaServicesPath = join-path -path $pvwaPath -ChildPath 'services'
             $pvwaServicesLogsPath = Join-Path -Path $pvwaServicesPath -ChildPath "Logs"
 
@@ -1059,7 +1059,7 @@ Function PVWA_CredFileHardening
     Process {
         Try{
    			Write-LogMessage -Type Info -Msg "Start validating hardening of PVWA credential file"
-            $pvwaPath = (Find-Components -Component "PVWA").Path
+            $pvwaPath = (Get-DetectedComponents -Component "PVWA").Path
             $credentialsfolder = join-path -Path $pvwaPath -ChildPath 'CredFiles'
 			# Go over all PVWA Cred Files in the folder
 			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.ini))

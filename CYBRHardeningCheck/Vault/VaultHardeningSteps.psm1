@@ -272,7 +272,7 @@ Function Vault_LogicContainerServiceLocalUser
 			$LCServiceUserName = $($Parameters | Where-Object Name -eq "LCServiceUserName").Value
 
 			# Get the Vault working directory
-			$vaultServicePath = (Find-Components -Component "Vault").Path
+			$vaultServicePath = (Get-DetectedComponents -Component "Vault").Path
 			$lcServicePath = Join-Path -Path $vaultServicePath -ChildPath "LogicContainer"
             $lcServiceArchiveLogsPath = Join-Path -Path $vaultServicePath -ChildPath "Logs\Archive"
 
