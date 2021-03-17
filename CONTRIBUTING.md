@@ -54,6 +54,7 @@ Two main files are the Hardening steps script (saved as \*.psm1) and the hardeni
 - Get-ServiceInstallPath
 - Get-SeceditAnalysisResults
 - Get-ParsedFileNameByOS
+- Get-DetectedComponents
 - Compare-ServiceStatus
 - Compare-AuditRulesFromPath
 - Compare-RegistryValue
@@ -68,7 +69,6 @@ Two main files are the Hardening steps script (saved as \*.psm1) and the hardeni
 - Convert-SIDToName
 - ConvertTo-Bool
 - Start-HardeningSteps
-- Find-Components
 - Test-CredFileVerificationType
 	
 #### GeneralHardeningSteps.psm1
