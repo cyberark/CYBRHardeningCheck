@@ -475,38 +475,47 @@ Function RunApplocker
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify RunApplocker"
-			# Get current applocker configuration (incase it wasn't configured, an empty policy will be returned)
-			$xmlAppLockerConfiguration = [xml](get-AppLockerPolicy -effective -xml)
-			# Load the current PSM AppLocker Configuration
-			$xmlPSM_ApplockerConfig = [xml](Get-Content $PSM_ApplockerConfiguration)
-			If(($null -ne $xmlAppLockerConfiguration) -and ($null -ne $xmlPSM_ApplockerConfig))
+			If(Test-Path $PSM_ApplockerConfiguration)
 			{
-				# For each type check that all rules exist
-				ForEach($type in $ruleTypesList)
+
+				# Get current applocker configuration (incase it wasn't configured, an empty policy will be returned)
+				$xmlAppLockerConfiguration = [xml](get-AppLockerPolicy -effective -xml)
+				# Load the current PSM AppLocker Configuration
+				$xmlPSM_ApplockerConfig = [xml](Get-Content $PSM_ApplockerConfiguration)
+				If(($null -ne $xmlAppLockerConfiguration) -and ($null -ne $xmlPSM_ApplockerConfig))
 				{
-					Write-LogMessage -type Verbose "Checking rules for '$type'..."
-					$psmApplockerConfig = $xmlPSM_ApplockerConfig.PSMAppLockerConfiguration.SelectNodes("//Application[@Type='$type']")
-					$currentApplockerConfig = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='$type']")
-					$compareResult = Compare-Object -ReferenceObject $currentApplockerConfig.Conditions.FilePathCondition.Path -DifferenceObject $psmApplockerConfig.Path
-					If($compareResult.Count -gt 0)
+					# For each type check that all rules exist
+					ForEach($type in $ruleTypesList)
 					{
-						$tmpStatus += "The following '$type' rules are different between the current AppLocker configuration and the PSM AppLocker configuration file<BR><ul>"
-						# Get the rules missing from the PSM AppLocker config
-						$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "<="}) -join "<li>(Effective)"
-						# Get the rules missing in the effective AppLocker config
-						$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "=>"}) -join "<li>(PSM Config)"
-						$tmpStatus += "</ul>"
-						$changeStatus = $true
+						Write-LogMessage -type Verbose "Checking rules for '$type'..."
+						$psmApplockerConfig = $xmlPSM_ApplockerConfig.PSMAppLockerConfiguration.SelectNodes("//Application[@Type='$type']")
+						$currentApplockerConfig = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='$type']")
+						$compareResult = Compare-Object -ReferenceObject $currentApplockerConfig.Conditions.FilePathCondition.Path -DifferenceObject $psmApplockerConfig.Path
+						If($compareResult.Count -gt 0)
+						{
+							$tmpStatus += "The following '$type' rules are different between the current AppLocker configuration and the PSM AppLocker configuration file<BR><ul>"
+							# Get the rules missing from the PSM AppLocker config
+							$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "<="}) -join "<li>(Effective)"
+							# Get the rules missing in the effective AppLocker config
+							$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "=>"}) -join "<li>(PSM Config)"
+							$tmpStatus += "</ul>"
+							$changeStatus = $true
+						}
 					}
+				}
+				else {
+					Write-LogMessage -Type Warning -Msg "AppLocker configuration files are empty"
+				}
+				If($changeStatus)
+				{
+					$res = "Warning"
+					[ref]$refOutput.Value = $tmpStatus
 				}
 			}
 			else {
-				Write-LogMessage -Type Warning -Msg "AppLocker configuration files are empty"
-			}
-			If($changeStatus)
-			{
+				Write-LogMessage -Type Warning -Msg "PSM AppLocker configuration file does not exist in $PSM_ApplockerConfiguration. Skiping AppLocker check"
 				$res = "Warning"
-				[ref]$refOutput.Value = $tmpStatus
+				[ref]$refOutput.Value = "PSM AppLocker configuration file does not exist in $PSM_ApplockerConfiguration"
 			}
 			
 			Write-LogMessage -Type Info -Msg "Finish verify RunApplocker"
