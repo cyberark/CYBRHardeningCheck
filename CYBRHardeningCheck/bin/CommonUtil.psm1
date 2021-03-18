@@ -1668,7 +1668,9 @@ Function Get-ParsedFileNameByComponent
 	Process {
 		if($fileName -match "@Component@")
 		{
-			return ($fileName -Replace "@Component@", $((Get-DetectedComponents).Name -join " "))
+			# Exclude SecureTunnel
+			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_.Name -ne "SecureTunnel" })
+			return ($fileName -Replace "@Component@", $($componentsList -join " "))
 		}
 		else
 		{
@@ -1698,7 +1700,7 @@ Function Get-DetectedComponents
 	param(
 		# Component naem
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM")]
+		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")]
 		[string]$Component = "All"
 	)
 	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script -ErrorAction Ignore)
