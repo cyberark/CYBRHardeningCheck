@@ -127,6 +127,10 @@ Two main files are the Hardening steps script (saved as \*.psm1) and the hardeni
 - HardenSMBServices
 - PSM_CredFileHardening
 
+#### SecureTunnelHardeningSteps.psm1
+- SecureTunnel_Permissions
+
+
 ### Adding a new hardening check
 
 Before adding a new hardening check, think if it is a component specific hardening or a general best practive hardening check.

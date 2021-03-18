@@ -934,7 +934,7 @@ Function Find-Components
 #>
 	param(
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM")]
+		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")]
 		[String]$Component = "All"
 	)
 
@@ -949,6 +949,7 @@ Function Find-Components
 		$REGKEY_PSMSERVICE = "Cyber-Ark Privileged Session Manager"
 		$REGKEY_AIMSERVICE = "CyberArk Application Password Provider"
 		$REGKEY_EPMSERVICE = "VfBackgroundWorker"
+		$REGKEY_SECURETUNNELSERVICE = "CyberArkPrivilegeCloudSecureTunnel"
 	}
 	Process {
 		if(![string]::IsNullOrEmpty($Component))
@@ -1057,10 +1058,27 @@ Function Find-Components
 					}
 					break
 				}
+				"SecureTunnel"
+				{
+					try{
+						# Check if Privilege Cloud Secure tunnel is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for Privilege Cloud Secure tunnel..."
+						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_SECURETUNNELSERVICE)))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found Privilege Cloud Secure tunnel installation"
+							$tunnelPath = $componentPath.Replace("PrivilegeCloudSecureTunnel.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$tunnelPath\PrivilegeCloudSecureTunnel.exe"
+							return New-Object PSObject -Property @{Name="SecureTunnel";Path=$tunnelPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
 				"All"
 				{
 					try{
-						ForEach($comp in @("Vault","CPM","PVWA","PSM","AIM","EPM"))
+						ForEach($comp in @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel"))
 						{
 							$retArrComponents += Find-Components -Component $comp
 						}

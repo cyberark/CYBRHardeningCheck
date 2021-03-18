@@ -40,6 +40,7 @@ $CPM_HARDENING_CONFIG = "$ScriptLocation\CPM\CPM_Hardening_Config.xml"
 $PVWA_HARDENING_CONFIG = "$ScriptLocation\PVWA\PVWA_Hardening_Config.xml"
 $PSM_HARDENING_CONFIG = "$ScriptLocation\PSM\PSM_Hardening_Config.xml"
 $VAULT_HARDENING_CONFIG = "$ScriptLocation\Vault\Vault_Hardening_Config.xml"
+$TUNNEL_HARDENING_CONFIG = "$ScriptLocation\SecureTunnel\SecureTunnel_Hardening_Config.xml"
 
 # Set modules paths
 $MODULE_COMMON_UTIL = "$MODULE_BIN_PATH\CommonUtil.psm1"
@@ -48,6 +49,7 @@ $MODULE_CPM_STEPS = "$ScriptLocation\CPM\CPMHardeningSteps.psm1"
 $MODULE_PVWA_STEPS = "$ScriptLocation\PVWA\PVWAHardeningSteps.psm1"
 $MODULE_PSM_STEPS = "$ScriptLocation\PSM\PSMHardeningSteps.psm1"
 $MODULE_VAULT_STEPS = "$ScriptLocation\Vault\VaultHardeningSteps.psm1"
+$MODULE_TUNNEL_STEPS = "$ScriptLocation\SecureTunnel\SecureTunnelHardeningSteps.psm1"
 
 # Output file template
 $REPORT_TEMPLATE_PATH = "$ScriptLocation\Hardening_HealthCheck_Report.html"
@@ -362,6 +364,7 @@ $dicComponentHardening = @{
 	"PSM" = @{"Module" = $MODULE_PSM_STEPS; "Configuration" = $PSM_HARDENING_CONFIG};
 	"AIM" = @{"Module" = ""; "Configuration" = ""};
 	"EPM" = @{"Module" = ""; "Configuration" = ""};
+	"SecureTunnel" = @{"Module" = $MODULE_TUNNEL_STEPS; "Configuration" = $TUNNEL_HARDENING_CONFIG};
 }
 #endregion
 
