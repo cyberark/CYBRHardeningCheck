@@ -1669,7 +1669,7 @@ Function Get-ParsedFileNameByComponent
 		if($fileName -match "@Component@")
 		{
 			# Exclude SecureTunnel
-			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_.Name -ne "SecureTunnel" })
+			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_ -ne "SecureTunnel" })
 			return ($fileName -Replace "@Component@", $($componentsList -join " "))
 		}
 		else
@@ -2160,10 +2160,12 @@ Function Compare-PolicyEntry
 	}
 	Process{
 		try{
-			Add-PolicyFileEditor
+			# Add-PolicyFileEditor
 			Write-LogMessage -Type "Verbose" -Msg "Starting Compare-PolicyEntry ($EntryTitle,$UserDir,$RegPath,$RegName,$RegData)"
-			$currentData = Get-PolicyFileEntry -Path $UserDir -Key $RegPath -ValueName $RegName
-			if ($RegData -eq $currentData.data)
+			# $currentData = Get-PolicyFileEntry -Path $UserDir -Key $RegPath -ValueName $RegName
+			$retValue = Get-Reg -Hive "LocalMachine" -Key $RegPath -Value $RegName
+			# if ($RegData -eq $currentData.data)
+			if ($RegData -eq $retValue)
 			{
 				Write-LogMessage -Type "Info" -Msg "Local Group Policy Entry $EntryTitle status matches $RegData"
 				[ref]$outStatus.Value = "Local Group Policy Entry $EntryTitle status matches $RegData"
