@@ -30,7 +30,7 @@ The tool also provides links to documentation to most of the hardening checks an
 ## Usage
 The package ZIP includes a few folders, a Powershell script (Main.ps1) and a HTML template for the report.
 Download the ZIP and extract it on a CyberArk component server you wish to check
-Open Powershell and run the Main.ps1 script
+Open Powershell (as an Administrator) and run the Main.ps1 script
 ```powershell
 PS> .\Main.ps1
 ```
