@@ -153,7 +153,7 @@ Function Get-HardeningStatus
 				$summary.errors++
 			}
 		}
-		$summary.hardeningPercentage = ($errors / $sortedHardeningStatus.count)
+		$summary.hardeningPercentage = ($summary.errors / $sortedHardeningStatus.count)
 
 		# return the Hardening setup and the Summary
 		return @( $sortedHardeningStatus, $summary )
