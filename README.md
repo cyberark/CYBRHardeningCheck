@@ -48,7 +48,7 @@ Other relevant information will be referenced in the log and the report.
 |Hardening check      				| Description               
 |--------      						| -------               
 |ImportingINFConfiguration			|Importing an INF File to the Local Machine
-|ValidateServerRoles				|This function checks for unnecessary roles
+|ValidateServerRoles				|Checks for unnecessary server roles
 |DisableScreenSaver					|Checks if the screen saver is disabled
 |AdvancedAuditPolicyConfiguration	|Advanced Audit Policy Configuration
 |RemoteDesktopServices				|Check Remote Desktop Services settings
@@ -57,7 +57,7 @@ Other relevant information will be referenced in the log and the report.
 |RegistryPermissions				|Check Registry permissions
 |FileSystemPermissions				|Validates unnecessary permissions on %SystemRoot%\System32\Config and %SystemRoot%\System32\Config\RegBack.
 |FileSystemAudit					|Check audit access rules on %SystemRoot%\System32\Config and %SystemRoot%\System32\Config\RegBack.
-|DisableServices					|Disabling The following services:  "Routing and Remote Access", "Smart Card", "Smart Card Removal Policy", "SNMP Trap", "Special Administration Console Helper","Windows Error Reporting Service", "WinHTTP Web Proxy Auto-Discovery Service"
+|DisableServices					|Check that the following services are disabled:  "Routing and Remote Access", "Smart Card", "Smart Card Removal Policy", "SNMP Trap", "Special Administration Console Helper","Windows Error Reporting Service", "WinHTTP Web Proxy Auto-Discovery Service"
 
 
 ### Vault specific hardening checks
