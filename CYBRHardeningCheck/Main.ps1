@@ -115,6 +115,17 @@ Function Remove-ScriptModule
 
 Function Get-HardeningStatus
 {
+<#
+.SYNOPSIS
+	Gets the Hardening status row to the HTML report output table
+.DESCRIPTION
+	Write a new Hardening status row to the HTML report output table
+.PARAMETER HardeningStatus
+	The hardening status object to build the report from
+#>
+param(
+	$hardeningStatus
+)
 	Begin {
 		If($null -eq $hardeningStatus)
 		{
@@ -135,7 +146,7 @@ Function Get-HardeningStatus
 			{
 				Write-LogMessage -Type Verbose -Msg "Handling '$($item.Name)' duplication..."
 				$tempDupStatus = $hardeningStatus | Where-Object { $_.Name -eq $item.Name }
-				$tempOutput = $tempDupStatus | ForEach-Object {
+				$tempOutput += $tempDupStatus | ForEach-Object {
 					Get-SummaryOutput -Component $_.Component -Status $_.Status -Details $_.Output
 				}
 				Write-LogMessage -Type Verbose -Msg ("Component:{0}`nName:{1}`nStatus:{2}`n" -f $item.Component, $item.Name, $item.Status)
@@ -321,11 +332,11 @@ Function New-HTMLReportOutput
 		}
 		$htmlFileContent = $htmlFileContent.Replace("@@@MachineName@@@",$machineName)
 		$htmlFileContent = $htmlFileContent.Replace("@@@ComponentsNum@@@", $($components.count))
-		$hardeningStatus,$summary = $(Get-HardeningStatus $hardeningStatus)
+		$hardeningTable,$summary = $(Get-HardeningStatus $hardeningStatus)
 		$htmlFileContent = $htmlFileContent.Replace("@@@HardeningStatus@@@", $($summary.hardeningPercentage.tostring("P")))
 		$htmlFileContent = $htmlFileContent.Replace("@@@ErrorsNum@@@", $($summary.Errors))
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblComponents@@@", $(Write-HTMLComponentsTable $components))
-		$htmlFileContent = $htmlFileContent.Replace("@@@tblHardening@@@", $(Write-HTMLHardeningStatusTable $hardeningStatus))
+		$htmlFileContent = $htmlFileContent.Replace("@@@tblHardening@@@", $(Write-HTMLHardeningStatusTable $hardeningTable))
 		$htmlFileContent = $htmlFileContent.Replace("@@@DateTime@@@",$reportDateTime)
 		# Export the data to the file
 		$htmlFileContent | Out-File $exportFilePath
