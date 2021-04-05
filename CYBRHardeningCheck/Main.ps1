@@ -113,6 +113,54 @@ Function Remove-ScriptModule
 	}
 }
 
+Function Get-HardeningStatus
+{
+	Begin {
+		If($null -eq $hardeningStatus)
+		{
+			Throw $(New-Object System.Exception ("Hardening Status object is NULL",$_.Exception))
+		}
+	}
+	Process {
+		$summary = "" | Select-Object "Errors", "hardeningPercentage"
+		$summary.errors = 0
+		$summary.hardeningPercentage = 0.0
+		# Get the Unique sorted list of hardening steps
+		$sortedHardeningStatus = $hardeningStatus | Sort-Object -Property Name -Unique
+		# Concatenate the status of duplicated items
+		ForEach($item in $sortedHardeningStatus)
+		{
+			# Check for duplicates
+			If(($hardeningStatus.Name -match $item.Name).Count -gt 1)
+			{
+				Write-LogMessage -Type Verbose -Msg "Handling '$($item.Name)' duplication..."
+				$tempDupStatus = $hardeningStatus | Where-Object { $_.Name -eq $item.Name }
+				$tempOutput = $tempDupStatus | ForEach-Object {
+					Get-SummaryOutput -Component $_.Component -Status $_.Status -Details $_.Output
+				}
+				Write-LogMessage -Type Verbose -Msg ("Component:{0}`nName:{1}`nStatus:{2}`n" -f $item.Component, $item.Name, $item.Status)
+				$item.Name = $Item.Name
+				$Item.Output = $tempOutput
+				Write-LogMessage -Type Verbose -Msg "New output: $($Item.Output)"
+			}
+			Else
+			{
+				$Item.Output = Get-SummaryOutput -Component $Item.Component -Status $Item.Status -Details $Item.Output
+			}
+			# Count Errors
+			If($item.Status -ne "Good")
+			{
+				$summary.errors++
+			}
+		}
+		$summary.hardeningPercentage = ($errors / $sortedHardeningStatus.count)
+
+		# return the Hardening setup and the Summary
+		return @( $sortedHardeningStatus, $summary )
+	}
+	End{}
+}
+
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Get-SummaryOutput
 # Description....: Returns the relevant summary message output based on the parameters
@@ -136,16 +184,14 @@ Function Get-SummaryOutput
 param(
 	$Component, $status, $details
 )
-	If([string]::IsNullOrEmpty($details))
-	{
-		return "<b>{0}</b> step was completed with status '{1}'.<BR>" -f `
-			$Component, $Status
-	}
-	else
-	{
-		return "<details><summary><b>{0}</b> step was completed with status '{1}'. See more details</summary><p>{2}</p></details><BR>" -f `
-					$Component, $Status, $Details
-	}
+	return 
+@"
+	<li> 
+		<div class="{1}">{0}<span class="status">{1}</span>
+			<span class="info">{2}</span>
+		</div>
+	</li>	
+"@ -f $Component, $Status, $Details
 }
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Write-HTMLHardeningStatusTable
@@ -166,55 +212,31 @@ Function Write-HTMLHardeningStatusTable
 	param(
 		$hardeningStatus
 	)
-
-	Begin {
-		If($null -eq $hardeningStatus)
+	$retText = ""
+	Write-LogMessage -type Verbose -Msg "Printing $($hardeningStatus.count) hardening steps"
+	ForEach ($status in $hardeningStatus)
+	{
+		$docLink = ""
+		If(-not [string]::IsNullOrEmpty($status.Description))
 		{
-			Throw $(New-Object System.Exception ("Hardening Status object is NULL",$_.Exception))
+			$docLink = "<a href=$($status.Description)>Link to documentation</a>"
 		}
+		$retText += 
+@"
+		<tr>
+			<td>
+			<details>
+				<summary class="$($status.Status)">$($status.Name)</summary>
+				<ul>
+					$($status.Output)
+				</ul>
+			</details>
+			</td>	
+			<td>$docLink</td>
+		</tr>
+"@
 	}
-	Process {
-		$retText = ""
-		# Get the Unique sorted list of hardening steps
-		$sortedHardeningStatus = $hardeningStatus | Sort-Object -Property Name -Unique
-		# Concatenate the status of duplicated items
-		ForEach($item in $sortedHardeningStatus)
-		{
-			# Check for duplicates
-			If(($hardeningStatus.Name -match $item.Name).Count -gt 1)
-			{
-				Write-LogMessage -Type Verbose -Msg "Handling '$($item.Name)' duplication..."
-				$tempDupStatus = $hardeningStatus | Where-Object { $_.Name -eq $item.Name }
-				$tempOutput = $tempDupStatus | ForEach-Object {
-					Get-SummaryOutput -Component $_.Component -Status $_.Status -Details $_.Output
-				}
-				#$tempComponent = "<B>[$($tempDupStatus.Component -join "]</B><B>[")]</B>"
-				Write-LogMessage -Type Verbose -Msg ("Component:{0}`nName:{1}`nStatus:{2}`n" -f $item.Component, $item.Name, $item.Status)
-				#$item.Name = $tempComponent+$Item.Name
-				$item.Name = $Item.Name
-				$Item.Output = $tempOutput
-				Write-LogMessage -Type Verbose -Msg "New output: $($Item.Output)"
-			}
-			Else
-			{
-				$Item.Output = Get-SummaryOutput -Component $Item.Component -Status $Item.Status -Details $Item.Output
-			}
-		}
-
-		Write-LogMessage -type Verbose -Msg "Printing $($sortedHardeningStatus.count) hardening steps"
-		ForEach ($status in $sortedHardeningStatus)
-		{
-			$docLink = ""
-			If(-not [string]::IsNullOrEmpty($status.Description))
-			{
-				$docLink = "<a href=$($status.Description)>Link to documentation</a>"
-			}
-			$retText += "<tr style='border:1px solid black;'>	<td>$($status.Name)</td> 	<td><div class=$($status.Status) /></td>	<td>$($status.Output)</td>	<td>$docLink</td></tr>"
-		}
-		return $retText
-	}
-	End {
-	}
+	return $retText
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -298,6 +320,10 @@ Function New-HTMLReportOutput
 			$machineName += " <B>(In Domain)</B>"
 		}
 		$htmlFileContent = $htmlFileContent.Replace("@@@MachineName@@@",$machineName)
+		$htmlFileContent = $htmlFileContent.Replace("@@@ComponentsNum@@@", $($components.count))
+		$hardeningStatus,$summary = $(Get-HardeningStatus $hardeningStatus)
+		$htmlFileContent = $htmlFileContent.Replace("@@@HardeningStatus@@@", $($summary.hardeningPercentage.tostring("P")))
+		$htmlFileContent = $htmlFileContent.Replace("@@@ErrorsNum@@@", $($summary.Errors))
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblComponents@@@", $(Write-HTMLComponentsTable $components))
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblHardening@@@", $(Write-HTMLHardeningStatusTable $hardeningStatus))
 		$htmlFileContent = $htmlFileContent.Replace("@@@DateTime@@@",$reportDateTime)
