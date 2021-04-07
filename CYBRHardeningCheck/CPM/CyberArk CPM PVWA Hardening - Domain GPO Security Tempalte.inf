@@ -1,0 +1,31 @@
+[Unicode]
+
+Unicode=yes
+
+[Version]
+
+Revision=1
+signature="$CHICAGO$"
+
+[System Access]
+
+
+[Registry Values]
+MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer=NoDisconnect,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile=EnableFirewall,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\AuthorizedApplications=AllowUserPrefMerge,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\AuthorizedApplications\List=mstsc.exe,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\GloballyOpenPorts=AllowUserPrefMerge,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\GloballyOpenPorts\List=3389:TCP:*:RDP,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\IcmpSettings=AllowOutboundDestinationUnreachable,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\Services\RemoteDesktop=Enabled,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\Services\UPnPFramework=Enabled,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\StandardProfile=EnableFirewall,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\StandardProfile\AuthorizedApplications=AllowUserPrefMerge,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\StandardProfile\Services\RemoteDesktop=Enabled,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsNT\TerminalServices=fDisableAutoReconnect,
+
+
+[Privilege Rights]
+
+

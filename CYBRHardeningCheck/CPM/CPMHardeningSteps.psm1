@@ -39,7 +39,7 @@ Function CPM_Password_Manager_Services_LocalUser
 			$CPMServiceUserName = $($Parameters | Where-Object Name -eq "CPMServiceUserName").Value
 
 			# Get the CPM working directories
-			$cpmServicesPath = (Get-ServiceInstallPath $ScannerserviceName).Replace("Scanner\CACPMScanner.exe","").Replace('"',"").Trim()
+			$cpmServicesPath = (Get-DetectedComponents -Component "CPM").Path
 			$drive = Split-Path -Path $cpmServicesPath -Qualifier
             $python27Path = Join-Path -Path $drive -ChildPath "Python27"
             $oraclePath = Join-Path -Path $drive -ChildPath "oracle"
@@ -65,13 +65,12 @@ Function CPM_Password_Manager_Services_LocalUser
 
 			if((Compare-UserPermissions -path $cpmServicesPath -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
-
-            $CPMFolderLocalAdmins = $false
-            $res = "Warning"
+	            $CPMFolderLocalAdmins = $false
+    	        $res = "Warning"
 			}
             $tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-			if((Compare-UserPermissions -path $cpmServicesPath -identity $CPMServiceUserName -rights "ReadAndExecute" -outStatus ([ref]$myRef)) -ne "Good")
+			if((Compare-UserPermissions -path $cpmServicesPath -identity $CPMServiceUserName -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 			    $CPMFolderLocalCPMUser = $false
 				$res = "Warning"
@@ -219,7 +218,7 @@ Function CPM_DisableDEPForExecutables
 		Try{
 			Write-LogMessage -Type Info -Msg "Start verifying DEP For Executables"
 
-			$retDEPSettings = ""
+			$retDEPSettings = @()
 			$depPolicyLevel = Get-WMIItem -Class Win32_OperatingSystem -Item "DataExecutionPrevention_SupportPolicy"
 			if ($depPolicyLevel -eq 3)
 			{
@@ -230,7 +229,7 @@ Function CPM_DisableDEPForExecutables
 				}
 				else
 				{
-					$retDEPSettings = "DEP is enabled for all processes with no exclusions. If using, PMTerminal might not work correctly"
+					$retDEPSettings += "DEP is enabled for all processes with no exclusions. If using, PMTerminal might not work correctly"
 					$res = "Warning"
 				}
 			}
@@ -242,16 +241,25 @@ Function CPM_DisableDEPForExecutables
 				# 1 | AlwaysOn | DEP is enabled for all processes
 				# 0 | AlwaysOff | DEP is not enabled for any processes
 
-				0 { $retDEPSettings = "DEP is not enabled for any processes (Always Off)"; $res = "Bad"; break }
+				0 { 
+					$res = "Bad"; 
+					$retDEPSettings += "DEP is not enabled for any processes (Always Off)"; 
+					break 
+				}
 				1 {
-                    $retDEPSettings += "DEP is enabled for all processes (Always On)" + "<BR>"; $res = "Warning"
+                    $retDEPSettings += "DEP is enabled for all processes (Always On)"; $res = "Warning"
                     $retDEPSettings += "The PMTerminal application may not work, "
 					$retDEPSettings += "PMTerminal's replacement (TPC) does not require DEP exceptions"
 					break
-                  }
-				2 { $retDEPSettings = "Only Windows system components and services have DEP applied (OptIn [default])"; $res = "Warning"; break }
+                }
+				2 { 
+					$res = "Warning"; 
+					$retDEPSettings += "Only Windows system components and services have DEP applied (OptIn [default])"; 
+					break 
+				}
 				3 {
-					$retDEPSettings += "DEP is enabled for all processes. Administrators can manually create a list of specific applications which do not have DEP applied (OptOut)"
+					$res = "Warning"
+					$retDEPSettings += "DEP is enabled for all processes. Administrators can manually create a list of specific applications which do not have DEP applied (OptOut)."
                     $retDEPSettings += "This is required for PMTerminal but not for the replacement application TPC."
 					$retDEPSettings += "The current Exclusions are:<ul>"
 					ForEach ($exc in $depExclusionsList)
@@ -259,14 +267,13 @@ Function CPM_DisableDEPForExecutables
 						$retDEPSettings += "<li>$($exc.Name)</li>"
 					}
 					$retDEPSettings += "</ul>"
-                    $res = "Warning"
                     $retDEPSettings += "Note that PMTerminal is end of life in September 2020"
 					$retDEPSettings += "'TPC' is the replacement application that does not require DEP exceptions"
 					break
-				  }
+				}
 			}
 
-			[ref]$refOutput.Value = $retDEPSettings
+			[ref]$refOutput.Value = $($retDEPSettings -join "<BR>")
 
 			Write-LogMessage -Type Info -Msg "Finish verifying DEP For Executables"
 
@@ -316,7 +323,7 @@ Function CPM_CredFileHardening
     Process {
         Try{
    			Write-LogMessage -Type Info -Msg "Start validating hardening of CPM credential file"
-            $cpmPath = (Find-Components -Component "CPM").Path
+            $cpmPath = (Get-DetectedComponents -Component "CPM").Path
             $credentialsfolder = join-path -Path $cpmPath -ChildPath 'Vault'
 			# Go over all CPM Cred Files in the folder
 			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.ini -File | Where-Object { $_.Name -ne "Vault.ini" }))

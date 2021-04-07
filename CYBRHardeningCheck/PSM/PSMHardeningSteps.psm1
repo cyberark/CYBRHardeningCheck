@@ -244,6 +244,7 @@ Function EnableUsersToPrintPSMSessions
 	}
 }
 
+
 # @FUNCTION@ ======================================================================================================================
 # Name...........: SupportWebApplications
 # Description....:
@@ -272,12 +273,50 @@ Function SupportWebApplications
 	Begin {
 		$res = "Good"
 		$myRef = ""
+		$tmpStatus = ""
+		$changeStatus = $false
+		$PSM_IE_Hardening = Resolve-Path -Path $(Get-CurrentComponentFolderPath -FileName "PSMIEHardening.csv")
+		$PSM_Chrome_Hardening = Resolve-Path -Path $(Get-CurrentComponentFolderPath -FileName "PSMChromeHardening.csv")
 	}
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify SupportWebApplications"
-
-			throw [System.NotImplementedException]::New("SupportWebApplications")
+			# Check the hardening of the Installed browsers
+			Write-LogMessage -Type Debug -Msg "Checking IE hardening"
+			$hardeningData = @()
+			If(Test-Path $PSM_IE_Hardening)
+			{
+				$hardeningData += Import-Csv $PSM_IE_Hardening -Header Path,ValueName,ValueType,ValueData
+			}
+			# Check if Chrome is installed
+			If(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe")
+			{
+				If(Test-Path $PSM_Chrome_Hardening)
+				{
+					$hardeningData += Import-Csv $PSM_Chrome_Hardening -Header Path,ValueName,ValueType,ValueData
+				}	
+			}
+			ForEach($line in $hardeningData)
+			{
+				$regHardening = @{
+					"Path" = "HKLM:\"+$line.Path;
+					"ValueName" = $line.ValueName;
+					"ValueData" = $line.ValueData;
+					"outStatus" = ([ref]$myRef);
+				}
+		
+				if((Compare-RegistryValue @regHardening) -ne "Good")
+				{
+					$tmpStatus += $myRef.Value + "<BR>"
+					$changeStatus = $true
+				}
+			}
+			
+			If($changeStatus)
+			{
+				$res = "Warning"
+				[ref]$refOutput.Value = $tmpStatus
+			}
 
 			Write-LogMessage -Type Info -Msg "Finish verify SupportWebApplications"
 
@@ -342,7 +381,7 @@ Function ClearRemoteDesktopUsers
 					{
 						try{
 							$Search = New-Object DirectoryServices.DirectorySearcher("(objectSID=$($item.SID))")
-							$Search.PropertiesToLoad.Add("member")
+							$Search.PropertiesToLoad.Add("member") | Out-Null
 							$Results = $Search.FindOne()
 							$MembersOfADGroups += $Results.Properties["Member"]
 						} catch {
@@ -358,16 +397,16 @@ Function ClearRemoteDesktopUsers
 						$res = "Warning"
 						$tmpStatus += "<B>Too many users/groups in Remote Desktop Users group</B><BR>"
 						$tmpStatus += "Current direct members of the 'Remote Desktop Users' group are:<BR>"
-						$tmpStatus += "<ul><li>$($MembersOfRDusersGroup.Name -join "<li>")</ul>"
+						$tmpStatus += ("<ul><li>" + $($MembersOfRDusersGroup.Name -join "<li>") + "</ul>")
 						if($null -ne $MembersOfADGroups)
 						{
-							$tmpStatus += "<b>Members of the AD groups that are members of the 'Remote Desktop Users Group are: </b><br>"
+							$tmpStatus += "<b>Members of the AD groups that are members of the 'Remote Desktop Users' Group are: </b><br>"
 							$tmpStatus += "<ul>"
 							forEach($item in $MembersOfADGroups)
 							{
 								If($item -match "^CN=([\w\s]{1,}),(?:CN|OU|DC)")
 								{
-									$tmpStatus += "<li>" + ($Matches[1].Trim())
+									$tmpStatus += ("<li>" + ($Matches[1].Trim()) + "</li>")
 								}
 							}
 							$tmpStatus += "</ul>"
@@ -428,14 +467,57 @@ Function RunApplocker
 
 	Begin {
 		$res = "Good"
-		$myRef = ""
+		$tmpStatus = ""
+		$changeStatus = $false
+		$PSM_ApplockerConfiguration = Join-Path -Path $(Get-DetectedComponents -Component "PSM").Path -ChildPath "PSMConfigureAppLocker.xml"
+		$ruleTypesList = @("Exe","Script","Msi","Dll")
 	}
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify RunApplocker"
+			If(Test-Path $PSM_ApplockerConfiguration)
+			{
 
-			throw [System.NotImplementedException]::New("RunApplocker")
-
+				# Get current applocker configuration (incase it wasn't configured, an empty policy will be returned)
+				$xmlAppLockerConfiguration = [xml](get-AppLockerPolicy -effective -xml)
+				# Load the current PSM AppLocker Configuration
+				$xmlPSM_ApplockerConfig = [xml](Get-Content $PSM_ApplockerConfiguration)
+				If(($null -ne $xmlAppLockerConfiguration) -and ($null -ne $xmlPSM_ApplockerConfig))
+				{
+					# For each type check that all rules exist
+					ForEach($type in $ruleTypesList)
+					{
+						Write-LogMessage -type Verbose "Checking rules for '$type'..."
+						$psmApplockerConfig = $xmlPSM_ApplockerConfig.PSMAppLockerConfiguration.SelectNodes("//Application[@Type='$type']")
+						$currentApplockerConfig = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='$type']")
+						$compareResult = Compare-Object -ReferenceObject $currentApplockerConfig.Conditions.FilePathCondition.Path -DifferenceObject $psmApplockerConfig.Path
+						If($compareResult.Count -gt 0)
+						{
+							$tmpStatus += "The following '$type' rules are different between the current AppLocker configuration and the PSM AppLocker configuration file<BR><ul>"
+							# Get the rules missing from the PSM AppLocker config
+							$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "<="}) -join "<li>(Effective)"
+							# Get the rules missing in the effective AppLocker config
+							$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "=>"}) -join "<li>(PSM Config)"
+							$tmpStatus += "</ul>"
+							$changeStatus = $true
+						}
+					}
+				}
+				else {
+					Write-LogMessage -Type Warning -Msg "AppLocker configuration files are empty"
+				}
+				If($changeStatus)
+				{
+					$res = "Warning"
+					[ref]$refOutput.Value = $tmpStatus
+				}
+			}
+			else {
+				Write-LogMessage -Type Warning -Msg "PSM AppLocker configuration file does not exist in $PSM_ApplockerConfiguration. Skiping AppLocker check"
+				$res = "Warning"
+				[ref]$refOutput.Value = "PSM AppLocker configuration file does not exist in $PSM_ApplockerConfiguration"
+			}
+			
 			Write-LogMessage -Type Info -Msg "Finish verify RunApplocker"
 
 			return $res
@@ -680,7 +762,7 @@ Function HidePSMDrives
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify HidePSMDrives"
 			# Define the HKEY_USERS root as a new drive
-			New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS -Scope Global
+			New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS -Scope Global | out-Null
 			# Get a list of all User SID to check
 			$arrRegUsers = Get-ChildItem -Path HKU:\ -ErrorAction Ignore | Select-Object Name -ErrorAction Ignore
 
@@ -719,7 +801,7 @@ Function HidePSMDrives
 		}
 	}
 	End {
-		Remove-PSDrive -Name HKU
+		Remove-PSDrive -Name HKU | out-null
 	}
 }
 
@@ -923,22 +1005,24 @@ Function HardenPSMUsersAccess
 		$statusChanged = $false
 		$myRef = ""
 
-        $PSM_PATH = (Find-Components -Component "PSM").Path
-		$PSM_VAULT_FILE_PATH = ($PSM_PATH + "Vault")
+        $PSM_PATH = (Get-DetectedComponents -Component "PSM").Path
+		$PSM_VAULT_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "Vault"
+		$PSM_PVCONF_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "temp\PVConfiguration.xml"
+		$PSM_BASICPSM_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "basic_psm.ini"
 
-        [XML]$xmlPSMconfig = Get-Content -Path "$PSM_PATH\temp\PVConfiguration.xml"
+        [XML]$xmlPSMconfig = Get-Content -Path $PSM_PVCONF_FILE_PATH
         $PSM_RECORDING_PATH = ($xmlPSMconfig | Select-XML -XPath "//RecorderSettings" | Select-Object -ExpandProperty Node).LocalRecordingsFolder
 
-        $PSM_BasicPSM = get-content -Path ($PSM_PATH + 'basic_psm.ini') | Select-String 'LogsFolder'
+        $PSM_BasicPSM = get-content -Path $PSM_BASICPSM_FILE_PATH | Select-String 'LogsFolder'
         $PSM_LOGS_PATH = $PSM_BasicPSM -Replace "LogsFolder=", '' -Replace '"', ''
         $PSM_LOGS_OLD_PATH = (Join-Path -Path $PSM_LOGS_PATH -ChildPath 'old')
 
-		$PVWAInstallationPath = (Find-Components -Component "PVWA").Path
+		$PVWAInstallationPath = (Get-DetectedComponents -Component "PVWA").Path
 		If($null -ne $PVWAInstallationPath)
 		{
-			$PVWAWebSitePath = Join-Path -Path (Get-ItemProperty HKLM:\Software\Microsoft\INetStp -Name "PathWWWRoot") -ChildPath "PasswordVault"
+			$PVWAWebSitePath = Join-Path -Path (Get-ItemProperty HKLM:\Software\Microsoft\INetStp -Name "PathWWWRoot").PathWWWRoot -ChildPath "PasswordVault"
 		}
-		$CPMPath = (Find-Components -Component "CPM").Path
+		$CPMPath = (Get-DetectedComponents -Component "CPM").Path
 		$AWS_FOLDER_PATH = Join-Path -Path $env:ProgramFiles -ChildPath "Amazon"
 		$AZURE_FOLDER_PATH = "C:\WindowsAzure"
 		$AZURE_PACKAGES_FOLDER_PATH = "C:\Packages"
@@ -1196,7 +1280,7 @@ Function PSM_CredFileHardening
     Process {
         Try{
    			Write-LogMessage -Type Info -Msg "Start validating hardening of PSM credential file"
-            $PSMPath = (Find-Components -Component "PSM").Path
+            $PSMPath = (Get-DetectedComponents -Component "PSM").Path
             $credentialsfolder = join-path -Path $PSMPath -ChildPath 'Vault'
 			# Go over all PSM Cred Files in the folder
 			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.cred))
@@ -1215,66 +1299,6 @@ Function PSM_CredFileHardening
         } catch {
 			Write-LogMessage -Type "Error" -Msg "Could not validate the PSM component credential file.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate PSM component credential file [0]."
-			return "Bad"
-		}
-	}
-	End {
-		# Write output to HTML
-	}
-}
-
-# @FUNCTION@ ======================================================================================================================
-# Name...........: PSM_CredFileHardening
-# Description....: Return type of restrictions added the the credential file
-# Parameters.....: Credential file location
-# Return Values..: Verification Type
-# =================================================================================================================================
-Function PSM_CredFileHardening
-{
-<#
-.SYNOPSIS
-	Return verficiation type on credential file
-.DESCRIPTION
-	Return the verification type on the credential file used by the components to log back in to the vault
-.PARAMETER parameters
-	Credential file location
-#>
-	param(
-		[Parameter(Mandatory=$false)]
-		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
-		[ref]$refOutput
-	)
-
-	Begin {
-        $res = 'Good'
-        $myRef = ""
-        $PSMPath = ""
-        $tmpValue = ""
-    }
-
-    Process {
-        Try{
-   			Write-LogMessage -Type Info -Msg "Start validating hardening of PSM credential file"
-            $PSMPath = (Find-Components -Component "PSM").Path
-            $credentialsfolder = join-path -Path $PSMPath -ChildPath "Vault\CredFiles"
-			# Go over all PSM Cred Files in the folder
-			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.ini))
-			{
-				Write-LogMessage -Type Debug -Msg "Checking '$($credFile.Name)' credential file"
-				if((Test-CredFileVerificationType -CredentialFilePath $credFile.FullName -outStatus ([ref]$myRef)) -ne "Good")
-				{
-					$res = "Warning"
-				}
-				$tmpValue += $myRef.value + "<BR>"
-			}
-
-            [ref]$refOutput.Value = $tmpValue
-            Write-LogMessage -Type Info -Msg "Finish validating PSM component credential files"
-   			return $res
-        } catch {
-			Write-LogMessage -Type "Error" -Msg "Could not validate the PSM component credential files.  Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$refOutput.Value = "Could not validate PSM component credential files."
 			return "Bad"
 		}
 	}

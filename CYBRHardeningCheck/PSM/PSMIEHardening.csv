@@ -1,0 +1,34 @@
+Software\Microsoft\Windows\CurrentVersion\Policies\Ext,RestrictToList,REG_DWORD,1
+Software\Microsoft\Windows\CurrentVersion\Policies\Ext,ListBox_Support_CLSID,REG_DWORD,0
+Software\Policies\Microsoft\Internet Explorer\Restrictions,NoExtensionManagement,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\LinksBar,Enabled,REG_DWORD,0
+Software\Policies\Microsoft\Internet Explorer\Main,StatusBarWeb,REG_DWORD,0
+Software\Policies\Microsoft\Internet Explorer\Recovery,NoReopenLastSession,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Main,AlwaysShowMenus,REG_DWORD,0
+Software\Policies\Microsoft\Internet Explorer,DisableImportExportFavorites,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Restrictions,NoHelpMenu,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing,Enabled,REG_DWORD,0
+Software\Policies\Microsoft\Internet Explorer\Restrictions,NoPopupManagement,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Control Panel,AdvancedTab,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Control Panel,ConnectionsTab,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Control Panel,ContentTab,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Control Panel,GeneralTab,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Control Panel,PrivacyTab,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Control Panel,ProgramsTab,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Control Panel,SecurityTab,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Privacy,EnableInPrivateBrowsing,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\CommandBar,CommandBarEnabled,REG_DWORD,0
+Software\Policies\Microsoft\Internet Explorer\IEDevTools,Disabled,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Restrictions,NoPrinting,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Main,NoReportSiteProblems,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Control Panel,Advanced,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Control Panel,History,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Control Panel,DisableDeleteBrowsingHistory,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Restrictions,NoBrowserSaveAs,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Geolocation,PolicyDisableGeolocation,REG_DWORD,1
+Software\Policies\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_DISABLE_MK_PROTOCOL,(Reserved),REG_SZ,"1"
+Software\Policies\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_RESTRICT_FILEDOWNLOAD,(Reserved),REG_SZ,"1"
+Software\Policies\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_ZONE_ELEVATION,(Reserved),REG_SZ,"1"
+Software\Policies\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3,2500,REG_DWORD,0
+Software\Policies\Microsoft\Internet Explorer\Main,FormSuggest Passwords,REG_SZ,"no"
+Software\Policies\Microsoft\Internet Explorer\Privacy,ClearBrowsingHistoryOnExit,REG_DWORD,1

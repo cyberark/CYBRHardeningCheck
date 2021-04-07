@@ -97,7 +97,7 @@ Function Write-LogMessage
 				break
 			}
 			"Debug" { 
-				if(($DebugPreference -ne "SilentlyContinue") -or ($VerbosePreference -ne "SilentlyContinue"))
+				if($InDebug -or $InVerbose)
 				{
 					Write-Debug $MSG
 					$msgToWrite = "[DEBUG]`t$Msg"
@@ -105,7 +105,7 @@ Function Write-LogMessage
 				break
 			}
 			"Verbose" { 
-				if(($VerbosePreference -ne "SilentlyContinue"))
+				if($InVerbose)
 				{
 					Write-Verbose -Msg $MSG
 					$msgToWrite = "[VERBOSE]`t$Msg"
@@ -311,72 +311,6 @@ Function Get-Reg
 }
 
 # @FUNCTION@ ======================================================================================================================
-# Name...........: Get-WMIItem
-# Description....: Method Retrieves a specific Item from a remote computer's WMI
-# Parameters.....: Class, RemoteComputer (Default - local computer), Item, Query(Default empty WMI SQL Query), Filter (Default empty Filter is Entered)
-# Return Values..: WMI Item Value
-# =================================================================================================================================
-Function Get-WMIItem {
-<#
-.SYNOPSIS
-	Method Retrieves a specific Item from a remote computer's WMI
-
-.DESCRIPTION
-	Returns the Value Data of a specific WMI query on a remote machine
-
-.PARAMETER Class
-	The WMI Class Name
-.PARAMETER Item
-	The Item to query
-.PARAMETER Query
-	A WMI query to run
-.PARAMETER Filter
-	A filter item to filter the results
-.PARAMETER RemoteComputer
-	The Computer Name that we want to Query (Default Value is Local Computer)
-#>
-	param(
-		[Parameter(Mandatory=$true)]
-		[String]$Class,
-		[Parameter(Mandatory=$false)]
-		[String]$RemoteComputer=".", # If not entered Local Computer is Selected
-		[Parameter(Mandatory=$true)]
-		[String]$Item,
-		[Parameter(Mandatory=$false)]
-		[String]$Query="", # If not entered an empty WMI SQL Query is Entered
-		[Parameter(Mandatory=$false)]
-		[String]$Filter="" # If not entered an empty Filter is Entered
-	)
-
-	Begin {
-
-	}
-	Process {
-		$retValue = ""
-		try{
-			if ($Query -eq "") # No Specific WMI SQL Query
-			{
-				# Execute WMI Query, Return only the Requested Items
-				$retValue = (Get-WmiObject -Class $Class -ComputerName $RemoteComputer -Filter $Filter -Property $Item | Select-Object $Item)
-			}
-			else # User Entered a WMI SQL Query
-			{
-				$retValue = (Get-WmiObject -ComputerName $RemoteComputer -Query $Query | Select-Object $Item)
-			}
-		}
-		catch{
-			Throw $(New-Object System.Exception ("WMI Error",$_.Exception))
-		}
-
-		return $retValue
-	}
-	End {
-
-	}
-}
-Export-ModuleMember -Function Get-WMIItem
-
-# @FUNCTION@ ======================================================================================================================
 # Name...........: Get-FileVersion
 # Description....: Method to return a file version
 # Parameters.....: File Path
@@ -448,6 +382,28 @@ Function Test-CommandExists
     try {if(Get-Command $command){RETURN $true}}
     Catch {RETURN $false}
     Finally {$ErrorActionPreference=$oldPreference}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Set-DetectedComponents
+# Description....: Sets the Detected Components in a Script scope
+# Parameters.....: None
+# Return Values..: None
+# =================================================================================================================================
+Function Set-DetectedComponents
+{
+<#
+.SYNOPSIS
+	Sets the Detected Components in a Script scope
+.DESCRIPTION
+	Sets the Detected Components in a Script scope
+#>
+	Write-LogMessage -Type Info -MSG "Detecting installed components" -LogFile $LOG_FILE_PATH
+	$_detectedComponents = Find-Components -Component "All"
+	# Add  indication if the server is a domain member
+	$_detectedComponents | Add-Member -NotePropertyName DomainMember -NotePropertyValue $(Test-InDomain)
+	# Make Detected Components availble in Script scope
+	Set-Variable -Name DetectedComponents -Value $_detectedComponents -Scope Script
 }
 
 #region Policy Common
@@ -961,6 +917,183 @@ Function Test-EnabledPolicySetting
 
 	return $retValue
 }
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Find-Components
+# Description....: Detects all CyberArk Components installed on the local server
+# Parameters.....: None
+# Return Values..: Array of detected components on the local server
+# =================================================================================================================================
+Function Find-Components
+{
+<#
+.SYNOPSIS
+	Method to query a local server for CyberArk components
+.DESCRIPTION
+	Detects all CyberArk Components installed on the local server
+#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")]
+		[String]$Component = "All"
+	)
+
+	Begin {
+		$retArrComponents = @()
+		# COMPONENTS SERVICE NAMES
+		$REGKEY_VAULTSERVICE_NEW = "CyberArk Logic Container"
+		$REGKEY_VAULTSERVICE_OLD = "Cyber-Ark Event Notification Engine"
+		$REGKEY_CPMSERVICE_NEW = "CyberArk Central Policy Manager Scanner"
+		$REGKEY_CPMSERVICE_OLD = "CyberArk Password Manager"
+		$REGKEY_PVWASERVICE = "CyberArk Scheduled Tasks"
+		$REGKEY_PSMSERVICE = "Cyber-Ark Privileged Session Manager"
+		$REGKEY_AIMSERVICE = "CyberArk Application Password Provider"
+		$REGKEY_EPMSERVICE = "VfBackgroundWorker"
+		$REGKEY_SECURETUNNELSERVICE = "CyberArkPrivilegeCloudSecureTunnel"
+	}
+	Process {
+		if(![string]::IsNullOrEmpty($Component))
+		{
+			Switch ($Component) {
+				"Vault"
+				{
+					try{
+						# Check if Vault is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for Vault..."
+						if(($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_NEW))))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found Vault installation"
+							$vaultPath = $componentPath.Replace("LogicContainer\BLServiceApp.exe","").Replace("Event Notification Engine\ENE.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$vaultPath\dbmain.exe"
+							return New-Object PSObject -Property @{Name="Vault";Path=$vaultPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"CPM"
+				{
+					try{
+						# Check if CPM is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for CPM..."
+						if(($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_NEW))))
+						{
+							# Get the CPM Installation Path
+							Write-LogMessage -Type "Info" -MSG "Found CPM installation"
+							$cpmPath = $componentPath.Replace("Scanner\CACPMScanner.exe","").Replace("PMEngine.exe","").Replace("/SERVICE","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$cpmPath\PMEngine.exe"
+							return New-Object PSObject -Property @{Name="CPM";Path=$cpmPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"PVWA"
+				{
+					try{
+						# Check if PVWA is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for PVWA..."
+						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PVWASERVICE)))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found PVWA installation"
+							$pvwaPath = $componentPath.Replace("Services\CyberArkScheduledTasks.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$pvwaPath\Services\CyberArkScheduledTasks.exe"
+							return New-Object PSObject -Property @{Name="PVWA";Path=$pvwaPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"PSM"
+				{
+					try{
+						# Check if PSM is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for PSM..."
+						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PSMSERVICE)))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found PSM installation"
+							$PSMPath = $componentPath.Replace("CAPSM.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$PSMPath\CAPSM.exe"
+							return New-Object PSObject -Property @{Name="PSM";Path=$PSMPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"AIM"
+				{
+					try{
+						# Check if AIM is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for AIM..."
+						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_AIMSERVICE)))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found AIM installation"
+							$AIMPath = $componentPath.Replace("/mode SERVICE","").Replace("AppProvider.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$AIMPath\AppProvider.exe"
+							return New-Object PSObject -Property @{Name="AIM";Path=$AIMPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"EPM"
+				{
+					try{
+						# Check if EPM Server is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for EPM Server..."
+						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_EPMSERVICE)))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found EPM Server installation"
+							$EPMPath = $componentPath.Replace("VfBackgroundWorker.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$EPMPath\VfBackgroundWorker.exe"
+							return New-Object PSObject -Property @{Name="EPM";Path=$EPMPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"SecureTunnel"
+				{
+					try{
+						# Check if Privilege Cloud Secure tunnel is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for Privilege Cloud Secure tunnel..."
+						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_SECURETUNNELSERVICE)))
+						{
+							Write-LogMessage -Type "Info" -MSG "Found Privilege Cloud Secure tunnel installation"
+							$tunnelPath = $componentPath.Replace("PrivilegeCloudSecureTunnel.exe","").Replace('"',"").Trim()
+							$fileVersion = Get-FileVersion "$tunnelPath\PrivilegeCloudSecureTunnel.exe"
+							return New-Object PSObject -Property @{Name="SecureTunnel";Path=$tunnelPath;Version=$fileVersion}
+						}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+				"All"
+				{
+					try{
+						ForEach($comp in @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel"))
+						{
+							$retArrComponents += Find-Components -Component $comp
+						}
+						return $retArrComponents
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting components. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
+			}
+		}
+	}
+	End {
+	}
+}
 #endregion
 
 #region Exported Functions
@@ -1163,6 +1296,95 @@ Function Test-ServiceRunWithLocalUser
 }
 Export-ModuleMember -Function Test-ServiceRunWithLocalUser
 
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Test-CurrentUserLocalAdmin
+# Description....: Check if the current user is a Local Admin
+# Parameters.....: None
+# Return Values..: True/False
+# =================================================================================================================================
+Function Test-CurrentUserLocalAdmin
+{
+<#
+.SYNOPSIS
+	Method to check a service login options and verify that the running user has 'Login as service' rights
+.DESCRIPTION
+	Check if a service is running with a local user and check if the user has the required user rights to run as service
+.PARAMETER ServiceName
+	The Service Name to Check Login info for
+.PARAMETER UserName
+	The User Name to Check 'Login as a Service' for
+#>
+    $user = [Security.Principal.WindowsIdentity]::GetCurrent();
+    return (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.SecurityIdentifier] "S-1-5-32-544")  # Local Administrators group SID
+}
+Export-ModuleMember -Function Test-CurrentUserLocalAdmin
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Get-WMIItem
+# Description....: Method Retrieves a specific Item from a remote computer's WMI
+# Parameters.....: Class, RemoteComputer (Default - local computer), Item, Query(Default empty WMI SQL Query), Filter (Default empty Filter is Entered)
+# Return Values..: WMI Item Value
+# =================================================================================================================================
+Function Get-WMIItem {
+	<#
+	.SYNOPSIS
+		Method Retrieves a specific Item from a remote computer's WMI
+	
+	.DESCRIPTION
+		Returns the Value Data of a specific WMI query on a remote machine
+	
+	.PARAMETER Class
+		The WMI Class Name
+	.PARAMETER Item
+		The Item to query
+	.PARAMETER Query
+		A WMI query to run
+	.PARAMETER Filter
+		A filter item to filter the results
+	.PARAMETER RemoteComputer
+		The Computer Name that we want to Query (Default Value is Local Computer)
+	#>
+		param(
+			[Parameter(Mandatory=$true)]
+			[String]$Class,
+			[Parameter(Mandatory=$false)]
+			[String]$RemoteComputer=".", # If not entered Local Computer is Selected
+			[Parameter(Mandatory=$true)]
+			[String]$Item,
+			[Parameter(Mandatory=$false)]
+			[String]$Query="", # If not entered an empty WMI SQL Query is Entered
+			[Parameter(Mandatory=$false)]
+			[String]$Filter="" # If not entered an empty Filter is Entered
+		)
+	
+		Begin {
+	
+		}
+		Process {
+			$retValue = ""
+			try{
+				if ($Query -eq "") # No Specific WMI SQL Query
+				{
+					# Execute WMI Query, Return only the Requested Items
+					$retValue = (Get-WmiObject -Class $Class -ComputerName $RemoteComputer -Filter $Filter -Property $Item | Select-Object $Item)
+				}
+				else # User Entered a WMI SQL Query
+				{
+					$retValue = (Get-WmiObject -ComputerName $RemoteComputer -Query $Query | Select-Object $Item)
+				}
+			}
+			catch{
+				Throw $(New-Object System.Exception ("WMI Error",$_.Exception))
+			}
+	
+			return $retValue
+		}
+		End {
+	
+		}
+	}
+	Export-ModuleMember -Function Get-WMIItem
+	
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Get-DnsHost
 # Description....: Returns the DNS (Full Qualified Domain Name) of the machine
@@ -1417,27 +1639,49 @@ Function Get-ParsedFileNameByOS
 Export-ModuleMember -Function Get-ParsedFileNameByOS
 
 # @FUNCTION@ ======================================================================================================================
-# Name...........: Set-DetectedComponents
-# Description....: Sets the Detected Components in a Script scope
-# Parameters.....: None
-# Return Values..: None
+# Name...........: Get-ParsedFileNameByComponent
+# Description....: Return the file name parsed by installed components
+# Parameters.....: fileName
+# Return Values..: Parsed File name (with all installed components)
 # =================================================================================================================================
-Function Set-DetectedComponents
+Function Get-ParsedFileNameByComponent
 {
 <#
 .SYNOPSIS
-	Sets the Detected Components in a Script scope
+	Return the file name parsed by installed components
 .DESCRIPTION
-	Sets the Detected Components in a Script scope
+	Return the file name parsed by installed components
+.PARAMETER fileName
+	The File Name to parse
 #>
-	Write-LogMessage -Type Info -MSG "Detecting installed components" -LogFile $LOG_FILE_PATH
-	$_detectedComponents = Find-Components -Component "All"
-	# Add  indication if the server is a domain member
-	$_detectedComponents | Add-Member -NotePropertyName DomainMember -NotePropertyValue $(Test-InDomain)
-	# Make Detected Components availble in Script scope
-	Set-Variable -Name DetectedComponents -Value $_detectedComponents -Scope Script
+	param(
+	   [parameter(Mandatory=$true)]
+	   [ValidateNotNullOrEmpty()]$fileName
+	)
+
+	Begin {
+		if($fileName -notmatch "@Component@")
+		{
+			return $fileName
+		}
+	}
+	Process {
+		if($fileName -match "@Component@")
+		{
+			# Exclude SecureTunnel
+			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_.Name -ne "SecureTunnel" })
+			return ($fileName -Replace "@Component@", $($componentsList -join " "))
+		}
+		else
+		{
+			return $fileName
+		}
+	}
+	End {
+
+	}
 }
-Export-ModuleMember -Function Set-DetectedComponents
+Export-ModuleMember -Function Get-ParsedFileNameByComponent
 
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Get-DetectedComponents
@@ -1453,7 +1697,26 @@ Function Get-DetectedComponents
 .DESCRIPTION
 	Gets the Detected Components in a Script scope
 #>
-	return $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
+	param(
+		# Component naem
+		[Parameter(Mandatory=$false)]
+		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")]
+		[string]$Component = "All"
+	)
+	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script -ErrorAction Ignore)
+	If($null -eq $retComponents)
+	{
+		Set-DetectedComponents
+		$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
+	}
+	# Check if we need to return a specific component
+	If($Component -ne "All")
+	{
+		return ($retComponents | Where-Object { $_.Name -eq $Component })
+	}
+	else {
+		return $retComponents
+	}
 }
 Export-ModuleMember -Function Get-DetectedComponents
 
@@ -1816,7 +2079,7 @@ Function Compare-UserRight
 			if(Test-Path $exportPath) { Remove-Item -Path $exportPath -Force }
 
 			Write-LogMessage -Type Debug -Msg "Export current Local Security Policy to file $exportPath"
-			secedit.exe /export /cfg "$exportPath" | Out-Null
+			secedit.exe /export /areas SECURITYPOLICY USER_RIGHTS REGKEYS /cfg "$exportPath" | Out-Null
 
 			$currentRightKeyValue = (Select-String $exportPath -Pattern "$userRight").Line
 			$currentSidsValue = $currentRightKeyValue.split("=",[System.StringSplitOptions]::RemoveEmptyEntries)[1].Trim()
@@ -2278,16 +2541,23 @@ Function Compare-AdvancedAuditPolicySubCategory
 			$verifySuccess = $true
 			$verifyFailure = $true
 			$auditLineOutput = ""
-			$auditCommandOutput = auditpol /get /subcategory:$subcategory | Where-Object {$_ -match $subcategory}
+			$_subCategory = $subcategory
+			# Avoid "Error 0x00000057 occurred"
+			If($subcategory -match "(?:^Audit\s)(.*)")
+			{
+				# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
+				$_subCategory = $Matches[1]
+			}
+			$auditCommandOutput = auditpol /get /subCategory:"$_subCategory" | Where-Object {$_ -match $_subCategory}
 			ForEach($item in $auditCommandOutput)
 			{
 				if($item -ne "")
 				{
 					$auditLineOutput = $item.Trim()
 					Write-LogMessage -Type Debug -Msg "Found Audit Policy: $auditLineOutput"
-					$auditPolicy = $item.Trim() -split '($subcategory\s+)'
+					$auditPolicy = $item.Trim() -split "($_subCategory\s+)"
 					# Assuming $auditPolicy[0] is empty
-					if($auditPolicy[1] -eq $subcategory)
+					if($auditPolicy[1] -eq $_subCategory)
 					{
 						# $auditPolicy[2] is where the Success, Failure data will be
 						$verifySuccess = Test-EnabledPolicySetting -PolicyStatus $success -MatchValue $auditPolicy[2] -NotMatchCriteria "Success"
@@ -2298,13 +2568,13 @@ Function Compare-AdvancedAuditPolicySubCategory
 			}
 			if($verifySuccess -and $verifyFailure)
 			{
-				Write-LogMessage -Type Debug -Msg "Advance Audit Policy Sub Category for '$subcategory' has the correct settings for Success and Failure"
+				Write-LogMessage -Type Debug -Msg "Advance Audit Policy Sub Category for '$_subCategory' has the correct settings for Success and Failure"
 				$returnVal = "Good"
-				[ref]$outStatus.Value = "Advance Audit Policy Sub Category for '$subcategory' has the correct settings for Success and Failure<BR>$auditLineOutput"
+				[ref]$outStatus.Value = "Advance Audit Policy Sub Category for '$_subCategory' has the correct settings for Success and Failure<BR>$auditLineOutput"
 			}
 		} Catch {
-			Write-LogMessage -Type Error -Msg "Could not get Advance Audit Policy Sub Category for '$subcategory'. Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$outStatus.Value = "Could not get Advance Audit Policy Sub Category for '$subcategory'. Error: $($_.Exception.Message)"
+			Write-LogMessage -Type Error -Msg "Could not get Advance Audit Policy Sub Category for '$_subCategory'. Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$outStatus.Value = "Could not get Advance Audit Policy Sub Category for '$_subCategory'. Error: $($_.Exception.Message)"
 			$returnVal = "Bad"
 		}
 		return $returnVal
@@ -2605,166 +2875,6 @@ Function Start-HardeningSteps
 Export-ModuleMember -Function Start-HardeningSteps
 
 # @FUNCTION@ ======================================================================================================================
-# Name...........: Find-Components
-# Description....: Detects all CyberArk Components installed on the local server
-# Parameters.....: None
-# Return Values..: Array of detected components on the local server
-# =================================================================================================================================
-Function Find-Components
-{
-<#
-.SYNOPSIS
-	Method to query a local server for CyberArk components
-.DESCRIPTION
-	Detects all CyberArk Components installed on the local server
-#>
-	param(
-		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM")]
-		[String]$Component = "All"
-	)
-
-	Begin {
-		$retArrComponents = @()
-		# COMPONENTS SERVICE NAMES
-		$REGKEY_VAULTSERVICE_NEW = "CyberArk Logic Container"
-		$REGKEY_VAULTSERVICE_OLD = "Cyber-Ark Event Notification Engine"
-		$REGKEY_CPMSERVICE_NEW = "CyberArk Central Policy Manager Scanner"
-		$REGKEY_CPMSERVICE_OLD = "CyberArk Password Manager"
-		$REGKEY_PVWASERVICE = "CyberArk Scheduled Tasks"
-		$REGKEY_PSMSERVICE = "Cyber-Ark Privileged Session Manager"
-		$REGKEY_AIMSERVICE = "CyberArk Application Password Provider"
-		$REGKEY_EPMSERVICE = "VfBackgroundWorker"
-	}
-	Process {
-		if(![string]::IsNullOrEmpty($Component))
-		{
-			Switch ($Component) {
-				"Vault"
-				{
-					try{
-						# Check if Vault is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for Vault..."
-						if(($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_NEW))))
-						{
-							Write-LogMessage -Type "Info" -MSG "Found Vault installation"
-							$vaultPath = $componentPath.Replace("LogicContainer\BLServiceApp.exe","").Replace("Event Notification Engine\ENE.exe","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$vaultPath\dbmain.exe"
-							return New-Object PSObject -Property @{Name="Vault";Path=$vaultPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"CPM"
-				{
-					try{
-						# Check if CPM is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for CPM..."
-						if(($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_NEW))))
-						{
-							# Get the CPM Installation Path
-							Write-LogMessage -Type "Info" -MSG "Found CPM installation"
-							$cpmPath = $componentPath.Replace("Scanner\CACPMScanner.exe","").Replace("PMEngine.exe","").Replace("/SERVICE","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$cpmPath\PMEngine.exe"
-							return New-Object PSObject -Property @{Name="CPM";Path=$cpmPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"PVWA"
-				{
-					try{
-						# Check if PVWA is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for PVWA..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PVWASERVICE)))
-						{
-							Write-LogMessage -Type "Info" -MSG "Found PVWA installation"
-							$pvwaPath = $componentPath.Replace("Services\CyberArkScheduledTasks.exe","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$pvwaPath\Services\CyberArkScheduledTasks.exe"
-							return New-Object PSObject -Property @{Name="PVWA";Path=$pvwaPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"PSM"
-				{
-					try{
-						# Check if PSM is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for PSM..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PSMSERVICE)))
-						{
-							Write-LogMessage -Type "Info" -MSG "Found PSM installation"
-							$PSMPath = $componentPath.Replace("CAPSM.exe","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$PSMPath\CAPSM.exe"
-							return New-Object PSObject -Property @{Name="PSM";Path=$PSMPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"AIM"
-				{
-					try{
-						# Check if AIM is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for AIM..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_AIMSERVICE)))
-						{
-							Write-LogMessage -Type "Info" -MSG "Found AIM installation"
-							$AIMPath = $componentPath.Replace("/mode SERVICE","").Replace("AppProvider.exe","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$AIMPath\AppProvider.exe"
-							return New-Object PSObject -Property @{Name="AIM";Path=$AIMPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"EPM"
-				{
-					try{
-						# Check if EPM Server is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for EPM Server..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_EPMSERVICE)))
-						{
-							Write-LogMessage -Type "Info" -MSG "Found EPM Server installation"
-							$EPMPath = $componentPath.Replace("VfBackgroundWorker.exe","").Replace('"',"").Trim()
-							$fileVersion = Get-FileVersion "$EPMPath\VfBackgroundWorker.exe"
-							return New-Object PSObject -Property @{Name="EPM";Path=$EPMPath;Version=$fileVersion}
-						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"All"
-				{
-					try{
-						ForEach($comp in @("Vault","CPM","PVWA","PSM","AIM","EPM"))
-						{
-							$retArrComponents += Find-Components -Component $comp
-						}
-						return $retArrComponents
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting Vault component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-			}
-		}
-	}
-	End {
-	}
-}
-Export-ModuleMember -Function Find-Components
-
-# @FUNCTION@ ======================================================================================================================
 # Name...........: Test-CredFileRestrictions
 # Description....: Checks the restrictions of the credential files that are used by the CyberArk components
 # Parameters.....: None
@@ -2789,11 +2899,9 @@ Function Test-CredFileVerificationType
 
 	Begin {
             $retValue = "Good"
-            $myref = ""
             $typeOfVerification = ""
             $verificationsFlag = ""
             $vaultUser = ""
-
 	}
 	Process {
         if(Test-Path $CredentialFilePath)

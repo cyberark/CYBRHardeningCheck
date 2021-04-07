@@ -112,6 +112,12 @@ Other relevant information will be referenced in the log and the report.
 |HardenSMBServices|Harden SMB and XB Services
 |PSM_CredFileHardening|Credential File Hardening
 
+### Privilege Cloud Secure Tunnel specific hardening checks
+|Hardening check      				| Description               
+|-------   						| ------
+|SecureTunnel_Permissions|Check Secure Tunnel folder hardening
+
+
 ## Contributing
 Please see our [`CONTRIBUTING`](CONTRIBUTING.md) for more details.
 

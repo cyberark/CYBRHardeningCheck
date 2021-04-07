@@ -47,12 +47,28 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $domainSysvolPath = (Get-ChildItem -Path $zipOutputFolder -Directory -Recurse -Filter "DomainSysvol").FullName
 
 # Get the Audit file
-Copy-Item -Path ($AuditPath -f $domainSysvolPath) -Destination (Join-Path -Path $OutputFolder -ChildPath $AdvAuditCSV)
+If(Test-Path ($AuditPath -f $domainSysvolPath))
+{	
+	Copy-Item -Path ($AuditPath -f $domainSysvolPath) -Destination (Join-Path -Path $OutputFolder -ChildPath $AdvAuditCSV)
+}
 # Get the INF file
-Copy-Item -Path ($INFPath -f $domainSysvolPath) -Destination (Join-Path -Path $OutputFolder -ChildPath $SecurityTemplateINF)
+If(Test-Path ($INFPath -f $domainSysvolPath))
+{
+	Copy-Item -Path ($INFPath -f $domainSysvolPath) -Destination (Join-Path -Path $OutputFolder -ChildPath $SecurityTemplateINF)
+} Else {
+	# Create an empty INI file
+	$newIni = [ordered]@{}
+	$newIni["Unicode"] = @{"Unicode"="yes"}
+	$newIni["Version"] = @{"signature"="""`$CHICAGO`$"""; "Revision"=1}
+	$newIni["System Access"] = @{}
+	$newIni["Registry Values"] = @{}
+	$newIni["Privilege Rights"] = @{}
+	Out-IniFile -InputObject $newIni -FilePath (Join-Path -Path $OutputFolder -ChildPath $SecurityTemplateINF)
+}
+
+# Get additional GPO Registry settings (from registry.pol)
 If(Test-Path ($RegPolPath -f $domainSysvolPath))
 {	
-	# Get additional GPO Registry settings (from registry.pol)
 	$additionalRegSettings = Get-RegPolDetails -path ($RegPolPath -f $domainSysvolPath)
 }
 
@@ -141,14 +157,12 @@ Function Get-IniContent ($filePath)
 
 Function Out-IniFile($InputObject, $FilePath)
 {
-	If(-not (Test-Path $FilePath))
+	If(Test-Path $FilePath)
 	{
-		$outFile = New-Item -ItemType file -Path $Filepath
+		Remove-Item $FilePath -Force
 	}
-	Else
-	{
-		$outFile = $FilePath
-	}
+	
+	$outFile = New-Item -ItemType file -Path $Filepath
     foreach ($i in $InputObject.keys)
     {
         if (!($($InputObject[$i].GetType().Name) -eq "Hashtable"))
