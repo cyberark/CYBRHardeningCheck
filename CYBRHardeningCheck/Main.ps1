@@ -146,9 +146,9 @@ param(
 			{
 				Write-LogMessage -Type Verbose -Msg "Handling '$($item.Name)' duplication..."
 				$tempDupStatus = $hardeningStatus | Where-Object { $_.Name -eq $item.Name }
-				$tempOutput += $tempDupStatus | ForEach-Object {
+				$tempOutput += $($tempDupStatus | ForEach-Object {
 					Get-SummaryOutput -Component $_.Component -Status $_.Status -Details $_.Output
-				}
+				})
 				Write-LogMessage -Type Verbose -Msg ("Component:{0}`nName:{1}`nStatus:{2}`n" -f $item.Component, $item.Name, $item.Status)
 				$item.Name = $Item.Name
 				$Item.Output = $tempOutput
@@ -156,7 +156,7 @@ param(
 			}
 			Else
 			{
-				$Item.Output = Get-SummaryOutput -Component $Item.Component -Status $Item.Status -Details $Item.Output
+				$Item.Output = $(Get-SummaryOutput -Component $Item.Component -Status $Item.Status -Details $Item.Output)
 			}
 			# Count Errors
 			If($item.Status -ne "Good")
@@ -195,7 +195,7 @@ Function Get-SummaryOutput
 param(
 	$Component, $status, $details
 )
-	return 
+	$outputSummary =  $(
 @"
 	<li> 
 		<div class="{1}">{0}<span class="status">{1}</span>
@@ -203,6 +203,8 @@ param(
 		</div>
 	</li>	
 "@ -f $Component, $Status, $Details
+	)
+	return $outputSummary
 }
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Write-HTMLHardeningStatusTable
@@ -330,10 +332,12 @@ Function New-HTMLReportOutput
 		{
 			$machineName += " <B>(In Domain)</B>"
 		}
+		$componentsList = @()
+		$componentsList += $Components
 		$htmlFileContent = $htmlFileContent.Replace("@@@MachineName@@@",$machineName)
-		$htmlFileContent = $htmlFileContent.Replace("@@@ComponentsNum@@@", $($components.count))
+		$htmlFileContent = $htmlFileContent.Replace("@@@ComponentsNum@@@", $($componentsList.Count))
 		$hardeningTable,$summary = $(Get-HardeningStatus $hardeningStatus)
-		$htmlFileContent = $htmlFileContent.Replace("@@@HardeningStatus@@@", $($summary.hardeningPercentage.tostring("P")))
+		$htmlFileContent = $htmlFileContent.Replace("@@@HardeningStatus@@@", $($summary.hardeningPercentage.tostring("#%")))
 		$htmlFileContent = $htmlFileContent.Replace("@@@ErrorsNum@@@", $($summary.Errors))
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblComponents@@@", $(Write-HTMLComponentsTable $components))
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblHardening@@@", $(Write-HTMLHardeningStatusTable $hardeningTable))
