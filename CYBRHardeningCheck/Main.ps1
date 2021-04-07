@@ -343,7 +343,7 @@ Function New-HTMLReportOutput
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblHardening@@@", $(Write-HTMLHardeningStatusTable $hardeningTable))
 		$htmlFileContent = $htmlFileContent.Replace("@@@DateTime@@@",$reportDateTime)
 		# Export the data to the file
-		$htmlFileContent | Out-File $exportFilePath
+		$htmlFileContent | Out-File $exportFilePath -Encoding utf8
 	}
 	End {
 		return $exportFilePath
