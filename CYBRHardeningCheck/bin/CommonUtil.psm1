@@ -650,7 +650,7 @@ Function Find-Components
 #>
 	param(
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")]
+		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel","Debug")]
 		[String]$Component = "All"
 	)
 
@@ -791,10 +791,26 @@ Function Find-Components
 					}
 					break
 				}
+				"Debug"
+				{
+					try{
+						# Check if Privilege Cloud Secure tunnel is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for DEBUG..."
+						return New-Object PSObject -Property @{Name="Debug";Path="C:\Temp";Version="0.1"}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
 				"All"
 				{
 					try{
-						ForEach($comp in @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel"))
+						$componentsList = @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel") 
+						if($LocalDebug)
+						{
+							$componentsList += "Debug"
+						}
+						ForEach($comp in $componentsList)
 						{
 							$retArrComponents += Find-Components -Component $comp
 						}
@@ -1416,7 +1432,7 @@ Function Get-DetectedComponents
 	param(
 		# Component naem
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")]
+		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel","Debug")]
 		[string]$Component = "All"
 	)
 	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script -ErrorAction Ignore)
