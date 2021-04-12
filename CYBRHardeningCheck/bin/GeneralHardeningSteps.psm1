@@ -131,7 +131,7 @@ Function ValidateServerRoles
 			Write-LogMessage -Type Info -Msg "Start validating server roles and features"
 			Write-LogMessage -Type Verbose -Msg "Passing $($Parameters.Count) parameters"
 
-			$rolesToCheck = @("AS-TCP-Port-Sharing","AS-Named-Pipes","AS-TCP-Activation","DirectAccess-VPN","Routing","Web-Application-Proxy","Web-Log-Libraries","Web-Http-Tracing","Web-CertProvider","Web-Client-Auth","Web-Digest-Auth","Web-Cert-Auth","Web-IP-Security","Web-Url-Auth","Web-Includes","Web-WebSockets","WDS")
+			$rolesToCheck = @("AS-TCP-Port-Sharing","AS-Named-Pipes","AS-TCP-Activation","DirectAccess-VPN","Routing","Web-Application-Proxy","Web-Log-Libraries","Web-Http-Tracing","Web-CertProvider","Web-Client-Auth","Web-Digest-Auth","Web-Cert-Auth","Web-IP-Security","Web-Url-Auth","Web-Includes","WDS")
 			$featuresToCheck = @("GPMC","Web-WHC","InkAndHandwritingServices","Server-Media-Foundation","CMAK","RSAT","Telnet-Client","Windows-Internal-Database","FS-SMB1")
 
 			if($Parameters.Count -gt 0)
