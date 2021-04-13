@@ -101,7 +101,7 @@ Function Vault_StaticIP
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify Vault has static IP"
-			$getdhcpstatus = Get-NetIPAddress -InterfaceAlias "Ethernet" -AddressFamily IPv4
+			$getdhcpstatus = Get-NetIPAddress -InterfaceAlias "Eth*" -AddressFamily IPv4
 			ForEach ($item in $getdhcpstatus)
 			{
 				if ($item.PrefixOrigin -eq "Dhcp")
@@ -433,20 +433,24 @@ Function Vault_FirewallNonStandardRules
 			}
 
 			Write-LogMessage -Type Verbose -Msg "There are $($FWRules.count) Firewall rules currently configured"
-			Write-LogMessage -Type Verbose -Msg "There are $(($FWRules | Where-Object { $_.DisplayGroup -contains "NON_STD" }).count) Non-Standard CyberArk Firewall rules currently configured"
-			If($(($FWRules | Where-Object { $_.DisplayGroup -notcontains "CYBERARK_" }).count) -gt 0)
+			Write-LogMessage -Type Verbose -Msg "There are $(($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }).count) Non-Standard CyberArk Firewall rules currently configured"
+			If($(($FWRules | Where-Object { $_.DisplayGroup -notmatch "CYBERARK_" }).count) -gt 0)
 			{
 				$res = "Warning"
-				$tmpStatus += "<li>There are $(($FWRules | Where-Object { $_.DisplayGroup -notcontains "CYBERARK_" }).count) Firewall rules that were not created by CyberArk Vault currently configured </li>"
+				$tmpStatus += "<li>There are $(($FWRules | Where-Object { $_.DisplayGroup -notmatch "CYBERARK_" }).count) Firewall rules that were not created by CyberArk Vault currently configured </li>"
 			}
 			
-			ForEach($rule in $($FWRules | Where-Object { $_.DisplayGroup -contains "NON_STD" }))
+			ForEach($rule in $($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }))
 			{
-				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
-				If($dbParmFWRules.FWRuleLine -notcontains $rule.FWRuleLine)
+				# Skip ICMP Protocol
+				If($rule.protocol -notmatch "ICMP")
 				{
-					$res = "Warning"
-					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is applied but not configured in DBParm.ini </li>"
+					# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
+					If($dbParmFWRules.FWRuleLine -notcontains $rule.FWRuleLine)
+					{
+						$res = "Warning"
+						$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is applied but not configured in DBParm.ini </li>"
+					}
 				}
 			}
 
@@ -511,11 +515,13 @@ Function Vault_ServerCertificate
 			Write-LogMessage -Type Info -Msg "Start validating Vault Server Certificate"
 			# Run the CACert tool
 			$vaultFolder = $(Get-DetectedComponents -Component Vault).Path
-			$caCertOutput = $(. "$vaultFolder\CACert.exe show")
+			Push-Location $vaultFolder
+			$caCertOutput = .\cacert.exe show
+			Pop-Location
 			# Parse the output
 			$selfSigned = $(($caCertOutput | Select-String "Subject:").line.Replace("Subject:","").Trim() -match "self-signed")
 			$algorithm = ""
-			foreach ($line in $($caCertOutput | Select-String "Signature Algorithm:")) {
+			foreach ($line in $($caCertOutput | Select-String "Signature Algorithm:").Line) {
 				$algorithm = $line.Replace("Signature Algorithm:","").Trim()
 				break
 			}
@@ -537,8 +543,8 @@ Function Vault_ServerCertificate
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not verify Vault Firewall Non-Standard rules.  Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$refOutput.Value = "Could not verify Vault Firewall Non-Standard rules."
+			Write-LogMessage -Type "Error" -Msg "Could not verify Vault Server Certificate.  Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$refOutput.Value = "Could not verify Vault Server Certificate."
 			return "Bad"
 		}
 	}
