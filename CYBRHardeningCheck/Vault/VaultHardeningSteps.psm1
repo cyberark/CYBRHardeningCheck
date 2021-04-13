@@ -316,8 +316,6 @@ Function Vault_LogicContainerServiceLocalUser
 				[ref]$refOutput.Value = $tmpStatus
 			}
 
-			[ref]$refOutput.Value = $myRef.Value
-
 			Write-LogMessage -Type Info -Msg "Finish validating Logic Container Service configuration"
 
 			return $res
@@ -325,6 +323,222 @@ Function Vault_LogicContainerServiceLocalUser
 		catch{
 			Write-LogMessage -Type "Error" -Msg "Could not validate Logic Container Service configuration.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate Logic Container Service configuration."
+			return "Bad"
+		}
+	}
+	End {
+		# Write output to HTML
+	}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Vault_FirewallNonStandardRules
+# Description....: Check that all the existing firewall rules are allowed (either standard or documented non-standard in the DBParm.ini)
+# Parameters.....:
+# Return Values..:
+# =================================================================================================================================
+Function Vault_FirewallNonStandardRules
+{
+<#
+.SYNOPSIS
+	Method to Check that all the existing firewall rules are allowed
+.DESCRIPTION
+	Returns true if all firewall rules are either standard or documented non-standard in the DBParm.ini
+.PARAMETER Parameters
+	(Optional) Parameters from the Configuration
+.PARAMETER Reference Status
+	Reference to the Step Status
+#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[array]$Parameters = $null,
+		[Parameter(Mandatory=$false)]
+		[ref]$refOutput
+	)
+
+	Begin {
+		$res = "Good"
+		$tmpStatus = ""
+	}
+	Process {
+		try{
+			Write-LogMessage -Type Info -Msg "Start validation of Vault Firewall Non-Standard rules"
+			$vaultFolder = $(Get-DetectedComponents -Component Vault).Path
+			# Find the DBParm.ini file
+			$DBParmFile = $(Get-ChildItem -Path $vaultFolder -Include "DBParm.ini" -Recurse).FullName
+			$dbParmFWRules = @()
+			ForEach($rule in $(Get-Content -Path $DBParmFile | Select-String "AllowNonStandardFWAddresses=").Line)
+			{
+				# Rule Parts: [0] - Address; [1] - Enabled; [2-3] - <Port>:<Direction>/<Protocol>
+				$ruleParts = $rule.Replace("AllowNonStandardFWAddresses=","").Split(',')
+				Foreach($direction in $ruleParts[2..5])
+				{
+					If($direction -Match "(\d{1,}):(\w{1,})/(\w{1,})")
+					{
+						$fwRule = "" | Select-Object DisplayGroup,Enabled,Direction,LocalAddress,RemoteAddress,Protocol,LocalPort,RemotePort	
+						$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
+							"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress,$this.Enabled,$(If($this.Direction -eq "inbound") {$this.LocalPort} else {$this.RemotePort}),$this.Direction,$this.Protocol
+						}
+						$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
+						If($ruleParts[1] -eq "Yes")
+						{
+							$fwRule.Enabled = "True"
+						}
+						$fwRule.Direction = $Matches[2]
+						$fwRule.LocalAddress = "Any"
+						$fwRule.RemoteAddress = $ruleParts[0].Replace("[","").Replace("]","")
+						$fwRule.Protocol = $Matches[3]
+						Switch ($fwRule.Direction)
+						{
+							"inbound" {
+								$fwRule.LocalPort = $Matches[1]
+								$fwRule.RemotePort = "Any"
+								break
+							}
+							"outbound" {
+								$fwRule.LocalPort = "Any"
+								$fwRule.RemotePort = $Matches[1]
+								break
+							}
+						}
+						$dbParmFWRules += $fwRule
+					}
+					Else
+					{
+						Write-Host "Non valid rule line ($rule)"
+					}
+				}
+			}
+
+			Write-LogMessage -Type Verbose -Msg "There are $($dbParmFWRules.count) Non-Standard Firewall rules defined in DBParm.ini"
+			
+			$FWRules = @()
+			ForEach($rule in $(get-netfirewallrule -policystore ActiveStore))
+			{
+				$addressFilter = $($rule | Get-NetFirewallAddressFilter)
+				$portFilter = $($rule | Get-NetFirewallPortFilter)
+				$fwRule = "" | Select-Object DisplayGroup,Enabled,Direction,LocalAddress,RemoteAddress,Protocol,LocalPort,RemotePort
+				$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
+					"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress,$this.Enabled,$(If($this.Direction -eq "inbound") {$this.LocalPort} else {$this.RemotePort}),$this.Direction,$this.Protocol
+				}
+				$fwRule.DisplayGroup = $rule.DisplayGroup
+				$fwRule.Enabled = $rule.Enabled.ToString()
+				$fwRule.Direction = $rule.Direction.ToString()
+				$fwRule.LocalAddress = $addressFilter.LocalAddress
+				$fwRule.RemoteAddress = $addressFilter.RemoteAddress
+				$fwRule.Protocol = $portFilter.Protocol
+				$fwRule.LocalPort = $portFilter.LocalPort
+				$fwRule.RemotePort = $portFilter.RemotePort
+				$FWRules += $fwRule
+			}
+
+			Write-LogMessage -Type Verbose -Msg "There are $($FWRules.count) Firewall rules currently configured"
+			Write-LogMessage -Type Verbose -Msg "There are $(($FWRules | Where-Object { $_.DisplayGroup -contains "NON_STD" }).count) Non-Standard CyberArk Firewall rules currently configured"
+			If($(($FWRules | Where-Object { $_.DisplayGroup -notcontains "CYBERARK_" }).count) -gt 0)
+			{
+				$res = "Warning"
+				$tmpStatus += "<li>There are $(($FWRules | Where-Object { $_.DisplayGroup -notcontains "CYBERARK_" }).count) Firewall rules that were not created by CyberArk Vault currently configured </li>"
+			}
+			
+			ForEach($rule in $($FWRules | Where-Object { $_.DisplayGroup -contains "NON_STD" }))
+			{
+				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
+				If($dbParmFWRules.FWRuleLine -notcontains $rule.FWRuleLine)
+				{
+					$res = "Warning"
+					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is applied but not configured in DBParm.ini </li>"
+				}
+			}
+
+			ForEach($rule in $dbParmFWRules)
+			{
+				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
+				If($FWRules.FWRuleLine -notcontains $rule.FWRuleLine)
+				{
+					$res = "Warning"
+					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is configured in DBParm.ini but does not exist in the Vault Firewall policy </li>"
+				}
+			}
+
+			[ref]$refOutput.Value = "<ul>$tmpStatus</ul>"
+
+			Write-LogMessage -Type Info -Msg "Finish validation of Vault Firewall Non-Standard rules"
+
+			return $res
+		}
+		catch{
+			Write-LogMessage -Type "Error" -Msg "Could not verify Vault Firewall Non-Standard rules.  Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$refOutput.Value = "Could not verify Vault Firewall Non-Standard rules."
+			return "Bad"
+		}
+	}
+	End {
+		# Write output to HTML
+	}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Vault_ServerCertificate
+# Description....: Check that the Vault has a signed CA certificate
+# Parameters.....:
+# Return Values..:
+# =================================================================================================================================
+Function Vault_ServerCertificate
+{
+<#
+.SYNOPSIS
+	Method to Check that the Vault has a signed CA certificate
+.DESCRIPTION
+	Returns the Status of the Vault certificate
+.PARAMETER Parameters
+	(Optional) Parameters from the Configuration
+.PARAMETER Reference Status
+	Reference to the Step Status
+#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[array]$Parameters = $null,
+		[Parameter(Mandatory=$false)]
+		[ref]$refOutput
+	)
+
+	Begin {
+		$res = "Good"
+		$tmpStatus = ""
+	}
+	Process {
+		try{
+			Write-LogMessage -Type Info -Msg "Start validating Vault Server Certificate"
+			# Run the CACert tool
+			$vaultFolder = $(Get-DetectedComponents -Component Vault).Path
+			$caCertOutput = $(. "$vaultFolder\CACert.exe show")
+			# Parse the output
+			$selfSigned = $(($caCertOutput | Select-String "Subject:").line.Replace("Subject:","").Trim() -match "self-signed")
+			$algorithm = ""
+			foreach ($line in $($caCertOutput | Select-String "Signature Algorithm:")) {
+				$algorithm = $line.Replace("Signature Algorithm:","").Trim()
+				break
+			}
+			If($selfSigned)
+			{
+				$res = "Warning"
+				$tmpStatus += "Vault currently using Self-Signed certificate<BR>"
+			}
+			If($algorithm -match "sha1")
+			{
+				$res = "Warning"
+				$tmpStatus += "Vault Certificate is using SHA1 encryption ($algorithm)"
+			}
+
+			[ref]$refOutput.Value = $tmpStatus
+			
+			Write-LogMessage -Type Info -Msg "Finish validating  Vault Server Certificate"
+
+			return $res
+		}
+		catch{
+			Write-LogMessage -Type "Error" -Msg "Could not verify Vault Firewall Non-Standard rules.  Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$refOutput.Value = "Could not verify Vault Firewall Non-Standard rules."
 			return "Bad"
 		}
 	}
