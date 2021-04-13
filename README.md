@@ -73,6 +73,8 @@ Other relevant information will be referenced in the log and the report.
 |Vault_WindowsFirewall				|Check that the Vault has the Firewall active
 |Vault_DomainJoined					|Check that the Vault was not joined to a Domain
 |Vault_LogicContainerServiceLocalUser|Vault Logic Container Service LocalUser
+|Vault_FirewallNonStandardRules|Vault Firewall Rule
+|Vault_ServerCertificate|Vault Server Certificate
 
 ### CPM specific hardening checks
 |Hardening check      				| Description               
