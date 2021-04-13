@@ -29,4 +29,8 @@
    <Step Name="VaultServerCertificate" DisplayName="Vault Server Certificate" Description="" ScriptName="Vault_ServerCertificate" Enable="Yes">
 	  <Parameters />
    </Step>
+   
+   <Step Name="VaultFWRules" DisplayName="Vault Firewall Rules" Description="" ScriptName="Vault_FirewallNonStandardRules" Enable="Yes">
+	  <Parameters />
+   </Step>
 </Stage>
