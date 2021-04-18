@@ -402,6 +402,13 @@ Function Vault_FirewallNonStandardRules
 							}
 						}
 						$dbParmFWRules += $fwRule
+						# Add ICMP rules if don't exist - usually added for RDP
+						If($($dbParmFWRules | where-object { $_.Protocol -eq "ICMP" -and $_.Direction -eq $fwRule.Direction} ).Count -eq 0)
+						{
+							# Add the same rule for ICMP
+							$fwRule.Protocol = "ICMP"
+							$dbParmFWRules += $fwRule
+						}
 					}
 					Else
 					{
@@ -442,15 +449,11 @@ Function Vault_FirewallNonStandardRules
 			
 			ForEach($rule in $($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }))
 			{
-				# Skip ICMP Protocol
-				If($rule.protocol -notmatch "ICMP")
+				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
+				If($dbParmFWRules.FWRuleLine -notcontains $rule.FWRuleLine)
 				{
-					# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
-					If($dbParmFWRules.FWRuleLine -notcontains $rule.FWRuleLine)
-					{
-						$res = "Warning"
-						$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is applied but not configured in DBParm.ini </li>"
-					}
+					$res = "Warning"
+					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is applied but not configured in DBParm.ini </li>"
 				}
 			}
 
