@@ -911,22 +911,36 @@ Function LocalPrivilegedUsers
 
 		Write-LogMessage -Type Info -Msg "Start verification of privielged users in local Administrators group ($localAdminGroup)"
 		try{
-			$arrPrivUsers = @()
-			([ADSI]"WinNT://./$localAdminGroup").psbase.Invoke('Members') | ForEach-Object {
-				$arrPrivUsers += ([ADSI]$_).InvokeGet('adspath').Replace("WinNT://","")
-			}
+			$arrPrivUsers = Get-LocalGroupMember -Name $localAdminGroup
 			
 			#TODO: add more logic here on what should be the process
 			Write-LogMessage -Type Debug -Msg "There are total of $($arrPrivUsers.count) users and groups in the local administrators group"
 			$numOfOtherAdmins = 0
+			
 			ForEach($user in $arrPrivUsers)
 			{
-				# Skip local Administrator
-				if($user -contains "/")
+				if($null -ne $user)
 				{
-					If(!(Test-LocalAdminUser -name $($user.split("/")[1])))
+					If($user.PrincipalSource -eq "Local")
 					{
-						$numOfOtherAdmins++
+						# Skip local Administrator
+						If(!(Test-LocalAdminUser -name $user.Name))
+						{
+							$numOfOtherAdmins++
+						}	
+					}
+					elseif ($user.PrincipalSource -eq "ActiveDirectory" -and $user.ObjectClass -eq "Group") {
+						try{
+							$Search = New-Object DirectoryServices.DirectorySearcher("(objectSID=$($user.SID))")
+							$Search.PropertiesToLoad.Add("member")
+							$Results = $Search.FindOne()
+							If($null -ne $Results)
+							{
+								$numOfOtherAdmins++
+							}
+						} catch {
+							Throw $(New-Object System.Exception ("LocalPrivilegedUsers: Active Directory Cannot be contacted. Check that you are logged in with a domain user"),$_.Exception)
+						}
 					}
 				}
 				Elseif($user.StartsWith("S-"))

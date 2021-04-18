@@ -1258,11 +1258,6 @@ Function Get-LocalSystemGroupName
 }
 Export-ModuleMember -Function Get-LocalSystemGroupName
 
-Function Get-LocalGroupMember
-{
-
-}
-
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Get-ServiceInstallPath
 # Description....: Get the installation path of a service
