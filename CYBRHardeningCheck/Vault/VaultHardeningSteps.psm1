@@ -97,8 +97,6 @@ Function Vault_StaticIP
 
 	Begin {
 		$res = "Good"
-		$myRef = ""
-
 	}
 	Process {
 		try{
@@ -206,7 +204,6 @@ Function Vault_DomainJoined
 
 	Begin {
 		$res = "Good"
-		$myRef = ""
 		$NSLog =  "$($ENV:SystemRoot)\debug\NetSetup.LOG"
 	}
 	Process {
@@ -265,7 +262,7 @@ Function Vault_LogicContainerServiceLocalUser
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$serviceName = "CyberArk Logic Container"
 	}
@@ -275,7 +272,7 @@ Function Vault_LogicContainerServiceLocalUser
 			$LCServiceUserName = $($Parameters | Where-Object Name -eq "LCServiceUserName").Value
 
 			# Get the Vault working directory
-			$vaultServicePath = (Find-Components -Component "Vault").Path
+			$vaultServicePath = (Get-DetectedComponents -Component "Vault").Path
 			$lcServicePath = Join-Path -Path $vaultServicePath -ChildPath "LogicContainer"
             $lcServiceArchiveLogsPath = Join-Path -Path $vaultServicePath -ChildPath "Logs\Archive"
 
@@ -287,7 +284,7 @@ Function Vault_LogicContainerServiceLocalUser
 			if((Test-ServiceRunWithLocalUser @lcService) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			$userPermissions = @{
@@ -303,17 +300,17 @@ Function Vault_LogicContainerServiceLocalUser
 			if((Compare-UserPermissions @userPermissions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			# Verify Local user has Full Control rights on the Archive Logs path
 			$userPermissions["Path"] = $lcServiceArchiveLogsPath
 			if((Compare-UserPermissions @userPermissions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus

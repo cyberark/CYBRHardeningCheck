@@ -24,9 +24,9 @@ Function ImportingINFConfiguration
 	)
 
 	Begin {
-		$SDBFileName = Join-Path -Path $CurrentComponentPath -ChildPath "CYBR_Hardening_secedit_DB.sdb"
+		$SDBFileName = Get-CurrentComponentFolderPath -FileName "CYBR_Hardening_secedit_DB.sdb"
 		$logName = "CYBR_Hardening_secedit_$((Get-Date -Format $g_DateTimePattern).Replace("/","-").Replace(":","-").Replace(" ","_")).log"
-		$AnalyzeLogName = Join-Path -Path $CurrentComponentPath -ChildPath $logName
+		$AnalyzeLogName = Get-CurrentComponentFolderPath -FileName $logName
 		$myRef = ""
 	}
 	Process {
@@ -34,26 +34,40 @@ Function ImportingINFConfiguration
 			Write-LogMessage -Type Info -Msg "Start comparing security configurations"
 			Write-LogMessage -Type Verbose -Msg "Passing $($Parameters.Count) parameters"
 
-			Write-LogMessage -Type Debug -Msg "Analyzing secedit INF file with the Local Machine security policy"
-			$INFconfigFileName = $($Parameters | Where-Object Name -eq "INFconfigFileName").Value
+			If($(Get-DetectedComponents).DomainMember)
+			{
+				Write-LogMessage -Type Debug -Msg "Analyzing secedit INF file with the Domain GPO Machine security policy"
+				$INFconfigFileName = $($Parameters | Where-Object { $_.Name -eq "DomainINFconfigFileName" }).Value
+			}
+			Else
+			{				
+				Write-LogMessage -Type Debug -Msg "Analyzing secedit INF file with the Local Machine security policy"
+				$INFconfigFileName = $($Parameters | Where-Object { ($_.Name -eq "INFconfigFileName") -or ($_.Name -eq "LocalINFconfigFileName") }).Value
+			}
 			# OS Specific treatment
 			If($INFconfigFileName -match "@OS@")
 			{
 				$INFconfigFileName = Get-ParsedFileNameByOS -fileName $INFconfigFileName
 			}
-
-			# Get the Component relative INF file path
-			$INFconfigFilePath = Join-Path -Path $CurrentComponentPath -ChildPath $INFconfigFileName
-
-			$seceditRetVaule = secedit /import /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet
-
-			if ((-not (Test-Path $SDBFileName)) -Or ($LASTEXITCODE -eq 1))
+			# Components specific treatment
+			If($INFconfigFileName -match "@Component@")
 			{
-				throw "Importing INF file: $INFconfigFileName has failed - Unable to create SDB file"
-				return "Bad"
+				$INFconfigFileName = Get-ParsedFileNameByComponent -fileName $INFconfigFileName
 			}
 
-			$seceditRetVaule = secedit /analyze /db $SDBFileName /log $AnalyzeLogName
+			# Get the Component relative INF file path
+			$INFconfigFilePath = Get-CurrentComponentFolderPath -FileName $INFconfigFileName
+			
+			# $seceditRetVaule = secedit /import /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet
+
+			# if ((-not (Test-Path $SDBFileName)) -Or ($LASTEXITCODE -eq 1))
+			# {
+			# 	throw "Importing INF file: $INFconfigFileName has failed - Unable to create SDB file"
+			# 	return "Bad"
+			# }
+
+			$seceditRetVaule = secedit /analyze /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet /log $AnalyzeLogName
+			# $seceditRetVaule = secedit /analyze /db $SDBFileName /log $AnalyzeLogName
 
 			if ($LASTEXITCODE -eq 1)
 			{
@@ -117,7 +131,7 @@ Function ValidateServerRoles
 			Write-LogMessage -Type Info -Msg "Start validating server roles and features"
 			Write-LogMessage -Type Verbose -Msg "Passing $($Parameters.Count) parameters"
 
-			$rolesToCheck = @("AS-TCP-Port-Sharing","AS-Named-Pipes","AS-TCP-Activation","DirectAccess-VPN","Routing","Web-Application-Proxy","Web-Log-Libraries","Web-Http-Tracing","Web-CertProvider","Web-Client-Auth","Web-Digest-Auth","Web-Cert-Auth","Web-IP-Security","Web-Url-Auth","Web-Includes","Web-WebSockets","WDS")
+			$rolesToCheck = @("AS-TCP-Port-Sharing","AS-Named-Pipes","AS-TCP-Activation","DirectAccess-VPN","Routing","Web-Application-Proxy","Web-Log-Libraries","Web-Http-Tracing","Web-CertProvider","Web-Client-Auth","Web-Digest-Auth","Web-Cert-Auth","Web-IP-Security","Web-Url-Auth","Web-Includes","WDS")
 			$featuresToCheck = @("GPMC","Web-WHC","InkAndHandwritingServices","Server-Media-Foundation","CMAK","RSAT","Telnet-Client","Windows-Internal-Database","FS-SMB1")
 
 			if($Parameters.Count -gt 0)
@@ -176,7 +190,7 @@ Function DisableScreenSaver
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -189,47 +203,47 @@ Function DisableScreenSaver
 				if((Compare-PolicyEntry -EntryTitle "Enable screen saver" -UserDir $UserDir -RegPath $RegPath -RegName 'ScreenSaveActive' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			} catch {
 				Write-LogMessage -Type "Error" -Msg "DisableScreenSaver: Could not validate 'Enable screen saver' property.  Error: $(Join-ExceptionMessage $_.Exception)"
 				$tmpStatus += "Error validating 'Enable screen saver' property<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			try{
 				if((Compare-PolicyEntry -EntryTitle "Force specific screen saver" -UserDir $UserDir -RegPath $RegPath -RegName 'SCRNSAVE.EXE' -RegData 'C:\Windows\System32\Ribbons.scr' -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			} catch {
 				Write-LogMessage -Type "Error" -Msg "DisableScreenSaver: Could not validate 'Force specific screen saver' property.  Error: $(Join-ExceptionMessage $_.Exception)"
 				$tmpStatus += "Error validating 'Force specific screen saver' property<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			try{
 				if((Compare-PolicyEntry -EntryTitle "Password protect the screen saver" -UserDir $UserDir -RegPath $RegPath -RegName 'ScreenSaverIsSecure' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			} catch {
 				Write-LogMessage -Type "Error" -Msg "DisableScreenSaver: Could not validate 'Password protect the screen saver' property.  Error: $(Join-ExceptionMessage $_.Exception)"
 				$tmpStatus += "Error validating 'Password protect the screen saver' property<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			try{
 				if((Compare-PolicyEntry -EntryTitle "Screen saver timeout" -UserDir $UserDir -RegPath $RegPath -RegName 'ScreenSaveTimeOut' -RegData '600' -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			} catch {
 				Write-LogMessage -Type "Error" -Msg "DisableScreenSaver: Could not validate 'Screen saver timeout' property.  Error: $(Join-ExceptionMessage $_.Exception)"
 				$tmpStatus += "Error validating 'Screen saver timeout' property<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -278,21 +292,33 @@ Function AdvancedAuditPolicyConfiguration
 		$myRef = ""
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 	}
 	Process {
 		Try {
 			Write-LogMessage -Type Info -Msg "Start validating Advanced Audit Policy Configuration"
 			Write-LogMessage -Type Verbose -Msg "Passing $($Parameters.Count) parameters"
-			$AuditConfigFile = $($Parameters | Where-Object Name -eq "AuditConfigFileName").Value
+			If($(Get-DetectedComponents).DomainMember)
+			{
+				$AuditConfigFile = $($Parameters | Where-Object { $_.Name -eq "DomainAuditConfigFileName" }).Value
+			}
+			Else
+			{				
+				$AuditConfigFile = $($Parameters | Where-Object { ($_.Name -eq "AuditConfigFileName") -or ($_.Name -eq "LocalAuditConfigFileName") }).Value
+			}
 			# OS Specific treatment
 			If($AuditConfigFile -match "@OS@")
 			{
 				$AuditConfigFile = Get-ParsedFileNameByOS -fileName $AuditConfigFile
 			}
+			# Components specific treatment
+			If($AuditConfigFile -match "@Component@")
+			{
+				$AuditConfigFile = Get-ParsedFileNameByComponent -fileName $AuditConfigFile
+			}
 
 			# Get the Component relative INF file path
-			$AuditConfigFilePath = Join-Path -Path $CurrentComponentPath -ChildPath $AuditConfigFile
+			$AuditConfigFilePath = Get-CurrentComponentFolderPath -FileName $AuditConfigFile
 
 			ForEach ($audit in $(Import-Csv $AuditConfigFilePath))
 			{
@@ -302,35 +328,39 @@ Function AdvancedAuditPolicyConfiguration
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "disable" -failure "disable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
-							$changeStatus = $true
+							$statusChanged = $true
 						}
+						break
 					}
 					1 {
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "enable" -failure "disable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
-							$changeStatus = $true
+							$statusChanged = $true
 						}
+						break
 					}
 					2 {
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "disable" -failure "enable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
-							$changeStatus = $true
+							$statusChanged = $true
 						}
+						break
 					}
 					3 {
 						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "enable" -failure "enable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
-							$changeStatus = $true
+							$statusChanged = $true
 						}
+						break
 					}
 				}
 				$output += $myRef.Value
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -378,7 +408,7 @@ Function RemoteDesktopServices
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -391,28 +421,28 @@ Function RemoteDesktopServices
 			if((Compare-PolicyEntry -EntryTitle "Set rules for remote control of Remote Desktop Services user sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'Shadow' -RegData '4' -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			if((Compare-PolicyEntry -EntryTitle "Set time limit for active but idle Remote Desktop Services sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'MaxIdleTime' -RegData '1800000' -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			if((Compare-PolicyEntry -EntryTitle "Do not allow Clipboard redirection" -UserDir $UserDir -RegPath $RegPath -RegName 'fDisableClip' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			if((Compare-PolicyEntry -EntryTitle "End session when time limits are reached" -UserDir $UserDir -RegPath $RegPath -RegName 'fResetBroken' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -528,7 +558,7 @@ Function RegistryAudits
 		# Pre-Checks
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 	}
 	Process {
@@ -545,16 +575,16 @@ Function RegistryAudits
 			{
 				$tmpStatus += "SOFTWARE registry Key does not have the required access control rules."
 				$tmpStatus += $myRef.output + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			If((Compare-AuditRulesFromPath -Path "HKLM:\SYSTEM" -AccessRules $AccessRulesArray -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += "SYSTEM registry Key does not have the required access control rules."
 				$tmpStatus += $myRef.output + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -669,39 +699,39 @@ Function FileSystemPermissions
 			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalAdministratorsGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalAdministratorsGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Check System Access
 			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalSystemGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalSystemGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Verify if Administrators and System are the only ones that has permissions
 			If((Compare-AmountOfUserPermissions -Path $ConfigPath -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			If((Compare-AmountOfUserPermissions -Path $ConfigRegBackPath -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -751,7 +781,7 @@ Function FileSystemAudit
 
 	Begin{
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$res = "Good"
 	}
@@ -773,15 +803,15 @@ Function FileSystemAudit
 				If((Compare-AuditRulesFromPath -path $systemConfig -accessRules $AccessRulesArray -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 				If((Compare-AuditRulesFromPath -path $ConfigRegBackPath -accessRules $AccessRulesArray -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 
-				If($changeStatus)
+				If($statusChanged)
 				{
 					$res = "Warning"
 					[ref]$refOutput.Value = $tmpStatus
@@ -830,7 +860,7 @@ Function DisableServices
 		$myRef = ""
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$serviceList = @("Routing and Remote Access", "Smart Card", "Smart Card Removal Policy",
 						 "SNMP Trap", "Special Administration Console Helper","Windows Error Reporting Service",
 						 "WinHTTP Web Proxy Auto-Discovery Service")
@@ -845,16 +875,16 @@ Function DisableServices
 					If((Compare-ServiceStatus -ServiceName $svc -ServiceStartMode "Disabled" -outStatus ([ref]$myRef)) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
-						$changeStatus = $true
+						$statusChanged = $true
 					}
 				} Catch {
 					Write-LogMessage -Type "Error" -Msg "Could not validate service '$svc' status.  Error: $(Join-ExceptionMessage $_.Exception)"
 					$tmpStatus += "Could not validate service '$svc' status."
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus

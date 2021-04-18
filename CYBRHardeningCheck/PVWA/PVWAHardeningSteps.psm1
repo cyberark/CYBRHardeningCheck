@@ -164,7 +164,6 @@ Function PVWA_Cryptography_Settings
 
 	Begin {
 		$res = "Good"
-		$myRef = ""
 		$iisPath = "iis:\Sites\Default Web Site\PasswordVault"
 		$filter = "/appSettings/add[@key='AdvancedFIPSCryptography']"
 		$value = "yes"
@@ -359,8 +358,8 @@ Function PVWA_DirectoryBrowsing
 			{
 				if($item.enabled)
 				{
-					[ref]$refOutput.Value = "PVWA is using Directory Brosing feature. Disable this feature."
-					Write-LogMessage -Type Info -Msg "PVWA is using Directory Brosing feature. Disable this feature."
+					[ref]$refOutput.Value = "PVWA is using Directory Browsing feature. Disable this feature."
+					Write-LogMessage -Type Info -Msg "PVWA is using Directory Browsing feature. Disable this feature."
 					$res = "Warning"
 				}
 			}
@@ -407,7 +406,7 @@ Function PVWA_IIS_SSL_TLS_Settings
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$versionsToDisable = "SSL 2.0", "SSL 3.0", "TLS 1.0", "TLS 1.1"
 		$versionToEnable = "TLS 1.2"
@@ -454,13 +453,13 @@ Function PVWA_IIS_SSL_TLS_Settings
 				if((Compare-RegistryValue @disabled) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 				$enabled["Path"] = $regClientPath
 				if((Compare-RegistryValue @enabled) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 
 				# Verify server version is Disabled
@@ -468,13 +467,13 @@ Function PVWA_IIS_SSL_TLS_Settings
 				if((Compare-RegistryValue @disabled) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 				$enabled["Path"] = $regServerPath
 				if((Compare-RegistryValue @enabled) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			}
 
@@ -486,12 +485,12 @@ Function PVWA_IIS_SSL_TLS_Settings
 			if((Compare-RegistryValue @disabled) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			if((Compare-RegistryValue @enabled) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Verify TLS 1.2 server version is enabled
@@ -500,12 +499,12 @@ Function PVWA_IIS_SSL_TLS_Settings
 			if((Compare-RegistryValue @disabled) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			if((Compare-RegistryValue @enabled) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Verify .NET framework TLS1.2 is enabled
@@ -513,16 +512,16 @@ Function PVWA_IIS_SSL_TLS_Settings
 			if((Compare-RegistryValue @DOT_NET) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			$DOT_NET["Path"] = $DOT_NET_32bit_Path
 			if((Compare-RegistryValue @DOT_NET) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -569,7 +568,7 @@ Function PVWA_IIS_Cypher_Suites
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$regCyphersSuites = @{
 				"Path" = "HKLM:\SYSTEM\CurrentControlSet\Control\Cryptography\Configuration\Local\SSL\00010002"
@@ -586,7 +585,7 @@ Function PVWA_IIS_Cypher_Suites
 			if((Compare-RegistryValue @regCyphersSuites) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			Write-LogMessage -Type Info -Msg "Finish validating Cryptography Cypher Suites configuration"
@@ -609,13 +608,13 @@ Function PVWA_IIS_Cypher_Suites
 				if((Compare-RegistryValue @regRC4Config) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
-					$changeStatus = $true
+					$statusChanged = $true
 				}
 			}
 
 			Write-LogMessage -Type Info -Msg "Finish validating RC4 Cypher Suites configuration"
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -664,7 +663,7 @@ Function PVWA_Scheduled_Task_Service_LocalUser
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$serviceName = "CyberArk Scheduled Tasks"
 	}
@@ -674,7 +673,7 @@ Function PVWA_Scheduled_Task_Service_LocalUser
 			$PVWAServiceUserName = $($Parameters | Where-Object Name -eq "PVWAServiceUserName").Value
 
 			# Get the PVWA working directory
-            $pvwaPath = (Find-Components -Component "PVWA").Path
+            $pvwaPath = (Get-DetectedComponents -Component "PVWA").Path
 			$pvwaServicesPath = join-path -path $pvwaPath -ChildPath 'services'
             $pvwaServicesLogsPath = Join-Path -Path $pvwaServicesPath -ChildPath "Logs"
 
@@ -686,7 +685,7 @@ Function PVWA_Scheduled_Task_Service_LocalUser
 			if((Test-ServiceRunWithLocalUser @pvwaService) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			$userPermissions = @{
@@ -702,14 +701,14 @@ Function PVWA_Scheduled_Task_Service_LocalUser
 			if((Compare-UserPermissions @userPermissions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			# Verify Local System has Full Control rights on the PVWA installation path
 			$userPermissions["Identity"] = $(Get-LocalSystemGroupName)
 			if((Compare-UserPermissions @userPermissions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			# Verify the PVWA Local user has Read and Execute rights on the PVWA installation path
 			$userPermissions["Identity"] = $PVWAServiceUserName
@@ -717,7 +716,7 @@ Function PVWA_Scheduled_Task_Service_LocalUser
 			if((Compare-UserPermissions @userPermissions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			# Verify if Administrators, System and the PVWA User are the only ones that has permissions
 			$pvwaFolderPermissionsAmount = @{
@@ -728,16 +727,16 @@ Function PVWA_Scheduled_Task_Service_LocalUser
 			If((Compare-AmountOfUserPermissions @pvwaFolderPermissionsAmount) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			$pvwaFolderPermissionsAmount["Path"] = $pvwaServicesLogsPath
 			If((Compare-AmountOfUserPermissions @pvwaFolderPermissionsAmount) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -788,7 +787,7 @@ Function PVWA_NonSystemDrive
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 		$regIISSettings = @{
 				"Path" = ""
@@ -812,7 +811,7 @@ Function PVWA_NonSystemDrive
 			{
 				# IIS is installed on the system drive
 				$tmpStatus += "IIS is installed on the System Drive in the defualt location"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 			else
 			{
@@ -825,7 +824,7 @@ Function PVWA_NonSystemDrive
 					if((Compare-RegistryValue @regIISSettings) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
-						$changeStatus = $true
+						$statusChanged = $true
 					}
 
 					$regIISSettings["Path"] = "HKLM:\Software\Wow6432Node\Microsoft\inetstp"
@@ -833,7 +832,7 @@ Function PVWA_NonSystemDrive
 					if((Compare-RegistryValue @regIISSettings) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
-						$changeStatus = $true
+						$statusChanged = $true
 					}
 
 					# Check the IIS Application pool isolation directory
@@ -843,13 +842,13 @@ Function PVWA_NonSystemDrive
 					if((Compare-RegistryValue @regIISSettings) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
-						$changeStatus = $true
+						$statusChanged = $true
 					}
 				}
 
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -898,7 +897,7 @@ Function PVWA_IIS_Hardening
 	Begin {
 		$res = "Good"
 		$tmpStatus = ""
-		$changeStatus = $false
+		$statusChanged = $false
 		$myRef = ""
 
 		# Set Registry values for
@@ -920,7 +919,7 @@ Function PVWA_IIS_Hardening
 			{
 				$tmpStatus += "$($regHTTPService["ValueName"]) registry value does not equal $($regHTTPService["ValueData"])."
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
 			# Check Registry values for MaxRequestBytes
@@ -930,10 +929,10 @@ Function PVWA_IIS_Hardening
 			{
 				$tmpStatus += "$($regHTTPService["ValueName"]) registry value does not equal $($regHTTPService["ValueData"])."
 				$tmpStatus += $myRef.Value + "<BR>"
-				$changeStatus = $true
+				$statusChanged = $true
 			}
 
-			If($changeStatus)
+			If($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -982,9 +981,6 @@ Function PVWA_AdditionalAppPool
 
 	Begin {
 		$res = "Good"
-		$tmpStatus = ""
-		$changeStatus = $false
-		$myRef = ""
 	}
 	Process {
 		Try{
@@ -1063,7 +1059,7 @@ Function PVWA_CredFileHardening
     Process {
         Try{
    			Write-LogMessage -Type Info -Msg "Start validating hardening of PVWA credential file"
-            $pvwaPath = (Find-Components -Component "PVWA").Path
+            $pvwaPath = (Get-DetectedComponents -Component "PVWA").Path
             $credentialsfolder = join-path -Path $pvwaPath -ChildPath 'CredFiles'
 			# Go over all PVWA Cred Files in the folder
 			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.ini))

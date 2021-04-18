@@ -24,7 +24,7 @@ $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 
 # Script Version
-$ScriptVersion = "2.8"
+$ScriptVersion = "2.8.2"
 
 # Set Log file path
 $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
@@ -40,6 +40,7 @@ $CPM_HARDENING_CONFIG = "$ScriptLocation\CPM\CPM_Hardening_Config.xml"
 $PVWA_HARDENING_CONFIG = "$ScriptLocation\PVWA\PVWA_Hardening_Config.xml"
 $PSM_HARDENING_CONFIG = "$ScriptLocation\PSM\PSM_Hardening_Config.xml"
 $VAULT_HARDENING_CONFIG = "$ScriptLocation\Vault\Vault_Hardening_Config.xml"
+$TUNNEL_HARDENING_CONFIG = "$ScriptLocation\SecureTunnel\SecureTunnel_Hardening_Config.xml"
 
 # Set modules paths
 $MODULE_COMMON_UTIL = "$MODULE_BIN_PATH\CommonUtil.psm1"
@@ -48,12 +49,10 @@ $MODULE_CPM_STEPS = "$ScriptLocation\CPM\CPMHardeningSteps.psm1"
 $MODULE_PVWA_STEPS = "$ScriptLocation\PVWA\PVWAHardeningSteps.psm1"
 $MODULE_PSM_STEPS = "$ScriptLocation\PSM\PSMHardeningSteps.psm1"
 $MODULE_VAULT_STEPS = "$ScriptLocation\Vault\VaultHardeningSteps.psm1"
+$MODULE_TUNNEL_STEPS = "$ScriptLocation\SecureTunnel\SecureTunnelHardeningSteps.psm1"
 
 # Output file template
 $REPORT_TEMPLATE_PATH = "$ScriptLocation\Hardening_HealthCheck_Report.html"
-
-# Global Parameter for Components Path
-$global:CurrentComponentPath = ""
 
 #region Helper Functions
 # @FUNCTION@ ======================================================================================================================
@@ -115,6 +114,40 @@ Function Remove-ScriptModule
 }
 
 # @FUNCTION@ ======================================================================================================================
+# Name...........: Get-SummaryOutput
+# Description....: Returns the relevant summary message output based on the parameters
+# Parameters.....: Component, hardening status, more details
+# Return Values..: None
+# =================================================================================================================================
+Function Get-SummaryOutput
+{
+<#
+.SYNOPSIS
+	Write a new Hardening status row to the HTML report output table
+.DESCRIPTION
+	Write a new Hardening status row to the HTML report output table
+.PARAMETER Component
+	The Component that was tested
+.PARAMETER Status
+	The hardening status of the test
+.PARAMETER Details
+	The additional details on the test
+#>
+param(
+	$Component, $status, $details
+)
+	If([string]::IsNullOrEmpty($details))
+	{
+		return "<b>{0}</b> step was completed with status '{1}'.<BR>" -f `
+			$Component, $Status
+	}
+	else
+	{
+		return "<details><summary><b>{0}</b> step was completed with status '{1}'. See more details</summary><p>{2}</p></details><BR>" -f `
+					$Component, $Status, $Details
+	}
+}
+# @FUNCTION@ ======================================================================================================================
 # Name...........: Write-HTMLHardeningStatusTable
 # Description....: Write the Hardening status rows to the HTML report output table
 # Parameters.....: Hardening Status
@@ -127,8 +160,8 @@ Function Write-HTMLHardeningStatusTable
 	Write a new Hardening status row to the HTML report output table
 .DESCRIPTION
 	Write a new Hardening status row to the HTML report output table
-.PARAMETER
-
+.PARAMETER HardeningStatus
+	The hardening status object to build the report from
 #>
 	param(
 		$hardeningStatus
@@ -153,8 +186,7 @@ Function Write-HTMLHardeningStatusTable
 				Write-LogMessage -Type Verbose -Msg "Handling '$($item.Name)' duplication..."
 				$tempDupStatus = $hardeningStatus | Where-Object { $_.Name -eq $item.Name }
 				$tempOutput = $tempDupStatus | ForEach-Object {
-					"<details><summary><b>{0}</b> step was completed with status '{1}'. See more details</summary><p>{2}</p></details><BR>" -f `
-					$_.Component, $_.Status, $_.Output
+					Get-SummaryOutput -Component $_.Component -Status $_.Status -Details $_.Output
 				}
 				#$tempComponent = "<B>[$($tempDupStatus.Component -join "]</B><B>[")]</B>"
 				Write-LogMessage -Type Verbose -Msg ("Component:{0}`nName:{1}`nStatus:{2}`n" -f $item.Component, $item.Name, $item.Status)
@@ -165,8 +197,7 @@ Function Write-HTMLHardeningStatusTable
 			}
 			Else
 			{
-				$Item.Output = "<details><summary><b>{0}</b> step was completed with status '{1}'. See more details</summary><p>{2}</p></details><BR>" -f `
-					$Item.Component, $Item.Status, $Item.Output
+				$Item.Output = Get-SummaryOutput -Component $Item.Component -Status $Item.Status -Details $Item.Output
 			}
 		}
 
@@ -199,7 +230,8 @@ Function Write-HTMLComponentsTable
 	Write components table to the HTML report output table
 .DESCRIPTION
 	Write components table to the HTML report output table
-.PARAMETER
+.PARAMETER componentsData
+	The list of discovered components
 
 #>
 	param(
@@ -217,6 +249,9 @@ Function Write-HTMLComponentsTable
 			{
 				$retText += "<tr>	<td>$($item.Name)</td>	<td>$($item.Version)</td></tr>"
 			}
+		}
+		else {
+			Write-LogMessage -type verbose -Msg "No components found"
 		}
 		$retText += "</tbody></table>"
 		return $retText
@@ -303,68 +338,67 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 	return
 }
 
+# Check that you are running with Admin privileges (So that we can access all paths that are hardened)
+If($(Test-CurrentUserLocalAdmin) -eq $false)
+{
+	Write-LogMessage -Type Error -Msg "In order to get all information, plesae run the script again on an Administrator Powershell session (Run as Admin)"
+	Write-LogMessage -Type Info -Msg "Script ended"
+	return
+}
+
+# Check if relevant files are blocked
+If($null -eq $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*.dll') -Recurse | Get-Item -Stream “Zone.Identifier” -ErrorAction SilentlyContinue))
+{
+	Write-LogMessage -Type Error -Msg "Some files are marked as blocked"
+	$command = "Get-ChildItem -Path $ScriptLocation -Recurse | Unblock-File"
+	Write-LogMessage -Type Info -Msg "To solve this you can run the following command: $command"
+	Write-LogMessage -Type Info -Msg "Script ended"
+	return
+}
+
+#region Prepare Hardening modules dictionary
+$dicComponentHardening = @{
+	"Vault" = @{"Module" = $MODULE_VAULT_STEPS; "Configuration" = $VAULT_HARDENING_CONFIG};
+	"CPM" = @{"Module" = $MODULE_CPM_STEPS; "Configuration" = $CPM_HARDENING_CONFIG};
+	"PVWA" = @{"Module" = $MODULE_PVWA_STEPS; "Configuration" = $PVWA_HARDENING_CONFIG};
+	"PSM" = @{"Module" = $MODULE_PSM_STEPS; "Configuration" = $PSM_HARDENING_CONFIG};
+	"AIM" = @{"Module" = ""; "Configuration" = ""};
+	"EPM" = @{"Module" = ""; "Configuration" = ""};
+	"SecureTunnel" = @{"Module" = $MODULE_TUNNEL_STEPS; "Configuration" = $TUNNEL_HARDENING_CONFIG};
+}
+#endregion
+
 Write-LogMessage -Type Info -MSG "Getting Machine Name" -LogFile $LOG_FILE_PATH
 $machineName = Get-DnsHost
 Write-LogMessage -Type Debug -Msg "Machine Name: $machineName"
 
-Write-LogMessage -Type Info -MSG "Detecting installed components" -LogFile $LOG_FILE_PATH
-$detectedComponents = Find-Components
 
 $hardeningStepsStatus = @()
-ForEach ($comp in $detectedComponents)
+ForEach ($comp in $(Get-DetectedComponents))
 {
-	Write-LogMessage -Type Info -MSG "Running Hardening Validations for component $($comp.Name)" -LogFile $LOG_FILE_PATH
-	Switch($comp.Name)
-	{
-		"Vault"
+	try {
+		Write-LogMessage -Type Info -MSG "Running Hardening Validations for component $($comp.Name)" -LogFile $LOG_FILE_PATH
+		If(![string]::IsNullOrEmpty($dicComponentHardening[$comp.Name].Module))
 		{
-			$moduleInfo = Import-Module $MODULE_VAULT_STEPS -PassThru
-			Set-Variable -Name CurrentComponentPath -Scope Global -Value (Join-Path -Path $ScriptLocation -ChildPath "Vault")
-			$vaultHardeningStepsStatus = Start-HardeningSteps $VAULT_HARDENING_CONFIG
-			$vaultHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "Vault"
-			$hardeningStepsStatus += $vaultHardeningStepsStatus
-			Remove-ScriptModule $moduleInfo
+			$moduleInfo = Import-Module $($dicComponentHardening[$comp.Name].Module) -PassThru
+			Set-CurrentComponentFolderPath -ComponentPath $(Join-Path -Path $ScriptLocation -ChildPath $comp.Name)
+			$compHardeningStepsStatus = Start-HardeningSteps $($dicComponentHardening[$comp.Name].Configuration)
+			$compHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue $comp.Name
+			$hardeningStepsStatus += $compHardeningStepsStatus
+			Remove-Module $moduleInfo		
 		}
-		"CPM"
-		{
-			$moduleInfo = Import-Module $MODULE_CPM_STEPS -PassThru
-			Set-Variable -Name CurrentComponentPath -Scope Global -Value (Join-Path -Path $ScriptLocation -ChildPath "CPM")
-			$cpmHardeningStepsStatus = Start-HardeningSteps $CPM_HARDENING_CONFIG
-			$cpmHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "CPM"
-			$hardeningStepsStatus += $cpmHardeningStepsStatus
-			Remove-ScriptModule $moduleInfo
-		}
-		"PVWA"
-		{
-			$moduleInfo = Import-Module $MODULE_PVWA_STEPS -PassThru
-			Set-Variable -Name CurrentComponentPath -Scope Global -Value (Join-Path -Path $ScriptLocation -ChildPath "PVWA")
-			$pvwaHardeningStepsStatus = Start-HardeningSteps $PVWA_HARDENING_CONFIG
-			$pvwaHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "PVWA"
-			$hardeningStepsStatus += $pvwaHardeningStepsStatus
-			Remove-ScriptModule $moduleInfo
-		}
-		"PSM"
-		{
-			$moduleInfo = Import-Module $MODULE_PSM_STEPS -PassThru
-			Set-Variable -Name CurrentComponentPath -Scope Global -Value (Join-Path -Path $ScriptLocation -ChildPath "PSM")
-			$psmHardeningStepsStatus = Start-HardeningSteps $PSM_HARDENING_CONFIG
-			$psmHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "PSM"
-			$hardeningStepsStatus += $psmHardeningStepsStatus
-			Remove-ScriptModule $moduleInfo
-		}
-		"AIM"
-		{
-			throw [System.NotImplementedException]::New('This Hardening Component check is not implemented.')
-		}
-		"EPM"
+		Else
 		{
 			throw [System.NotImplementedException]::New('This Hardening Component check is not implemented.')
 		}
 	}
+	catch {
+		Write-LogMessage -type Error -Msg "Error running hardening validations for component $($comp.Name). Error: $(Join-ExceptionMessage $_.Exception)" -LogFile $LOG_FILE_PATH
+	}
 }
 
 # Export the Report when Finished
-$outputFile = New-HTMLReportOutput -machineName $machineName -components $detectedComponents -hardeningStatus $hardeningStepsStatus
+$outputFile = New-HTMLReportOutput -machineName $machineName -components $(Get-DetectedComponents) -hardeningStatus $hardeningStepsStatus
 
 Write-LogMessage -Type Info -MSG "Hardening Health Check Report located in: $outputFile" -LogFile $LOG_FILE_PATH
 . $outputFile

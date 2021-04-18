@@ -1,5 +1,10 @@
-[![GitHub release][release-img]][release]
-[![License][license-img]][license]
+[![release][]][github-site]
+[![license][]][license-link]
+
+[release]:https://img.shields.io/github/v/release/cyberark/CYBRHardeningCheck?color=brightgreen
+[github-site]:https://github.com/cyberark/CYBRHardeningCheck/releases/latest
+[license]:https://img.shields.io/github/license/cyberark/CYBRHardeningCheck.svg
+[license-link]:https://github.com/cyberark/CYBRHardeningCheck/blob/main/LICENSE
 
 # CyberArk Hardening Health Check
 One of the most important recommendations for any application, and especially for security applications is to harden the server.
@@ -30,7 +35,7 @@ The tool also provides links to documentation to most of the hardening checks an
 ## Usage
 The package ZIP includes a few folders, a Powershell script (Main.ps1) and a HTML template for the report.
 Download the ZIP and extract it on a CyberArk component server you wish to check
-Open Powershell and run the Main.ps1 script
+Open Powershell (as an Administrator) and run the Main.ps1 script
 ```powershell
 PS> .\Main.ps1
 ```
@@ -111,6 +116,12 @@ Other relevant information will be referenced in the log and the report.
 |HardenPSMUsersAccess|Harden PSM Users Access
 |HardenSMBServices|Harden SMB and XB Services
 |PSM_CredFileHardening|Credential File Hardening
+
+### Privilege Cloud Secure Tunnel specific hardening checks
+|Hardening check      				| Description               
+|-------   						| ------
+|SecureTunnel_Permissions|Check Secure Tunnel folder hardening
+
 
 ## Contributing
 Please see our [`CONTRIBUTING`](CONTRIBUTING.md) for more details.
