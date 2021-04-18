@@ -1,4 +1,6 @@
-﻿# @FUNCTION@ ======================================================================================================================
+﻿$script:NICteamingName = ""
+
+# @FUNCTION@ ======================================================================================================================
 # Name...........: Vault_NICHardening
 # Description....: NIC Hardening
 # Parameters.....:
@@ -44,6 +46,7 @@ Function Vault_NICHardening
 					{
 						# If the Vault has NIC Teaming, then this is OK - just report it
 						$nicTeam = Get-NetLbfoTeam | Where-Object { $_.Status -eq "Up" }
+						$script:NICteamingName = $nicTeam.Name
 						$myRef += "NIC Teaming is enabled.<BR>Team Name: {0}<BR>Team NIC Members: {1}" -f $nicTeam.Name, $($nicTeam.Members -join ", ")
 					}
 					else
@@ -97,11 +100,17 @@ Function Vault_StaticIP
 
 	Begin {
 		$res = "Good"
+		$interfaceAliasPattern = "Eth*"
 	}
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify Vault has static IP"
-			$getdhcpstatus = Get-NetIPAddress -InterfaceAlias "Eth*" -AddressFamily IPv4
+			If(! [string]::IsNullOrEmpty($NICteamingName))
+			{
+				Write-LogMessage -Type Verbose -Msg "Checking Team ($NICteamingName) and not Ethernet"
+				$interfaceAliasPattern = $NICteamingName
+			}
+			$getdhcpstatus = Get-NetIPAddress -InterfaceAlias $interfaceAliasPattern -AddressFamily IPv4
 			ForEach ($item in $getdhcpstatus)
 			{
 				if ($item.PrefixOrigin -eq "Dhcp")
