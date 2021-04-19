@@ -410,14 +410,8 @@ Function Vault_FirewallNonStandardRules
 								break
 							}
 						}
+						Write-LogMessage -Type Verbose -Msg "Added DBParm.ini rule: $($fwRule.FWRuleLine)"
 						$dbParmFWRules += $fwRule
-						# Add ICMP rules if don't exist - usually added for RDP
-						If($($dbParmFWRules | where-object { $_.Protocol -eq "ICMP" -and $_.Direction -eq $fwRule.Direction} ).Count -eq 0)
-						{
-							# Add the same rule for ICMP
-							$fwRule.Protocol = "ICMP"
-							$dbParmFWRules += $fwRule
-						}
 					}
 					Else
 					{
@@ -425,9 +419,38 @@ Function Vault_FirewallNonStandardRules
 					}
 				}
 			}
-
-			Write-LogMessage -Type Verbose -Msg "There are $($dbParmFWRules.count) Non-Standard Firewall rules defined in DBParm.ini"
 			
+			Write-LogMessage -Type Verbose -Msg "There are $($dbParmFWRules.count) Non-Standard Firewall rules defined in DBParm.ini"
+			Write-LogMessage -Type Verbose -Msg "Adding ICMP rules for the DBParm.ini collection"
+
+			# Add ICMPv4
+			If($dbParmFWRules.count -gt 0)
+			{
+				# Add an ICMP rule for every address
+				$addresses = @($dbParmFWRules.RemoteAddress | select-object -Unique)
+				# Add general ICMP rule (any - any)
+				$addresses += "Any"
+				Foreach ($address in $addresses) {
+					Foreach ($direction in @("inbound","outbound"))
+					{
+						$fwRule = "" | Select-Object DisplayGroup,Enabled,Direction,LocalAddress,RemoteAddress,Protocol,LocalPort,RemotePort	
+						$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
+							"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress,$this.Enabled,$(If($this.Direction -eq "inbound") {$this.LocalPort} else {$this.RemotePort}),$this.Direction,$this.Protocol
+						}
+						$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
+						$fwRule.Protocol = "ICMPv4"
+						$fwRule.Enabled = "True"
+						$fwRule.LocalPort = "Any"
+						$fwRule.RemotePort = "Any"
+						$fwRule.LocalAddress = "Any"
+						$fwRule.RemoteAddress = $address
+						$fwRule.Direction = $direction
+						Write-LogMessage -Type Verbose -Msg "Added DBParm.ini rule: $($fwRule.FWRuleLine)"
+						$dbParmFWRules += $fwRule
+					}
+				}
+			}
+
 			$FWRules = @()
 			ForEach($rule in $(get-netfirewallrule -policystore ActiveStore))
 			{
@@ -445,6 +468,7 @@ Function Vault_FirewallNonStandardRules
 				$fwRule.Protocol = $portFilter.Protocol
 				$fwRule.LocalPort = $portFilter.LocalPort
 				$fwRule.RemotePort = $portFilter.RemotePort
+				Write-LogMessage -Type Verbose -Msg "Added Configured Firewall rule: $($fwRule.FWRuleLine)"
 				$FWRules += $fwRule
 			}
 
