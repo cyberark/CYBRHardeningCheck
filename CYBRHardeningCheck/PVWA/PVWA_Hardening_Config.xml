@@ -1,46 +1,46 @@
 <Stage Name="Hardening" Version="1.0">
 
-   <Step Name="ImportingINFConfiguration" DisplayName="Importing INF Configuration" ScriptName="ImportingINFConfiguration" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Automatic%20Hardening%20in%20'Out%20of%20Domain'%20Deployments.htm#Manualimplementation">
+   <Step Name="ImportingINFConfiguration" DisplayName="Importing INF Configuration" ScriptName="ImportingINFConfiguration" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#ImportstheINFconfiguration">
 	<Parameters>
 		<Parameter Name="LocalINFconfigFileName" Value="CyberArk @Component@ Hardening - Local Security Templates.inf" />
 		<Parameter Name="DomainINFconfigFileName" Value="CyberArk @Component@ Hardening - Domain GPO Security Templates.inf" />
 	</Parameters>
    </Step>
    
-   <Step Name="AdvancedAuditPolicyConfiguration" DisplayName="Advanced Audit Policy Configuration" ScriptName="AdvancedAuditPolicyConfiguration"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Advancedauditpolicyconfiguration">
+   <Step Name="AdvancedAuditPolicyConfiguration" DisplayName="Advanced Audit Policy Configuration" ScriptName="AdvancedAuditPolicyConfiguration"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#configures-advanced-audit-policies">
 		<Parameters>
 			<Parameter Name="LocalAuditConfigFileName" Value="CyberArk Components - Local Advanced Audit.csv" />
 			<Parameter Name="DomainAuditConfigFileName" Value="CyberArk @Component@ Hardening - Domain GPO Advanced Audit.csv" />
 		</Parameters>
    </Step>
 
-   <Step Name="ValidateServerRoles" DisplayName="Validate Server Roles" ScriptName="ValidateServerRoles"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Validate%20Proper%20Server%20Roles.htm#ValidateProperServerRoles">
+   <Step Name="ValidateServerRoles" DisplayName="Validate Server Roles" ScriptName="ValidateServerRoles"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#Validatesserverroles">
       <Parameters>
          <Parameter Name="IsPSMInstalled" Value="False"/>
       </Parameters>
    </Step>
    
-   <Step Name= "PVWA_IIS_Registry_Shares" DisplayName="PVWA IIS Registry Shares" ScriptName="PVWA_IIS_Registry_Shares" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Shares.htm#Shares"/>
+   <Step Name= "PVWA_IIS_Registry_Shares" DisplayName="PVWA IIS Registry Shares" ScriptName="PVWA_IIS_Registry_Shares" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#DisablesIISRegistryshares"/>
    
-   <Step Name="PVWA_IIS_WebDAV" DisplayName="PVWA IIS WebDAV" ScriptName="PVWA_IIS_WebDAV" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Web%20Distributed%20Authoring%20and%20Versioning.htm#WebDistributedAuthoringandVersioningWebDAV"/>
+   <Step Name="PVWA_IIS_WebDAV" DisplayName="PVWA IIS WebDAV" ScriptName="PVWA_IIS_WebDAV" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#DisablesIISWebDAV"/>
 
-   <Step Name="PVWA_IIS_MimeTypes" DisplayName="PVWA IIS MimeTypes" ScriptName="PVWA_IIS_MimeTypes"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20MIME%20Types.htm#MIMETypes"/>
+   <Step Name="PVWA_IIS_MimeTypes" DisplayName="PVWA IIS MimeTypes" ScriptName="PVWA_IIS_MimeTypes"  Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#RemovesunnecessaryIISMIMEtypes"/>
 
-   <Step Name= "PVWA_IIS_SSL_TLS_Settings" DisplayName="PVWA IIS SSL TLS Settings" ScriptName="PVWA_IIS_SSL_TLS_Settings" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20SSL-TLS%20Settings.htm#SSLTLSSettings"/>
+   <Step Name= "PVWA_IIS_SSL_TLS_Settings" DisplayName="PVWA IIS SSL TLS Settings" ScriptName="PVWA_IIS_SSL_TLS_Settings" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#IISSSLTLSSettings"/>
    
-   <Step Name= "PVWA_IIS_Cypher_Suites" DisplayName="PVWA IIS Cypher Suites" ScriptName="PVWA_IIS_Cypher_Suites" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/Ciphers.htm#CipherSuites"/>
+   <Step Name= "PVWA_IIS_Cypher_Suites" DisplayName="PVWA IIS Cypher Suites" ScriptName="PVWA_IIS_Cypher_Suites" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#configures-cipher-suites"/>
      
-   <Step Name= "PVWA_Cryptography_Settings" DisplayName="PVWA Cryptography Mode Settings" ScriptName="PVWA_Cryptography_Settings" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20General%20Configuration%20for%20all%20Deployments.htm#pvwa"/>
+   <Step Name= "PVWA_Cryptography_Settings" DisplayName="PVWA Cryptography Mode Settings" ScriptName="PVWA_Cryptography_Settings" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-install-post-installation.htm#EnableFIPScryptography"/>
    
-   <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableScreenSaver" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#ScreenSaver"/>
+   <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableScreenSaver" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#enables-screen-saver-policies"/>
 
-   <Step Name= "RemoteDesktopServices" DisplayName="Remote Desktop Services" ScriptName="RemoteDesktopServices" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Remotedesktopservices"/>
+   <Step Name= "RemoteDesktopServices" DisplayName="Remote Desktop Services" ScriptName="RemoteDesktopServices" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#configures-remote-desktop-services-policies"/>
    
    <Step Name="EventLogSizeAndRetention" DisplayName="EventLog Size And Retention" ScriptName="EventLogSizeAndRetention" Enable="Yes" Description="" />
 
-   <Step Name="RegistryAudits" DisplayName="Registry Audits" ScriptName="RegistryAudits" Enable="Yes" Description="" />
+   <Step Name="RegistryAudits" DisplayName="Registry Audits" ScriptName="RegistryAudits" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#registry-audits" />
 
-   <Step Name= "RegistryPermissions" DisplayName="Registry Permissions" ScriptName="RegistryPermissions" Enable="Yes" Description="" />
+   <Step Name= "RegistryPermissions" DisplayName="Registry Permissions" ScriptName="RegistryPermissions" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#registry-permissions" />
 
    <Step Name="FileSystemPermissions" DisplayName="FileSystem Permissions" ScriptName="FileSystemPermissions" Enable="Yes" Description="" />
 
@@ -59,16 +59,16 @@
    
    <Step Name="PVWA_DirectoryBrowsing" DisplayName="PVWA IIS Directory Browsing" ScriptName="PVWA_DirectoryBrowsing" Enable="Yes" Description="" />
    
-   <Step Name="PVWA_AnonymousAuthentication" DisplayName="PVWA IIS Anonymous Authentication" ScriptName="PVWA_AnonymousAuthentication" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/hardening-anon-auth.htm" />
+   <Step Name="PVWA_AnonymousAuthentication" DisplayName="PVWA IIS Anonymous Authentication" ScriptName="PVWA_AnonymousAuthentication" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#EnablesIISAnonymousauthentication" />
    
-   <Step Name="PVWA_NonSystemDrive" DisplayName="PVWA not installed on System drive" ScriptName="PVWA_NonSystemDrive" Enable="Yes" Description="">
+   <Step Name="PVWA_NonSystemDrive" DisplayName="PVWA installed on Non System drive" ScriptName="PVWA_NonSystemDrive" Enable="Yes" Description="">
    	<Parameters>
          <Parameter Name="PVWAIISDrive" Value="D:"/>
          <Parameter Name="PVWAIISLogsDrive" Value="D:"/>
       </Parameters>
 	</Step>
 	
-	<Step Name="PVWA_AdditionalAppPool" DisplayName="PVWA Application Pool configuration" ScriptName="PVWA_AdditionalAppPool" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Application%20Pool.htm#ApplicationPool">
+	<Step Name="PVWA_AdditionalAppPool" DisplayName="PVWA Application Pool configuration" ScriptName="PVWA_AdditionalAppPool" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-post-hardening-tasks.htm#Removeunneededapplicationpools">
    	  <Parameters>
          <Parameter Name="DedicatedServer" Value="Yes"/>
 	  </Parameters>
