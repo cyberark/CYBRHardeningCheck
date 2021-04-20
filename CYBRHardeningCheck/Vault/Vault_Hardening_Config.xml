@@ -33,4 +33,7 @@
    <Step Name="VaultFWRules" DisplayName="Vault Firewall Rules" Description="" ScriptName="Vault_FirewallNonStandardRules" Enable="Yes">
 	  <Parameters />
    </Step>
+   <Step Name="VaultKeysPermissions" DisplayName="Vault Keys permissions" Description="" ScriptName="Vault_KeysProtection" Enable="Yes">
+	  <Parameters />
+   </Step>
 </Stage>

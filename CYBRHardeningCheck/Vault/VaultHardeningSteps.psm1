@@ -588,3 +588,92 @@ Function Vault_ServerCertificate
 		# Write output to HTML
 	}
 }
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Vault_KeysProtection
+# Description....: Check that the Vault Encryption keys are protected and have the right permissions
+# Parameters.....:
+# Return Values..:
+# =================================================================================================================================
+Function Vault_KeysProtection
+{
+<#
+.SYNOPSIS
+	Method to Check that the Vault Encryption keys are protected and have the right permissions
+.DESCRIPTION
+	Returns the Status of the Vault Encryption keys permissions
+.PARAMETER Parameters
+	(Optional) Parameters from the Configuration
+.PARAMETER Reference Status
+	Reference to the Step Status
+#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[array]$Parameters = $null,
+		[Parameter(Mandatory=$false)]
+		[ref]$refOutput
+	)
+
+	Begin {
+		$res = "Good"
+		$tmpStatus = ""
+	}
+	Process {
+		try{
+			Write-LogMessage -Type Info -Msg "Start validating Vault Encryption keys permissions"
+			$vaultFolder = $(Get-DetectedComponents -Component Vault).Path
+			$DBParmFile = $(Get-ChildItem -Path $vaultFolder -Include "DBParm.ini" -Recurse).FullName
+			# Get the location of all Vault Keys
+			$keysList = $(Get-Content -Path $DBParmFile | Select-String -List "RecoveryPubKey","ServerKey","ServerPrivateKey","RecoveryPrvKey","BackupKey").Line
+			Write-LogMessage -Type Verbose -Msg "Found the following Keys paths: $KeysList"
+			$KeysLocations = @()
+			$KeysLocations += $($keysList | % { Split-Path -Parent -Path $($_.Split("=")[1]) } ) | Select-Object -Unique
+			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
+			foreach ($path in $KeysLocations) {
+				Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
+				if((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+				{
+					$KeysFolderLocalAdmins = $false
+					$res = "Warning"
+				}
+				$tmpStatus += "<li>" + $myRef.Value + "</li>"
+
+				if((Compare-UserPermissions -path $path -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+				{
+					$KeysFolderLocalSystem = $false
+					$res = "Warning"
+				}
+				$tmpStatus += "<li>" + $myRef.Value + "</li>"
+
+				# Verify if Administrators, System and the CPM User are the only ones that has permissions
+				if(($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
+				{
+					If((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
+					{
+						$tmpStatus += "<li>" + $myRef.Value + "</li>"
+						$res = "Warning"
+					}
+					Else { $tmpStatus += "<li> Permissions are set correctly on the path: " + $path + "</li>" }
+				}
+				Else {
+					$tmpStatus += "<li>" + "The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user" + "</li>"
+					$res = "Warning"
+				}
+			}
+
+			[ref]$refOutput.Value = "<ul>"+$tmpStatus+"</ul>"
+			
+			Write-LogMessage -Type Info -Msg "Finish validating Vault Encryption keys permissions"
+
+			return $res
+		}
+		catch{
+			Write-LogMessage -Type "Error" -Msg "Could not verify Vault Server Certificate. Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$refOutput.Value = "Could not verify Vault Server Certificate."
+			return "Bad"
+		}
+	}
+	End {
+		# Write output to HTML
+	}
+}
