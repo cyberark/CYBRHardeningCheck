@@ -74,7 +74,7 @@ Two main files are the Hardening steps script (saved as \*.psm1) and the hardeni
 #### GeneralHardeningSteps.psm1
 - ImportingINFConfiguration
 - ValidateServerRoles
-- DisableScreenSaver
+- EnableScreenSaver
 - AdvancedAuditPolicyConfiguration
 - RemoteDesktopServices
 - EventLogSizeAndRetention

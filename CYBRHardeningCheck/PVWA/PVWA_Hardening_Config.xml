@@ -32,7 +32,7 @@
      
    <Step Name= "PVWA_Cryptography_Settings" DisplayName="PVWA Cryptography Mode Settings" ScriptName="PVWA_Cryptography_Settings" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20General%20Configuration%20for%20all%20Deployments.htm#pvwa"/>
    
-   <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableScreenSaver" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#ScreenSaver"/>
+   <Step Name="EnableScreenSaver" DisplayName="Enable ScreenSaver" ScriptName="EnableScreenSaver" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#ScreenSaver"/>
 
    <Step Name= "RemoteDesktopServices" DisplayName="Remote Desktop Services" ScriptName="RemoteDesktopServices" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#Remotedesktopservices"/>
    

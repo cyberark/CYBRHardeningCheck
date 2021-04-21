@@ -54,7 +54,7 @@ Other relevant information will be referenced in the log and the report.
 |--------      						| -------               
 |ImportingINFConfiguration			|Importing an INF File to the Local Machine
 |ValidateServerRoles				|This function checks for unnecessary roles
-|DisableScreenSaver					|Checks if the screen saver is disabled
+|EnableScreenSaver					|Checks if the screen saver is disabled
 |AdvancedAuditPolicyConfiguration	|Advanced Audit Policy Configuration
 |RemoteDesktopServices				|Check Remote Desktop Services settings
 |EventLogSizeAndRetention			|Check Event Log and Retention settings
