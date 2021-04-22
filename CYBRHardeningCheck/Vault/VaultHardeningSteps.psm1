@@ -630,7 +630,7 @@ Function Vault_KeysProtection
 			$KeysLocations += $($keysList | ForEach-Object { Split-Path -Parent -Path $($_.Split("=")[1]) } ) | Select-Object -Unique
 			
 			# Check if the Recovery key exists on the server
-			$RecoveryKey = ($keysList | Where-Object { $_ -match "RecoveryPrvKey=" })
+			$RecoveryKey = ($keysList | Where-Object { $_ -match "RecoveryPrvKey=" }).Split("=")[1]
 			Write-LogMessage -Type Verbose -Msg "Checking if the RecoveryKey exists on the machine"
 			Write-LogMessage -Type Verbose -Msg "Current RecoveryKey path: $RecoveryKey"
 			If(Test-Path $RecoveryKey)
