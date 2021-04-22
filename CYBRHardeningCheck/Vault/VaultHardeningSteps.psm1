@@ -625,9 +625,9 @@ Function Vault_KeysProtection
 			$DBParmFile = $(Get-ChildItem -Path $vaultFolder -Include "DBParm.ini" -Recurse).FullName
 			# Get the location of all Vault Keys
 			$keysList = $(Get-Content -Path $DBParmFile | Select-String -List "RecoveryPubKey","ServerKey","ServerPrivateKey","RecoveryPrvKey","BackupKey").Line
-			Write-LogMessage -Type Verbose -Msg "Found the following Keys paths: $($KeysList -join `n)"
+			Write-LogMessage -Type Verbose -Msg "Found the following Keys paths: $($KeysList -join "; ")"
 			$KeysLocations = @()
-			$KeysLocations += $($keysList | % { Split-Path -Parent -Path $($_.Split("=")[1]) } ) | Select-Object -Unique
+			$KeysLocations += $($keysList | ForEach-Object { Split-Path -Parent -Path $($_.Split("=")[1]) } ) | Select-Object -Unique
 			
 			# Check if the Recovery key exists on the server
 			$RecoveryKey = ($keysList | Where-Object { $_ -match "RecoveryPrvKey=" })
