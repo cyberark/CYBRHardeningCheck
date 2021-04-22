@@ -625,16 +625,21 @@ Function Vault_KeysProtection
 			$DBParmFile = $(Get-ChildItem -Path $vaultFolder -Include "DBParm.ini" -Recurse).FullName
 			# Get the location of all Vault Keys
 			$keysList = $(Get-Content -Path $DBParmFile | Select-String -List "RecoveryPubKey","ServerKey","ServerPrivateKey","RecoveryPrvKey","BackupKey").Line
-			Write-LogMessage -Type Verbose -Msg "Found the following Keys paths: $($KeysList -join "; ")"
+			Write-LogMessage -Type Verbose -Msg "Found the following Keys paths: $($KeysList -join '; ')"
 			$KeysLocations = @()
 			$KeysLocations += $($keysList | ForEach-Object { Split-Path -Parent -Path $($_.Split("=")[1]) } ) | Select-Object -Unique
 			
 			# Check if the Recovery key exists on the server
 			$RecoveryKey = ($keysList | Where-Object { $_ -match "RecoveryPrvKey=" })
+			Write-LogMessage -Type Verbose -Msg "Checking if the RecoveryKey exists on the machine"
+			Write-LogMessage -Type Verbose -Msg "Current RecoveryKey path: $RecoveryKey"
 			If(Test-Path $RecoveryKey)
 			{
 				$res = "Warning"
 				$tmpStatus += "<li>It is not recommended to have the Recovery Key on the Vault server.</li>"
+			}
+			else {
+				Write-LogMessage -Type Verbose -Msg "RecoveryKey is not accessible on machine"
 			}
 
 			# Check that all paths have the right permissions
