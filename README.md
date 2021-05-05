@@ -1,10 +1,13 @@
 [![release][]][github-site]
 [![license][]][license-link]
+[![downloads][]][github-site]
 
 [release]:https://img.shields.io/github/v/release/cyberark/CYBRHardeningCheck?color=brightgreen
 [github-site]:https://github.com/cyberark/CYBRHardeningCheck/releases/latest
 [license]:https://img.shields.io/github/license/cyberark/CYBRHardeningCheck.svg
 [license-link]:https://github.com/cyberark/CYBRHardeningCheck/blob/main/LICENSE
+[downloads]:https://img.shields.io/github/downloads/cyberark/CYBRHardeningCheck/total?color=brightgreen
+
 
 # CyberArk Hardening Health Check
 One of the most important recommendations for any application, and especially for security applications is to harden the server.
