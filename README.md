@@ -1,10 +1,12 @@
 [![release][]][github-site]
 [![license][]][license-link]
+[![downloads][]][github-site]
 
 [release]:https://img.shields.io/github/v/release/cyberark/CYBRHardeningCheck?color=brightgreen
 [github-site]:https://github.com/cyberark/CYBRHardeningCheck/releases/latest
 [license]:https://img.shields.io/github/license/cyberark/CYBRHardeningCheck.svg
 [license-link]:https://github.com/cyberark/CYBRHardeningCheck/blob/main/LICENSE
+[downloads]:https://img.shields.io/github/downloads/cyberark/CYBRHardeningCheck/total?color=brightgreen
 
 # CyberArk Hardening Health Check
 One of the most important recommendations for any application, and especially for security applications is to harden the server.
@@ -33,6 +35,8 @@ The tool also provides links to documentation to most of the hardening checks an
 <Example Report Image>
 
 ## Usage
+
+### General
 The package ZIP includes a few folders, a Powershell script (Main.ps1) and a HTML template for the report.
 Download the ZIP and extract it on a CyberArk component server you wish to check
 Open Powershell (as an Administrator) and run the Main.ps1 script
@@ -47,6 +51,16 @@ PS> ./Main.ps1 -Debug -Verbose
 
 The tool creates a log file by default that contains all steps taken by the script (when using Verbose logging you will get a lot more info in the log file)
 Other relevant information will be referenced in the log and the report.
+
+### Custom checks
+You can add a custom hardening check by providing a hardening XML
+You can see an exmaple of such XML file in the [Custom folder](https://github.com/cyberark/CYBRHardeningCheck/tree/main/CYBRHardeningCheck/Custom/Custom_Hardening_Config.xml)
+and use the CustomXML parameter
+```powershell
+PS> .\Main.ps1 -CustomXML "C:\Scripts\CYBRHardeningCheck\Custom\Custom_Hardening_Config.xml"
+```
+
+This custom check will be added to any CyberArk component hardening check that is found
 
 ## Available Hardening tests
 ### Cross-Component hardening checks
