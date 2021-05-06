@@ -469,7 +469,7 @@ Function RunApplocker
 		$res = "Good"
 		$tmpStatus = ""
 		$changeStatus = $false
-		$PSM_ApplockerConfiguration = Join-Path -Path $(Get-DetectedComponents -Component "PSM").Path -ChildPath "PSMConfigureAppLocker.xml"
+		$PSM_ApplockerConfiguration = Join-Path -Path $(Get-DetectedComponents -Component "PSM").Path -ChildPath "Hardening\PSMConfigureAppLocker.xml"
 		$ruleTypesList = @("Exe","Script","Msi","Dll")
 	}
 	Process {
