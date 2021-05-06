@@ -32,7 +32,7 @@
      
    <Step Name= "PVWA_Cryptography_Settings" DisplayName="PVWA Cryptography Mode Settings" ScriptName="PVWA_Cryptography_Settings" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-install-post-installation.htm#EnableFIPScryptography"/>
    
-   <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableScreenSaver" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#enables-screen-saver-policies"/>
+   <Step Name="EnableScreenSaver" DisplayName="Enable ScreenSaver" ScriptName="EnableScreenSaver" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#ScreenSaver"/>
 
    <Step Name= "RemoteDesktopServices" DisplayName="Remote Desktop Services" ScriptName="RemoteDesktopServices" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#configures-remote-desktop-services-policies"/>
    
@@ -61,7 +61,7 @@
    
    <Step Name="PVWA_AnonymousAuthentication" DisplayName="PVWA IIS Anonymous Authentication" ScriptName="PVWA_AnonymousAuthentication" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#EnablesIISAnonymousauthentication" />
    
-   <Step Name="PVWA_NonSystemDrive" DisplayName="PVWA installed on Non System drive" ScriptName="PVWA_NonSystemDrive" Enable="Yes" Description="">
+   <Step Name="PVWA_NonSystemDrive" DisplayName="PVWA installed on Non System drive" ScriptName="PVWA_NonSystemDrive" Enable="Yes" Description="https://blogs.iis.net/thomad/moving-the-iis7-inetpub-directory-to-a-different-drive">
    	<Parameters>
          <Parameter Name="PVWAIISDrive" Value="D:"/>
          <Parameter Name="PVWAIISLogsDrive" Value="D:"/>

@@ -14,7 +14,7 @@
 		</Parameters>
    </Step>
    
-   <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableTheScreenSaverForThePSMLocalUsers" Enable="Yes"/>
+   <Step Name="EnableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableTheScreenSaverForThePSMLocalUsers" Enable="Yes"/>
 
 	<!-- The following step configures properties for users PSMConnect and PSMAdminConnect-->
 	<Step Name ="ConfigurePSMUsers" DisplayName="Configure users for PSM sessions" ScriptName="ConfigureUsersForPSMSessions" Enable="Yes"/>

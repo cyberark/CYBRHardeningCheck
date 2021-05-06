@@ -20,7 +20,7 @@
       </Parameters>
    </Step>
    
-   <Step Name="DisableScreenSaver" DisplayName="Enable ScreenSaver" ScriptName="DisableScreenSaver" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/CPM-hardening-task-descriptions.htm#enables-screen-saver-policies" />
+   <Step Name="EnableScreenSaver" DisplayName="Enable ScreenSaver" ScriptName="EnableScreenSaver" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Security/EPV%20Out%20of%20Domain%20PVWA%20and%20CPM%20Server.htm#ScreenSaver" />
 
    <Step Name= "RemoteDesktopServices" DisplayName="Remote Desktop Services" ScriptName="RemoteDesktopServices" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/CPM-hardening-task-descriptions.htm#configures-remote-desktop-services-policies"/>
    
