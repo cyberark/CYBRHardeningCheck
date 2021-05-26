@@ -15,16 +15,21 @@
 [CmdletBinding()]
 param
 (
+	# Use this switch to disable Auto-Update
+	[Parameter(Mandatory=$false)]
+	[Switch]$DisableAutoUpdate
 )
 
+# Get the full script path
+$ScriptFullPath = $MyInvocation.MyCommand.Path
 # Get Script Location
-$ScriptLocation = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptLocation = Split-Path -Parent $ScriptFullPath
 # Get Debug / Verbose parameters for Script
 $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 
 # Script Version
-$ScriptVersion = "2.8.2"
+$ScriptVersion = "2.9.1"
 
 # Set Log file path
 $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
@@ -111,6 +116,88 @@ Function Remove-ScriptModule
 	}
 	End {
 	}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Test-LatestVersion
+# Description....: Tests if the script is running the latest version
+# Parameters.....: NONE
+# Return Values..: True / False
+# =================================================================================================================================
+Function Test-LatestVersion
+{
+<# 
+.SYNOPSIS 
+	Tests if the script is running the latest version
+.DESCRIPTION
+	Tests if the script is running the latest version
+#>
+	$githubURL = "https://raw.githubusercontent.com"
+	$repositoryURL = "$githubURL/cyberark/CYBRHardeningCheck/tree/main"
+	$scriptFolderPath = "CYBRHardeningCheck"
+	$scriptName = "Main.ps1"
+	$scriptURL = "$repositoryURL/$scriptFolderPath/$scriptName"
+	$getScriptContent = ""
+	$retLatestVersion = $true
+	try{
+		$getScriptContent = (Invoke-WebRequest -UseBasicParsing -Uri $scriptURL).Content
+	}
+	catch
+	{
+		Throw $(New-Object System.Exception ("Test-LatestVersion: Couldn't download and check for latest version",$_.Exception))
+	}
+	If($($getScriptContent -match "ScriptVersion\s{0,1}=\s{0,1}\""([\d\.]{1,5})\"""))
+	{
+		$gitHubScriptVersion = $Matches[1]
+		# Get a Major-Minor number format
+		$gitHubMajorMinor = [double]($gitHubScriptVersion.Split(".")[0..1])
+		$currentMajorMinor = [double]($ScriptVersion.Split(".")[0..1])
+		# Check if we have a Major-Minor-Patch version number or only Major-Minor
+		If($gitHubScriptVersion.Split(".").count -gt 2)
+		{
+			$gitHubPatch = [int]$gitHubScriptVersion.Split(".")[2]
+			$currentPatch = [int]$ScriptVersion.Split(".")[2]
+		}
+		$downloadLatestVersion = $false
+		# Check the Major-Minor version
+		If($gitHubMajorMinor -ge $currentMajorMinor)
+		{
+			If($gitHubMajorMinor -eq $currentMajorMinor)
+			{
+				# Check the patch version
+				$downloadLatestVersion = $($gitHubPatch -gt $currentPatch)
+			}
+			else {
+				$downloadLatestVersion = $true
+			}
+		}
+
+		# Check if we need to use the gitHub version
+		If($downloadLatestVersion)
+		{
+			$retLatestVersion = $false
+			Write-LogMessage -Type Info -MSG "Found new version: $gitHubScriptVersion - Updating..."
+			$getScriptContent | Out-File "$ScriptFullPath.NEW"
+			If (Test-Path -Path "$ScriptFullPath.NEW")
+			{
+				Rename-Item -path $ScriptFullPath -NewName "$ScriptFullPath.OLD"
+				Rename-Item -Path "$ScriptFullPath.NEW" -NewName $ScriptFullPath
+				Remove-Item -Path "$ScriptFullPath.OLD"	
+			}
+			Else
+			{
+				Write-LogMessage -Type Error -MSG  "Can't find the new script at location '$ScriptFullPath.NEW'."
+				# Revert to current version in case of error
+				$retLatestVersion = $true
+			}
+		}
+		Else
+		{
+			Write-LogMessage -Type Info -MSG  "Current version ($ScriptVersion) is the latest!"
+		}
+	}
+	
+	return $retLatestVersion
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -311,6 +398,7 @@ Function New-HTMLReportOutput
 #endregion
 
 #---------------
+#region [Basic Pre-requisites]
 # Check if Powershell is running in Constrained Language Mode
 If($ExecutionContext.SessionState.LanguageMode -ne "FullLanguage")
 {
@@ -355,6 +443,25 @@ If($null -ne $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*
 	Write-LogMessage -Type Info -Msg "Script ended"
 	return
 }
+#endregion [Basic Pre-requisites]
+
+# Check for latest script version
+If(!$DisableAutoUpdate)
+{
+	try{
+		If($(Test-LatestVersion) -eq $false)
+		{
+			# Run the updated script
+			$scriptPathAndArgs = "powershell.exe -NoLogo -File `"$ScriptFullPath`" "
+			Write-LogMessage -Type Info -MSG "Finished Updating, relaunching the script"
+			Invoke-Expression $scriptPathAndArgs
+			# Exit the current script
+			return
+		}
+	} catch {
+		Write-LogMessage -Type Error -MSG "Error checking for latest version. Error: $(Join-ExceptionMessage $_.Exception)"
+	}
+}
 
 #region Prepare Hardening modules dictionary
 $dicComponentHardening = @{
@@ -371,7 +478,6 @@ $dicComponentHardening = @{
 Write-LogMessage -Type Info -MSG "Getting Machine Name" -LogFile $LOG_FILE_PATH
 $machineName = Get-DnsHost
 Write-LogMessage -Type Debug -Msg "Machine Name: $machineName"
-
 
 $hardeningStepsStatus = @()
 ForEach ($comp in $(Get-DetectedComponents))
