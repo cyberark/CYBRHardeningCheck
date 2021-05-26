@@ -155,8 +155,8 @@ Function Test-LatestVersion
 		# Check if we have a Major-Minor-Patch version number or only Major-Minor
 		If($gitHubScriptVersion.Split(".").count -gt 2)
 		{
-			$gitHubPatch = [int]$gitHubScriptVersion.Split(".")[2]
-			$currentPatch = [int]$ScriptVersion.Split(".")[2]
+			$gitHubPatch = [int]($gitHubScriptVersion.Split(".")[2])
+			$currentPatch = [int]($ScriptVersion.Split(".")[2])
 		}
 		$downloadLatestVersion = $false
 		# Check the Major-Minor version
