@@ -48,8 +48,9 @@ $VAULT_HARDENING_CONFIG = "$ScriptLocation\Vault\Vault_Hardening_Config.xml"
 $TUNNEL_HARDENING_CONFIG = "$ScriptLocation\SecureTunnel\SecureTunnel_Hardening_Config.xml"
 
 # Set modules paths
-$MODULE_COMMON_UTIL = "$MODULE_BIN_PATH\CommonUtil.psm1"
-$MODULE_GENERAL_STEPS = "$MODULE_BIN_PATH\GeneralHardeningSteps.psm1"
+$MODULE_COMMON_UTIL = "$MODULE_BIN_PATH\CommonUtil.psd1"
+$MODULE_GENERAL_STEPS = "$MODULE_BIN_PATH\GeneralHardeningSteps.psd1"
+$MODULE_LATEST_VERSION = "$MODULE_BIN_PATH\LatestVersionCheck.psd1"
 $MODULE_CPM_STEPS = "$ScriptLocation\CPM\CPMHardeningSteps.psm1"
 $MODULE_PVWA_STEPS = "$ScriptLocation\PVWA\PVWAHardeningSteps.psm1"
 $MODULE_PSM_STEPS = "$ScriptLocation\PSM\PSMHardeningSteps.psm1"
@@ -82,9 +83,10 @@ Function Import-ScriptModule
 	Process {
 		$commonUtilInfo = Import-Module $MODULE_COMMON_UTIL -Force -DisableNameChecking -PassThru -ErrorAction Stop
 		$generalInfo = Import-Module $MODULE_GENERAL_STEPS -Force -DisableNameChecking -PassThru -ErrorAction Stop
+		$LatestVersionInfo = Import-Module $MODULE_LATEST_VERSION -Force -DisableNameChecking -PassThru -ErrorAction Stop
 	}
 	End {
-		return $commonUtilInfo,$generalInfo
+		return $commonUtilInfo,$generalInfo,$LatestVersionInfo
 	}
 }
 
@@ -116,88 +118,6 @@ Function Remove-ScriptModule
 	}
 	End {
 	}
-}
-
-# @FUNCTION@ ======================================================================================================================
-# Name...........: Test-LatestVersion
-# Description....: Tests if the script is running the latest version
-# Parameters.....: NONE
-# Return Values..: True / False
-# =================================================================================================================================
-Function Test-LatestVersion
-{
-<# 
-.SYNOPSIS 
-	Tests if the script is running the latest version
-.DESCRIPTION
-	Tests if the script is running the latest version
-#>
-	$githubURL = "https://raw.githubusercontent.com"
-	$repositoryURL = "$githubURL/cyberark/CYBRHardeningCheck/tree/main"
-	$scriptFolderPath = "CYBRHardeningCheck"
-	$scriptName = "Main.ps1"
-	$scriptURL = "$repositoryURL/$scriptFolderPath/$scriptName"
-	$getScriptContent = ""
-	$retLatestVersion = $true
-	try{
-		$getScriptContent = (Invoke-WebRequest -UseBasicParsing -Uri $scriptURL).Content
-	}
-	catch
-	{
-		Throw $(New-Object System.Exception ("Test-LatestVersion: Couldn't download and check for latest version",$_.Exception))
-	}
-	If($($getScriptContent -match "ScriptVersion\s{0,1}=\s{0,1}\""([\d\.]{1,5})\"""))
-	{
-		$gitHubScriptVersion = $Matches[1]
-		# Get a Major-Minor number format
-		$gitHubMajorMinor = [double]($gitHubScriptVersion.Split(".")[0..1])
-		$currentMajorMinor = [double]($ScriptVersion.Split(".")[0..1])
-		# Check if we have a Major-Minor-Patch version number or only Major-Minor
-		If($gitHubScriptVersion.Split(".").count -gt 2)
-		{
-			$gitHubPatch = [int]($gitHubScriptVersion.Split(".")[2])
-			$currentPatch = [int]($ScriptVersion.Split(".")[2])
-		}
-		$downloadLatestVersion = $false
-		# Check the Major-Minor version
-		If($gitHubMajorMinor -ge $currentMajorMinor)
-		{
-			If($gitHubMajorMinor -eq $currentMajorMinor)
-			{
-				# Check the patch version
-				$downloadLatestVersion = $($gitHubPatch -gt $currentPatch)
-			}
-			else {
-				$downloadLatestVersion = $true
-			}
-		}
-
-		# Check if we need to use the gitHub version
-		If($downloadLatestVersion)
-		{
-			$retLatestVersion = $false
-			Write-LogMessage -Type Info -MSG "Found new version: $gitHubScriptVersion - Updating..."
-			$getScriptContent | Out-File "$ScriptFullPath.NEW"
-			If (Test-Path -Path "$ScriptFullPath.NEW")
-			{
-				Rename-Item -path $ScriptFullPath -NewName "$ScriptFullPath.OLD"
-				Rename-Item -Path "$ScriptFullPath.NEW" -NewName $ScriptFullPath
-				Remove-Item -Path "$ScriptFullPath.OLD"	
-			}
-			Else
-			{
-				Write-LogMessage -Type Error -MSG  "Can't find the new script at location '$ScriptFullPath.NEW'."
-				# Revert to current version in case of error
-				$retLatestVersion = $true
-			}
-		}
-		Else
-		{
-			Write-LogMessage -Type Info -MSG  "Current version ($ScriptVersion) is the latest!"
-		}
-	}
-	
-	return $retLatestVersion
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -448,8 +368,16 @@ If($null -ne $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*
 # Check for latest script version
 If(!$DisableAutoUpdate)
 {
+	$parameters = @{
+		currentVersion = $ScriptVersion;
+		repositoryName = "cyberark/CYBRHardeningCheck";
+		repositoryFolderPath = "CYBRHardeningCheck";
+		scriptVersionFileName = "Main.ps1";
+		branch = "main";
+		sourceFolderPath = $ScriptLocation;
+	}
 	try{
-		If($(Test-LatestVersion) -eq $false)
+		If($(Test-GitHubLatestVersion @parameters) -eq $false)
 		{
 			# Run the updated script
 			$scriptPathAndArgs = "powershell.exe -NoLogo -File `"$ScriptFullPath`" "
