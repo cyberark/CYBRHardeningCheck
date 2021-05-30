@@ -8,6 +8,7 @@
 [license-link]:https://github.com/cyberark/CYBRHardeningCheck/blob/main/LICENSE
 [downloads]:https://img.shields.io/github/downloads/cyberark/CYBRHardeningCheck/total?color=brightgreen
 
+
 # CyberArk Hardening Health Check
 One of the most important recommendations for any application, and especially for security applications is to harden the server.
 CyberArk provides recommendations and automation scripts to harden its servers to make sure best security.
@@ -68,7 +69,7 @@ This custom check will be added to any CyberArk component hardening check that i
 |--------      						| -------               
 |ImportingINFConfiguration			|Importing an INF File to the Local Machine
 |ValidateServerRoles				|This function checks for unnecessary roles
-|DisableScreenSaver					|Checks if the screen saver is disabled
+|EnableScreenSaver					|Checks if the screen saver is disabled
 |AdvancedAuditPolicyConfiguration	|Advanced Audit Policy Configuration
 |RemoteDesktopServices				|Check Remote Desktop Services settings
 |EventLogSizeAndRetention			|Check Event Log and Retention settings
