@@ -28,7 +28,9 @@ Function Test-ScriptLatestVersion
         [Parameter(Mandatory=$true)]
         [string]$currentVersion,
         [Parameter(Mandatory=$false)]
-        [string]$versionPattern = "ScriptVersion"
+        [string]$versionPattern = "ScriptVersion",
+        [Parameter(Mandatory=$false)]
+        [ref]$outGitHubVersion
     )
     $getScriptContent = ""
     $isLatestVersion = $false
@@ -37,7 +39,11 @@ Function Test-ScriptLatestVersion
         If($($getScriptContent -match "$versionPattern\s{0,1}=\s{0,1}\""([\d\.]{1,10})\"""))
 	    {
             $gitHubScriptVersion = $Matches[1]
-            Write-LogMessage -Type Info -MSG "Current Version: $currentVersion; GitHub Version: $gitHubScriptVersion"
+            if($null -ne $outGitHubVersion)
+            {
+                $outGitHubVersion.Value = $gitHubScriptVersion
+            }
+            Write-LogMessage -Type debug -Msg  "Current Version: $currentVersion; GitHub Version: $gitHubScriptVersion"
             # Get a Major-Minor number format
             $gitHubMajorMinor = [double]($gitHubScriptVersion.Split(".")[0..1] -join '.')
             $currentMajorMinor = [double]($currentVersion.Split(".")[0..1] -join '.')
@@ -61,12 +67,12 @@ Function Test-ScriptLatestVersion
             }
         }
         else {
-            Throw "Test-ScriptVersion: Couldn't match Script Version pattern ($versionPattern)"
+            Throw "Test-ScriptLatestVersion: Couldn't match Script Version pattern ($versionPattern)"
         }
 	}
 	catch
 	{
-		Throw $(New-Object System.Exception ("Test-ScriptVersion: Couldn't download and check for latest version",$_.Exception))
+		Throw $(New-Object System.Exception ("Test-ScriptLatestVersion: Couldn't download and check for latest version",$_.Exception))
 	}
     return $isLatestVersion
 }
@@ -108,20 +114,57 @@ Function Copy-GitHubContent
                 $itemDir = Join-Path -Path $outputFolderPath -ChildPath $item.name
                 if(! (Test-Path -path $itemDir))
                 {
-                    New-Item -ItemType Directory -Path $itemDir
+                    New-Item -ItemType Directory -Path $itemDir | Out-Null
                 }		
                 # Get all relevant files from the folder
                 Copy-GitHubContent -outputFolderPath $itemDir -gitHubItemURL $item.url
             }
             elseif ($item.type -eq "file") {
-                $getFileContent = (Invoke-WebRequest -UseBasicParsing -Uri ($item.download_url)).Content
-                $getFileContent | Out-File -FilePath $(Join-Path -Path $outputFolderPath -ChildPath $item.name)
+                Invoke-WebRequest -UseBasicParsing -Uri ($item.download_url) -OutFile $(Join-Path -Path $outputFolderPath -ChildPath $item.name)
             }
         }
     }
     catch{
         Throw $(New-Object System.Exception ("Copy-GitHubContent: Couldn't download files and folders from GitHub URL ($gitHubItemURL)",$_.Exception))
     }
+}
+
+Function Replace-Item
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [ValidateScript({Test-Path $_})]
+        [string]$Path,
+        [Parameter(Mandatory=$true)]
+        [ValidateScript({Test-Path $_})]
+        [string]$Destination,
+        [Parameter(Mandatory=$false)]
+        [switch]$Recurse
+    )
+
+    try{
+        foreach($item in $(Get-ChildItem -Recurse:$Recurse -Path $Path))
+        {
+            $destPath = split-path -path $item.fullName.Replace($Path, $Destination) -Parent
+            $oldName = "$($item.name).OLD"
+            if(Test-Path -Path $(Join-Path -path $destPath -ChildPath $item.name))
+            {
+                Rename-Item -Path $(Join-Path -path $destPath -ChildPath $item.name) -NewName $oldName
+                Copy-Item -path $item.fullname -Destination $(Join-Path -path $destPath -ChildPath $item.name)
+                Remove-Item -path $(Join-Path -path $destPath -ChildPath $oldName)
+            }
+            Else
+			{
+				Write-LogMessage -Type Warning -Msg  "Can't find file $($item.name) in destination location '$destPath' to replace, copying"
+                Copy-Item -path $item.fullname -Destination $destPath
+			}
+        }
+    }
+    catch{
+        Throw $(New-Object System.Exception ("eplace-Item: Couldn't Replace files",$_.Exception))
+    }
+
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -154,6 +197,9 @@ Function Test-GitHubLatestVersion
 .PARAMETER branch
     The branch to search for
     Default main
+.PARAMETER versionPattern
+    The pattern to check in the script
+    Default: ScriptVersion
 .PARAMETER TestOnly
     Switch parameter to perform only test
     If not exclusively selected, the function will update the script if a new version is found
@@ -173,6 +219,8 @@ param (
     [Parameter(Mandatory=$false)]
     [string]$branch = "main",
     [Parameter(Mandatory=$false)]
+    [string]$versionPattern = "ScriptVersion",
+    [Parameter(Mandatory=$false)]
     [switch]$TestOnly
 )
     if([string]::IsNullOrEmpty($repositoryFolderPath))
@@ -187,7 +235,8 @@ param (
 	try{
 		$folderContents = $(Invoke-RestMethod -Method Get -Uri $apiURL)
 		$scriptURL = $($folderContents | Where-Object { $_.Type -eq "file" -and $_.Name -eq $scriptVersionFileName }).download_url
-        $downloadLatestVersion = Test-ScriptLatestVersion -fileURL $scriptURL -currentVersion $currentVersion
+        $gitHubVersion = 0
+        $shouldDownloadLatestVersion = Test-ScriptLatestVersion -fileURL $scriptURL -currentVersion $currentVersion -outGitHubVersion ([ref]$gitHubVersion)
 	}
 	catch
 	{
@@ -196,34 +245,41 @@ param (
 	
     try{
         # Check if we need to download the gitHub version
-        If($downloadLatestVersion -and (! $TestOnly))
+        If($shouldDownloadLatestVersion)
         {
+            # GitHub has a more updated version
             $retLatestVersion = $false
-            Write-LogMessage -Type Info -MSG "Found new version, Updating..."
-            # Create a new tmp folder to download all files to
-            $tmpFolder = Join-Path -path $sourceFolderPath -ChildPath "tmp"
-            if(! (Test-Path -path $tmpFolder))
+            If(! $TestOnly) # Not Test only, update script
             {
-                New-Item -ItemType Directory -Path $tmpFolder
+                Write-LogMessage -Type Debug -Msg  "Found new version (version $gitHubVersion), Updating..."
+                # Create a new tmp folder to download all files to
+                $tmpFolder = Join-Path -path $sourceFolderPath -ChildPath "tmp"
+                if(! (Test-Path -path $tmpFolder))
+                {
+                    New-Item -ItemType Directory -Path $tmpFolder | Out-Null
+                }
+                try{
+                    # Download the entire folder (files and directories) to the tmp folder
+                    Copy-GitHubContent -outputFolderPath $tmpFolder -gitHubItemURL $apiURL
+                    # Replace the current folder content
+                    Replace-Item -Recurse -Path $tmpFolder -Destination $sourceFolderPath
+                    # Remove tmp folder
+                    Remove-Item -Recurse -Path $tmpFolder -Force
+                }
+                catch
+                {
+                    # Revert to current version in case of error
+                    $retLatestVersion = $true
+                    Write-LogMessage -Type Error -Msg "There was an error downloading GitHub content. Error: $(Join-ExceptionMessage $_.Exception)"
+                }
             }
-            try{
-                # Download the entire folder (files and directories) to the tmp folder
-                Copy-GitHubContent -outputFolderPath $tmpFolder -gitHubItemURL $apiURL
-                # Replace the current folder content
-                #Copy-Item -Recurse -Path $tmpFolder -Destination $ScriptLocation -Force
-                # Remove tmp folder
-                Remove-Item -Recurse -Path $tmpFolder -Force
-            }
-            catch
-	        {
-                Write-LogMessage -Type Error -MSG "There was an error downloading GitHub content. Error: $(Join-ExceptionMessage $_.Exception)"
-                # Revert to current version in case of error
-                $retLatestVersion = $true
+            else {
+                Write-LogMessage -Type Debug -Msg "Found a new version in GitHub (version $gitHubVersion), skipping update"    
             }
         }
         Else
         {
-            Write-LogMessage -Type Info -MSG  "Current version ($currentVersion) is the latest!"
+            Write-LogMessage -Type Debug -Msg "Current version ($currentVersion) is the latest!"
         }
     }
     catch

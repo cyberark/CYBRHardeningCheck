@@ -368,7 +368,7 @@ If($null -ne $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*
 # Check for latest script version
 If(!$DisableAutoUpdate)
 {
-	$parameters = @{
+	$gitHubLatestVersionParameters = @{
 		currentVersion = $ScriptVersion;
 		repositoryName = "cyberark/CYBRHardeningCheck";
 		repositoryFolderPath = "CYBRHardeningCheck";
@@ -377,10 +377,11 @@ If(!$DisableAutoUpdate)
 		sourceFolderPath = $ScriptLocation;
 	}
 	try{
-		If($(Test-GitHubLatestVersion @parameters) -eq $false)
+		$isLatestVersion = $(Test-GitHubLatestVersion @gitHubLatestVersionParameters)
+		If($isLatestVersion -eq $false)
 		{
 			# Run the updated script
-			$scriptPathAndArgs = "powershell.exe -NoLogo -File `"$ScriptFullPath`" "
+			$scriptPathAndArgs = "& `"$ScriptFullPath`" "
 			Write-LogMessage -Type Info -MSG "Finished Updating, relaunching the script"
 			Invoke-Expression $scriptPathAndArgs
 			# Exit the current script
