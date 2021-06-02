@@ -45,7 +45,7 @@ PS> .\Main.ps1
 
 For troubleshooting or getting more information about the checks done, you can run the script using Verbose logging
 ```powershell
-PS> ./Main.ps1 -Debug -Verbose
+PS> .\Main.ps1 -Debug -Verbose
 ```
 
 The tool creates a log file by default that contains all steps taken by the script (when using Verbose logging you will get a lot more info in the log file)
