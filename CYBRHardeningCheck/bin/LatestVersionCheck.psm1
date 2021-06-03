@@ -48,7 +48,7 @@ Function Test-ScriptLatestVersion
             $gitHubMajorMinor = [double]($gitHubScriptVersion.Split(".")[0..1] -join '.')
             $currentMajorMinor = [double]($currentVersion.Split(".")[0..1] -join '.')
             # Check if we have a Major-Minor-Patch version number or only Major-Minor
-            If($gitHubScriptVersion.Split(".").count -gt 2)
+            If(($gitHubScriptVersion.Split(".").count -gt 2) -or ($currentVersion.Split(".").count -gt 2))
             {
                 $gitHubPatch = [int]($gitHubScriptVersion.Split(".")[2])
                 $currentPatch = [int]($currentVersion.Split(".")[2])
