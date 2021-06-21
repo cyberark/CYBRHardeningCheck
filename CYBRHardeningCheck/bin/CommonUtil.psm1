@@ -2246,40 +2246,51 @@ Function Compare-AdvancedAuditPolicySubCategory
 		[ref]$outStatus
 	)
 	Begin{
-
+		$returnVal = "Good"
 	}
 	Process {
-		$returnVal = $true
 		try {
 			Write-LogMessage -Type "Info" -Msg "Checking Advance Audit Policy Sub Category for '$subcategory'"
 
-			$verifySuccess = $true
-			$verifyFailure = $true
+			$verifySuccess = $false
+			$verifyFailure = $false
 			$auditLineOutput = ""
 			$_subCategory = $subcategory
 			# Avoid "Error 0x00000057 occurred"
 			If($subcategory -match "(?:^Audit\s)(.*)")
 			{
-				# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
-				$_subCategory = $Matches[1]
+				# Add an exception for "Audit Policy Change"
+				If($subcategory -ne "Audit Policy Change")
+				{
+					# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
+					$_subCategory = $Matches[1]
+				}
 			}
 			$auditCommandOutput = auditpol /get /subCategory:"$_subCategory" | Where-Object {$_ -match $_subCategory}
-			ForEach($item in $auditCommandOutput)
+			if($null -ne $auditCommandOutput)
 			{
-				if($item -ne "")
+				ForEach($item in $auditCommandOutput)
 				{
-					$auditLineOutput = $item.Trim()
-					Write-LogMessage -Type Debug -Msg "Found Audit Policy: $auditLineOutput"
-					$auditPolicy = $item.Trim() -split "($_subCategory\s+)"
-					# Assuming $auditPolicy[0] is empty
-					if($auditPolicy[1] -eq $_subCategory)
+					if($item -ne "")
 					{
-						# $auditPolicy[2] is where the Success, Failure data will be
-						$verifySuccess = Test-EnabledPolicySetting -PolicyStatus $success -MatchValue $auditPolicy[2] -NotMatchCriteria "Success"
-						$verifyFailure = Test-EnabledPolicySetting -PolicyStatus $failure -MatchValue $auditPolicy[2] -NotMatchCriteria "Failure"
-						break
+						$auditLineOutput = $item.Trim()
+						Write-LogMessage -Type Debug -Msg "Found Audit Policy: $auditLineOutput"
+						$auditPolicy = $item.Trim() -split "($_subCategory\s+)"
+						# Assuming $auditPolicy[0] is empty
+						if($auditPolicy[1] -eq $_subCategory)
+						{
+							# $auditPolicy[2] is where the Success, Failure data will be
+							$verifySuccess = Test-EnabledPolicySetting -PolicyStatus $success -MatchValue $auditPolicy[2] -NotMatchCriteria "Success"
+							$verifyFailure = Test-EnabledPolicySetting -PolicyStatus $failure -MatchValue $auditPolicy[2] -NotMatchCriteria "Failure"
+							break
+						}
 					}
 				}
+			}
+			else {
+				Write-LogMessage -Type Error -Msg "There was a problem verifying Advance Audit Policy Sub Category for '$_subCategory'"
+				$returnVal = "Warning"
+				[ref]$outStatus.Value = "There was a problem verifying Advance Audit Policy Sub Category for '$_subCategory'"
 			}
 			if($verifySuccess -and $verifyFailure)
 			{

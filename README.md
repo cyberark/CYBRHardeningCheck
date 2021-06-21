@@ -1,5 +1,13 @@
-[![GitHub release][release-img]][release]
-[![License][license-img]][license]
+[![release][]][github-site]
+[![license][]][license-link]
+[![downloads][]][github-site]
+
+[release]:https://img.shields.io/github/v/release/cyberark/CYBRHardeningCheck?color=brightgreen
+[github-site]:https://github.com/cyberark/CYBRHardeningCheck/releases/latest
+[license]:https://img.shields.io/github/license/cyberark/CYBRHardeningCheck.svg
+[license-link]:https://github.com/cyberark/CYBRHardeningCheck/blob/main/LICENSE
+[downloads]:https://img.shields.io/github/downloads/cyberark/CYBRHardeningCheck/total?color=brightgreen
+
 
 # CyberArk Hardening Health Check
 One of the most important recommendations for any application, and especially for security applications is to harden the server.
@@ -37,7 +45,7 @@ PS> .\Main.ps1
 
 For troubleshooting or getting more information about the checks done, you can run the script using Verbose logging
 ```powershell
-PS> ./Main.ps1 -Debug -Verbose
+PS> .\Main.ps1 -Debug -Verbose
 ```
 
 The tool creates a log file by default that contains all steps taken by the script (when using Verbose logging you will get a lot more info in the log file)
@@ -48,8 +56,8 @@ Other relevant information will be referenced in the log and the report.
 |Hardening check      				| Description               
 |--------      						| -------               
 |ImportingINFConfiguration			|Importing an INF File to the Local Machine
-|ValidateServerRoles				|Checks for unnecessary server roles
-|DisableScreenSaver					|Checks if the screen saver is disabled
+|ValidateServerRoles				|This function checks for unnecessary roles
+|EnableScreenSaver					|Checks if the screen saver is disabled
 |AdvancedAuditPolicyConfiguration	|Advanced Audit Policy Configuration
 |RemoteDesktopServices				|Check Remote Desktop Services settings
 |EventLogSizeAndRetention			|Check Event Log and Retention settings
@@ -68,6 +76,8 @@ Other relevant information will be referenced in the log and the report.
 |Vault_WindowsFirewall				|Check that the Vault has the Firewall active
 |Vault_DomainJoined					|Check that the Vault was not joined to a Domain
 |Vault_LogicContainerServiceLocalUser|Vault Logic Container Service LocalUser
+|Vault_FirewallNonStandardRules|Vault Firewall Rule
+|Vault_ServerCertificate|Vault Server Certificate
 
 ### CPM specific hardening checks
 |Hardening check      				| Description               

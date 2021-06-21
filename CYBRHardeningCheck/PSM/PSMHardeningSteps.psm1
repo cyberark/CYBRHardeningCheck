@@ -469,7 +469,7 @@ Function RunApplocker
 		$res = "Good"
 		$tmpStatus = ""
 		$changeStatus = $false
-		$PSM_ApplockerConfiguration = Join-Path -Path $(Get-DetectedComponents -Component "PSM").Path -ChildPath "PSMConfigureAppLocker.xml"
+		$PSM_ApplockerConfiguration = Join-Path -Path $(Get-DetectedComponents -Component "PSM").Path -ChildPath "Hardening\PSMConfigureAppLocker.xml"
 		$ruleTypesList = @("Exe","Script","Msi","Dll")
 	}
 	Process {
@@ -678,7 +678,7 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 	Process {
 		try{
 			# Disable Screen Saver on server
-			If((DisableScreenSaver -refOutput ([ref]$myRef)) -ne "Good")
+			If((EnableScreenSaver -refOutput ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value
 			}
