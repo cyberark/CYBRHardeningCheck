@@ -358,8 +358,7 @@ function Out-HardeningFolderPath {
 	)
 	$fileContent = Get-Content $Path
 	$stringToReplace = "@@@Hardening_Scripts_Folder@@@"
-	$allFolders = $(Get-ChildItem -Path c:\ -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue)
-	Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "CPM|PVWA|PSM|AIM" }
+	$allFolders = $(Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "CPM|PVWA|PSM|AIM" })
 	Write-LogMessage -Type Debug -Msg "Found $($allFolders.count) fodlers named 'InstallationAutomation'"
 	If($allFolders.Count -gt 1)
 	{
