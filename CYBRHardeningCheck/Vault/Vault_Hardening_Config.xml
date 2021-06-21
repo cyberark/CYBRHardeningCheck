@@ -25,4 +25,15 @@
          <Parameter Name="LCServiceUserName" Value="LogicContainerUser"/>
       </Parameters>
    </Step>
+   
+   <Step Name="VaultServerCertificate" DisplayName="Vault Server Certificate" Description="" ScriptName="Vault_ServerCertificate" Enable="Yes">
+	  <Parameters />
+   </Step>
+   
+   <Step Name="VaultFWRules" DisplayName="Vault Firewall Rules" Description="" ScriptName="Vault_FirewallNonStandardRules" Enable="Yes">
+	  <Parameters />
+   </Step>
+   <Step Name="VaultKeysPermissions" DisplayName="Vault Keys permissions" Description="" ScriptName="Vault_KeysProtection" Enable="Yes">
+	  <Parameters />
+   </Step>
 </Stage>
