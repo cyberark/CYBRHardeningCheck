@@ -349,6 +349,40 @@ Function New-HTMLReportOutput
 		return $exportFilePath
 	}
 }
+
+function Out-HardeningFolderPath {
+	param (
+		[Parameter(Mandatory=$true)]
+		[ValidateScript({ Test-Path $_ })]
+		[string]$Path
+	)
+	$fileContent = Get-Content $Path
+	$stringToReplace = "@@@Hardening_Scripts_Folder@@@"
+	$allFolders = $(Get-ChildItem -Path c:\ -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue)
+	Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "CPM|PVWA|PSM|AIM" }
+	Write-LogMessage -Type Debug -Msg "Found $($allFolders.count) fodlers named 'InstallationAutomation'"
+	If($allFolders.Count -gt 1)
+	{
+		# Assuming that all found folders relate to CyberArk
+		$outString = "<ul>"
+		Foreach($folder in $allFolders)
+		{
+			$outString += "<li>$($folder.FullName)</li>"
+		}
+		$outString += "</ul>"
+	}
+	elseif($allFolders -eq 1)
+	{
+		$outString = "'$($allFolders.FullName)'"
+	}
+	else {
+		$outString = "Did not find CyberArk Hardening scripts folder on this machine."
+	}
+	# Replace the data
+	$fileContent = $fileContent.Replace($stringToReplace,$outString)
+	# Export the data to the file
+	$fileContent | Out-File $path -Encoding utf8
+}
 #endregion
 
 #---------------
@@ -440,6 +474,8 @@ ForEach ($comp in $(Get-DetectedComponents))
 
 # Export the Report when Finished
 $outputFile = New-HTMLReportOutput -machineName $machineName -components $(Get-DetectedComponents) -hardeningStatus $hardeningStepsStatus
+# Add the Hardening Scripts folder to the report
+Out-HardeningFolderPath -Path $outputFile
 
 Write-LogMessage -Type Info -MSG "Hardening Health Check Report located in: $outputFile" -LogFile $LOG_FILE_PATH
 . $outputFile
