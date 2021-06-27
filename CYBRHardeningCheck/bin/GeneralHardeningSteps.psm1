@@ -58,13 +58,11 @@ Function ImportingINFConfiguration
 			# Get the Component relative INF file path
 			$INFconfigFilePath = Get-CurrentComponentFolderPath -FileName $INFconfigFileName
 			
-			# $seceditRetVaule = secedit /import /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet
-
-			# if ((-not (Test-Path $SDBFileName)) -Or ($LASTEXITCODE -eq 1))
-			# {
-			# 	throw "Importing INF file: $INFconfigFileName has failed - Unable to create SDB file"
-			# 	return "Bad"
-			# }
+			if(!Test-Path $INFconfigFilePath)
+			{
+				# INF Configuration was not found
+				Throw "Could not find configuration file in path: $INFconfigFilePath"
+			}
 
 			$seceditRetVaule = secedit /analyze /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet /log $AnalyzeLogName
 			# $seceditRetVaule = secedit /analyze /db $SDBFileName /log $AnalyzeLogName

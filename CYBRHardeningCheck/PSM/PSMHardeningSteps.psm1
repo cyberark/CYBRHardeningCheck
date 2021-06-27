@@ -90,90 +90,6 @@ Function ConfigureUsersForPSMSessions
 }
 
 # @FUNCTION@ ======================================================================================================================
-# Name...........: PSMForWebApplications
-# Description....:
-# Parameters.....:
-# Return Values..:
-# =================================================================================================================================
-Function PSMForWebApplications
-{
-<#
-.SYNOPSIS
-
-.DESCRIPTION
-
-.PARAMETER Parameters
-	(Optional) Parameters from the Configuration
-.PARAMETER Reference Status
-	Reference to the Step Status
-#>
-	param(
-		[Parameter(Mandatory=$false)]
-		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
-		[ref]$refOutput
-	)
-
-	Begin {
-		$res = "Good"
-		$tmpStatus = ""
-		$statusChanged = $false
-		$myRef = ""
-	}
-	Process {
-		try{
-			Write-LogMessage -Type Info -Msg "Start verify PSMForWebApplications"
-
-			# Check Disable Internet Explorer Enhanced Security Configuration
-			$regESC = @{
-				"Path" = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
-				"ValueName" = "IsInstalled";
-				"ValueData" = 0;
-				"outStatus" = ([ref]$myRef);
-			}
-
-			if((Compare-RegistryValue @regESC) -ne "Good")
-			{
-				$tmpStatus += $myRef.Value + "<BR>"
-				$statusChanged = $true
-			}
-
-			# Check Prevent-RunningFirstRunWizard
-			$regFRW = @{
-				"Path" = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main";
-				"ValueName" = "DisableFirstRunCustomize";
-				"ValueData" = 2;
-				"outStatus" = ([ref]$myRef);
-			}
-
-			if((Compare-RegistryValue @regFRW) -ne "Good")
-			{
-				$tmpStatus += $myRef.Value + "<BR>"
-				$statusChanged = $true
-			}
-
-			If($statusChanged)
-			{
-				$res = "Warning"
-				[ref]$refOutput.Value = $tmpStatus
-			}
-
-			Write-LogMessage -Type Info -Msg "Finish verify PSMForWebApplications"
-
-			return $res
-		}
-		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not verify PSMForWebApplications.  Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$refOutput.Value = "Could not verify PSMForWebApplications."
-			return "Bad"
-		}
-	}
-	End {
-		# Write output to HTML
-	}
-}
-
-# @FUNCTION@ ======================================================================================================================
 # Name...........: EnableUsersToPrintPSMSessions
 # Description....:
 # Parameters.....:
@@ -312,6 +228,35 @@ Function SupportWebApplications
 				}
 			}
 			
+			# IE Specific hardening settings check
+			# Check Disable Internet Explorer Enhanced Security Configuration
+			$regESC = @{
+				"Path" = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
+				"ValueName" = "IsInstalled";
+				"ValueData" = 0;
+				"outStatus" = ([ref]$myRef);
+			}
+
+			if((Compare-RegistryValue @regESC) -ne "Good")
+			{
+				$tmpStatus += $myRef.Value + "<BR>"
+				$changeStatus = $true
+			}
+
+			# Check Prevent-RunningFirstRunWizard
+			$regFRW = @{
+				"Path" = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main";
+				"ValueName" = "DisableFirstRunCustomize";
+				"ValueData" = 2;
+				"outStatus" = ([ref]$myRef);
+			}
+
+			if((Compare-RegistryValue @regFRW) -ne "Good")
+			{
+				$tmpStatus += $myRef.Value + "<BR>"
+				$changeStatus = $true
+			}
+
 			If($changeStatus)
 			{
 				$res = "Warning"

@@ -258,15 +258,21 @@ Function CPM_DisableDEPForExecutables
 					break 
 				}
 				3 {
-					$res = "Warning"
+					$res = "Good"
 					$retDEPSettings += "DEP is enabled for all processes. Administrators can manually create a list of specific applications which do not have DEP applied (OptOut)."
                     $retDEPSettings += "This is required for PMTerminal but not for the replacement application TPC."
-					$retDEPSettings += "The current Exclusions are:<ul>"
-					ForEach ($exc in $depExclusionsList)
+					If($depExclusionsList.Count -eq 0)
 					{
-						$retDEPSettings += "<li>$($exc.Name)</li>"
+						Write-LogMessage -Type Error "Could not get DEP Exclusions List"
 					}
-					$retDEPSettings += "</ul>"
+					else {
+						$retDEPSettings += "The current Exclusions are:<ul>"
+						ForEach ($exc in $depExclusionsList)
+						{
+							$retDEPSettings += "<li>$($exc.Name)</li>"
+						}
+						$retDEPSettings += "</ul>"
+					}
                     $retDEPSettings += "Note that PMTerminal is end of life in September 2020"
 					$retDEPSettings += "'TPC' is the replacement application that does not require DEP exceptions"
 					break

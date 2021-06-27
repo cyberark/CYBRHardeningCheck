@@ -487,7 +487,7 @@ ForEach ($comp in $(Get-DetectedComponents))
 		}
 		Else
 		{
-			throw [System.NotImplementedException]::New('This Hardening Component check is not implemented.')
+			throw [System.NotImplementedException]::new('This Hardening Component check is not implemented.')
 		}
 	}
 	catch {

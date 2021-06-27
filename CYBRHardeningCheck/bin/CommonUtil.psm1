@@ -1,4 +1,7 @@
-﻿#region Writer Functions
+﻿Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")
+Set-Variable -Name UnsupportedHardeningComponents -Option ReadOnly -Value @("AIM","EPM","SecureTunnel")
+
+#region Writer Functions
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Write-LogMessage
 # Description....: Writes the message to log and screen
@@ -650,7 +653,10 @@ Function Find-Components
 #>
 	param(
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")]
+		[ValidateScript({   
+			if($_ -in (@("All")+$DetectionSupportedComponents)) { return $true }
+			else{ throw "Use one of these components: $($validSet -join ', ')" }
+		})]
 		[String]$Component = "All"
 	)
 
@@ -794,7 +800,7 @@ Function Find-Components
 				"All"
 				{
 					try{
-						ForEach($comp in @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel"))
+						ForEach($comp in $DetectionSupportedComponents)
 						{
 							$retArrComponents += Find-Components -Component $comp
 						}
@@ -1384,8 +1390,8 @@ Function Get-ParsedFileNameByComponent
 	Process {
 		if($fileName -match "@Component@")
 		{
-			# Exclude SecureTunnel
-			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_ -ne "SecureTunnel" })
+			# Exclude Non-supported components
+			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_ -notin $UnsupportedHardeningComponents })
 			return ($fileName -Replace "@Component@", $($componentsList -join " "))
 		}
 		else
@@ -1416,7 +1422,10 @@ Function Get-DetectedComponents
 	param(
 		# Component naem
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")]
+		[ValidateScript({   
+			if($_ -in (@("All")+$DetectionSupportedComponents)) { return $true }
+			else{ throw "Use one of these components: $($validSet -join ', ')" }
+		})]
 		[string]$Component = "All"
 	)
 	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script -ErrorAction Ignore)
