@@ -273,7 +273,7 @@ Function CPM_DisableDEPForExecutables
 						}
 						$retDEPSettings += "</ul>"
 					}
-                    $retDEPSettings += "Note that PMTerminal is end of life in September 2020"
+                    $retDEPSettings += "Note that PMTerminal is end of life in December 2021"
 					$retDEPSettings += "'TPC' is the replacement application that does not require DEP exceptions"
 					break
 				}

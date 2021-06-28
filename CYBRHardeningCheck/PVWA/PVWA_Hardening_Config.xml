@@ -61,7 +61,7 @@
    
    <Step Name="PVWA_AnonymousAuthentication" DisplayName="PVWA IIS Anonymous Authentication" ScriptName="PVWA_AnonymousAuthentication" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/PVWA-hardening-task-descriptions.htm#EnablesIISAnonymousauthentication" />
    
-   <Step Name="PVWA_NonSystemDrive" DisplayName="PVWA installed on Non System drive" ScriptName="PVWA_NonSystemDrive" Enable="Yes" Description="https://blogs.iis.net/thomad/moving-the-iis7-inetpub-directory-to-a-different-drive">
+   <Step Name="PVWA_NonSystemDrive" DisplayName="PVWA installed on Non System drive (Optional)" ScriptName="PVWA_NonSystemDrive" Enable="Yes" Description="https://blogs.iis.net/thomad/moving-the-iis7-inetpub-directory-to-a-different-drive">
    	<Parameters>
          <Parameter Name="PVWAIISDrive" Value="D:"/>
          <Parameter Name="PVWAIISLogsDrive" Value="D:"/>
