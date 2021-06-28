@@ -388,17 +388,47 @@ Function New-HTMLReportOutput
 	}
 }
 
-function Out-HardeningFolderPath {
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Out-HardeningFolderPath
+# Description....: Adds the Hardening folder path found on the machine
+# Parameters.....: Path to HTML report, number of detected components
+# Return Values..: Updates the HTML file with the relevant folder paths
+# =================================================================================================================================
+Function Out-HardeningFolderPath {
+<#
+.SYNOPSIS
+	Searches the Hardening folder on the machine
+.DESCRIPTION
+	Updates the Hardening folder path found on the machine in the HTML report
+.PARAMETER Path
+	The path to the HTML report to update
+.PARAMETER TotalComponentsFound
+	The number of components found (for makng the search quicker)
+#>
 	param (
 		[Parameter(Mandatory=$true)]
 		[ValidateScript({ Test-Path $_ })]
-		[string]$Path
+		[string]$Path,
+		[Parameter(Mandatory=$false)]
+		[int]$TotalComponentsFound = 1
 	)
+	Write-LogMessage -Type Info -Msg "Start looking for hardening fodlers named 'InstallationAutomation'"
+	Write-LogMessage -Type Verbose -Msg "Should find maximum of $TotalComponentsFound folders"
 	$fileContent = Get-Content $Path
 	$stringToReplace = "@@@Hardening_Scripts_Folder@@@"
-	$allFolders = $(Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "CPM|PVWA|PSM|AIM" })
-	Write-LogMessage -Type Debug -Msg "Found $($allFolders.count) fodlers named 'InstallationAutomation'"
-	If($allFolders.Count -gt 1)
+	$x = 0 
+	# Start a background job to search all InstallaiotnAutomation folders and limit it to the maximum number of Total Components found
+	# Might want to add in the future filter on the actual components folder names (e.g. "CPM|PVWA|PSM|AIM")
+	Start-Job -Name FileCollection -ScriptBlock {Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Select-Object -First $args[0] } -ArgumentList $TotalComponentsFound | Out-Null
+	While((Get-Job -Name FileCollection).State -eq "Running") 
+	{ 
+		Write-Progress -Activity "Searching for Hardening folders..." -PercentComplete $x 
+		If($x -eq 100){ $x = 1 } Else { $x += 1 } 
+	} 
+	Write-Progress -Activity "Searching for Hardening folders..." -Completed 
+	$allFolders = Receive-Job -Name FileCollection -AutoRemoveJob -Wait
+	Write-LogMessage -Type Debug -Msg "Found $($allFolders.FullName.Count) fodlers named 'InstallationAutomation'"
+	If($allFolders.FullName.Count -gt 1)
 	{
 		# Assuming that all found folders relate to CyberArk
 		$outString = "<ul>"
@@ -408,7 +438,7 @@ function Out-HardeningFolderPath {
 		}
 		$outString += "</ul>"
 	}
-	elseif($allFolders -eq 1)
+	elseif($allFolders.FullName.Count -eq 1)
 	{
 		$outString = "'$($allFolders.FullName)'"
 	}
@@ -524,7 +554,7 @@ ForEach ($comp in $(Get-DetectedComponents))
 # Export the Report when Finished
 $outputFile = New-HTMLReportOutput -machineName $machineName -components $(Get-DetectedComponents) -hardeningStatus $hardeningStepsStatus
 # Add the Hardening Scripts folder to the report
-Out-HardeningFolderPath -Path $outputFile
+Out-HardeningFolderPath -Path $outputFile -TotalComponentsFound $(Get-DetectedComponents).Name.Count
 
 Write-LogMessage -Type Info -MSG "Hardening Health Check Report located in: $outputFile" -LogFile $LOG_FILE_PATH
 . $outputFile
