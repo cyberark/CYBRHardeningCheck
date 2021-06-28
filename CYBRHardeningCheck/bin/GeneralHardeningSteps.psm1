@@ -872,12 +872,12 @@ Function DisableServices
 				Try {
 					If((Compare-ServiceStatus -ServiceName $svc -ServiceStartMode "Disabled" -outStatus ([ref]$myRef)) -ne "Good")
 					{
-						$tmpStatus += $myRef.Value + "<BR>"
+						$tmpStatus += "<li>" + $myRef.Value + "</li>"
 						$statusChanged = $true
 					}
 				} Catch {
 					Write-LogMessage -Type "Error" -Msg "Could not validate service '$svc' status.  Error: $(Join-ExceptionMessage $_.Exception)"
-					$tmpStatus += "Could not validate service '$svc' status."
+					$tmpStatus += "<li>Could not validate service '$svc' status.</li>"
 					$statusChanged = $true
 				}
 			}
@@ -885,7 +885,7 @@ Function DisableServices
 			If($statusChanged)
 			{
 				$res = "Warning"
-				[ref]$refOutput.Value = $tmpStatus
+				[ref]$refOutput.Value = "<ul>" + $tmpStatus + "</ul>"
 			}
 
 			Write-LogMessage -Type Info -Msg "Finish verification of disabled status of the following services: $($serviceList -join ", ")"
