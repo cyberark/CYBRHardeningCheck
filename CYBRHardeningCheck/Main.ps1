@@ -15,6 +15,7 @@
 [CmdletBinding()]
 param
 (
+	[switch]$LocalDebug
 )
 
 # Get Script Location
@@ -22,6 +23,7 @@ $ScriptLocation = Split-Path -Parent $MyInvocation.MyCommand.Path
 # Get Debug / Verbose parameters for Script
 $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
+$global:LocalDebug = $LocalDebug
 
 # Script Version
 $ScriptVersion = "2.9"
@@ -41,6 +43,12 @@ $PVWA_HARDENING_CONFIG = "$ScriptLocation\PVWA\PVWA_Hardening_Config.xml"
 $PSM_HARDENING_CONFIG = "$ScriptLocation\PSM\PSM_Hardening_Config.xml"
 $VAULT_HARDENING_CONFIG = "$ScriptLocation\Vault\Vault_Hardening_Config.xml"
 $TUNNEL_HARDENING_CONFIG = "$ScriptLocation\SecureTunnel\SecureTunnel_Hardening_Config.xml"
+If($LocalDebug)
+{
+	#debug only
+	$DEBUG_HARDENING_CONFIG = "$ScriptLocation\Debug\Debug_Hardening_Config.xml"
+	#enddebug
+}
 
 # Set modules paths
 $MODULE_COMMON_UTIL = "$MODULE_BIN_PATH\CommonUtil.psm1"
@@ -50,6 +58,12 @@ $MODULE_PVWA_STEPS = "$ScriptLocation\PVWA\PVWAHardeningSteps.psm1"
 $MODULE_PSM_STEPS = "$ScriptLocation\PSM\PSMHardeningSteps.psm1"
 $MODULE_VAULT_STEPS = "$ScriptLocation\Vault\VaultHardeningSteps.psm1"
 $MODULE_TUNNEL_STEPS = "$ScriptLocation\SecureTunnel\SecureTunnelHardeningSteps.psm1"
+If($LocalDebug)
+{
+	#debug only
+	$MODULE_DEBUG_STEPS = "$ScriptLocation\Debug\DebugHardeningSteps.psm1"
+	#enddebug
+}
 
 # Output file template
 $REPORT_TEMPLATE_PATH = "$ScriptLocation\Hardening_HealthCheck_Report.html"
@@ -436,6 +450,8 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 	return
 }
 
+If(! $LocalDebug)
+{
 # Check that you are running with Admin privileges (So that we can access all paths that are hardened)
 If($(Test-CurrentUserLocalAdmin) -eq $false)
 {
@@ -443,7 +459,10 @@ If($(Test-CurrentUserLocalAdmin) -eq $false)
 	EndScript
 	return
 }
+}
 
+If(! $LocalDebug)
+{
 # Check if relevant files are blocked
 If($null -ne $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*.dll') -Recurse | Get-Item -Stream “Zone.Identifier” -ErrorAction SilentlyContinue))
 {
@@ -452,6 +471,7 @@ If($null -ne $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*
 	Write-LogMessage -Type Info -Msg "To solve this you can run the following command: $command"
 	EndScript
 	return
+}
 }
 
 #region Prepare Hardening modules dictionary
@@ -463,6 +483,12 @@ $dicComponentHardening = @{
 	"AIM" = @{"Module" = ""; "Configuration" = ""};
 	"EPM" = @{"Module" = ""; "Configuration" = ""};
 	"SecureTunnel" = @{"Module" = $MODULE_TUNNEL_STEPS; "Configuration" = $TUNNEL_HARDENING_CONFIG};
+}
+If($LocalDebug)
+{
+	$dicComponentHardening += @{ 
+		"Debug" = @{"Module" = $MODULE_DEBUG_STEPS; "Configuration" = $DEBUG_HARDENING_CONFIG};
+	}
 }
 #endregion
 

@@ -1,0 +1,4 @@
+<Stage Name="Hardening" Version="1.0">
+   <Step Name="DisableServices" DisplayName="Disable Services" ScriptName="DisableServices" Enable="Yes" Description="https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/Release%20Notes/RN-WhatsNew.htm"/>
+   <Step Name="CheckFolder" DisplayName="Check folder" ScriptName="Debug_CheckFolder" Enable="Yes" Description=""/>
+</Stage>
