@@ -1,4 +1,7 @@
-﻿#region Writer Functions
+﻿Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel","Debug")
+Set-Variable -Name UnsupportedHardeningComponents -Option ReadOnly -Value @("AIM","EPM","SecureTunnel")
+
+#region Writer Functions
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Write-LogMessage
 # Description....: Writes the message to log and screen
@@ -650,7 +653,10 @@ Function Find-Components
 #>
 	param(
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel","Debug")]
+		[ValidateScript({   
+			if($_ -in (@("All")+$DetectionSupportedComponents)) { return $true }
+			else{ throw "Use one of these components: $($validSet -join ', ')" }
+		})]
 		[String]$Component = "All"
 	)
 
@@ -805,12 +811,7 @@ Function Find-Components
 				"All"
 				{
 					try{
-						$componentsList = @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel") 
-						if($LocalDebug)
-						{
-							$componentsList += "Debug"
-						}
-						ForEach($comp in $componentsList)
+						ForEach($comp in $DetectionSupportedComponents)
 						{
 							$retArrComponents += Find-Components -Component $comp
 						}
@@ -1400,8 +1401,8 @@ Function Get-ParsedFileNameByComponent
 	Process {
 		if($fileName -match "@Component@")
 		{
-			# Exclude SecureTunnel
-			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_ -ne "SecureTunnel" })
+			# Exclude Non-supported components
+			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_ -notin $UnsupportedHardeningComponents })
 			return ($fileName -Replace "@Component@", $($componentsList -join " "))
 		}
 		else
@@ -1432,7 +1433,10 @@ Function Get-DetectedComponents
 	param(
 		# Component naem
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel","Debug")]
+		[ValidateScript({   
+			if($_ -in (@("All")+$DetectionSupportedComponents)) { return $true }
+			else{ throw "Use one of these components: $($validSet -join ', ')" }
+		})]
 		[string]$Component = "All"
 	)
 	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script -ErrorAction Ignore)
@@ -2262,40 +2266,51 @@ Function Compare-AdvancedAuditPolicySubCategory
 		[ref]$outStatus
 	)
 	Begin{
-
+		$returnVal = "Good"
 	}
 	Process {
-		$returnVal = $true
 		try {
 			Write-LogMessage -Type "Info" -Msg "Checking Advance Audit Policy Sub Category for '$subcategory'"
 
-			$verifySuccess = $true
-			$verifyFailure = $true
+			$verifySuccess = $false
+			$verifyFailure = $false
 			$auditLineOutput = ""
 			$_subCategory = $subcategory
 			# Avoid "Error 0x00000057 occurred"
 			If($subcategory -match "(?:^Audit\s)(.*)")
 			{
-				# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
-				$_subCategory = $Matches[1]
+				# Add an exception for "Audit Policy Change"
+				If($subcategory -ne "Audit Policy Change")
+				{
+					# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
+					$_subCategory = $Matches[1]
+				}
 			}
 			$auditCommandOutput = auditpol /get /subCategory:"$_subCategory" | Where-Object {$_ -match $_subCategory}
-			ForEach($item in $auditCommandOutput)
+			if($null -ne $auditCommandOutput)
 			{
-				if($item -ne "")
+				ForEach($item in $auditCommandOutput)
 				{
-					$auditLineOutput = $item.Trim()
-					Write-LogMessage -Type Debug -Msg "Found Audit Policy: $auditLineOutput"
-					$auditPolicy = $item.Trim() -split "($_subCategory\s+)"
-					# Assuming $auditPolicy[0] is empty
-					if($auditPolicy[1] -eq $_subCategory)
+					if($item -ne "")
 					{
-						# $auditPolicy[2] is where the Success, Failure data will be
-						$verifySuccess = Test-EnabledPolicySetting -PolicyStatus $success -MatchValue $auditPolicy[2] -NotMatchCriteria "Success"
-						$verifyFailure = Test-EnabledPolicySetting -PolicyStatus $failure -MatchValue $auditPolicy[2] -NotMatchCriteria "Failure"
-						break
+						$auditLineOutput = $item.Trim()
+						Write-LogMessage -Type Debug -Msg "Found Audit Policy: $auditLineOutput"
+						$auditPolicy = $item.Trim() -split "($_subCategory\s+)"
+						# Assuming $auditPolicy[0] is empty
+						if($auditPolicy[1] -eq $_subCategory)
+						{
+							# $auditPolicy[2] is where the Success, Failure data will be
+							$verifySuccess = Test-EnabledPolicySetting -PolicyStatus $success -MatchValue $auditPolicy[2] -NotMatchCriteria "Success"
+							$verifyFailure = Test-EnabledPolicySetting -PolicyStatus $failure -MatchValue $auditPolicy[2] -NotMatchCriteria "Failure"
+							break
+						}
 					}
 				}
+			}
+			else {
+				Write-LogMessage -Type Error -Msg "There was a problem verifying Advance Audit Policy Sub Category for '$_subCategory'"
+				$returnVal = "Warning"
+				[ref]$outStatus.Value = "There was a problem verifying Advance Audit Policy Sub Category for '$_subCategory'"
 			}
 			if($verifySuccess -and $verifyFailure)
 			{

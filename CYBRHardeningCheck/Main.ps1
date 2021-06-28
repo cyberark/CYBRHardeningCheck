@@ -26,7 +26,7 @@ $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 $global:LocalDebug = $LocalDebug
 
 # Script Version
-$ScriptVersion = "2.8.2"
+$ScriptVersion = "2.9"
 
 # Set Log file path
 $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
@@ -184,6 +184,30 @@ param(
 		return @( $sortedHardeningStatus, $summary )
 	}
 	End{}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: EndScript
+# Description....: End the Script with a Footer line and Remove all used modules
+# Parameters.....: Module Info
+# Return Values..: None
+# =================================================================================================================================
+Function EndScript
+{
+<#
+.SYNOPSIS
+	End the Script with a Footer line and Remove all used modules
+.DESCRIPTION
+	End the Script with a Footer line and Remove all used modules
+#>
+	param(
+		$moduleInfos
+	)
+
+	Write-LogMessage -Type Info -MSG "Script ended" -Footer -LogFile $LOG_FILE_PATH
+
+	# UnLoad loaded modules
+	Remove-ScriptModule $moduleInfos	
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -363,21 +387,54 @@ Function New-HTMLReportOutput
 		return $exportFilePath
 	}
 }
+
+function Out-HardeningFolderPath {
+	param (
+		[Parameter(Mandatory=$true)]
+		[ValidateScript({ Test-Path $_ })]
+		[string]$Path
+	)
+	$fileContent = Get-Content $Path
+	$stringToReplace = "@@@Hardening_Scripts_Folder@@@"
+	$allFolders = $(Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "CPM|PVWA|PSM|AIM" })
+	Write-LogMessage -Type Debug -Msg "Found $($allFolders.count) fodlers named 'InstallationAutomation'"
+	If($allFolders.Count -gt 1)
+	{
+		# Assuming that all found folders relate to CyberArk
+		$outString = "<ul>"
+		Foreach($folder in $allFolders)
+		{
+			$outString += "<li>$($folder.FullName)</li>"
+		}
+		$outString += "</ul>"
+	}
+	elseif($allFolders -eq 1)
+	{
+		$outString = "'$($allFolders.FullName)'"
+	}
+	else {
+		$outString = "Did not find CyberArk Hardening scripts folder on this machine."
+	}
+	# Replace the data
+	$fileContent = $fileContent.Replace($stringToReplace,$outString)
+	# Export the data to the file
+	$fileContent | Out-File $path -Encoding utf8
+}
 #endregion
 
 #---------------
+# Load all relevant modules
+$moduleInfos = Import-ScriptModule
+
 # Check if Powershell is running in Constrained Language Mode
 If($ExecutionContext.SessionState.LanguageMode -ne "FullLanguage")
 {
 	Write-LogMessage -Type Error -Msg "Powershell is currently running in $($ExecutionContext.SessionState.LanguageMode) mode which limits the use of some API methods used in this script.`
 	PowerShell Constrained Language mode was designed to work with system-wide application control solutions such as CyberArk EPM or Device Guard User Mode Code Integrity (UMCI).`
 	For more information: https://blogs.msdn.microsoft.com/powershell/2017/11/02/powershell-constrained-language-mode/"
-	Write-LogMessage -Type Info -Msg "Script ended"
+	EndScript
 	return
 }
-
-# Load all relevant modules
-$moduleInfos = Import-ScriptModule
 
 Write-LogMessage -Type Info -MSG "Starting script (v$ScriptVersion)" -Header -LogFile $LOG_FILE_PATH
 if($InDebug) { Write-LogMessage -Type Info -MSG "Running in Debug Mode" -LogFile $LOG_FILE_PATH }
@@ -389,7 +446,7 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 	Write-LogMessage -Type Error -Msg "The Powershell version installed on this machine is not compatible with the required version for this script.`
 	Installed PowerShell version $($PSVersionTable.PSVersion.Major) is compatible with versions $($PSVersionTable.PSCompatibleVersions -join ", ").`
 	Please install at least PowerShell version 3."
-	Write-LogMessage -Type Info -Msg "Script ended"
+	EndScript
 	return
 }
 
@@ -399,7 +456,7 @@ If(! $LocalDebug)
 If($(Test-CurrentUserLocalAdmin) -eq $false)
 {
 	Write-LogMessage -Type Error -Msg "In order to get all information, plesae run the script again on an Administrator Powershell session (Run as Admin)"
-	Write-LogMessage -Type Info -Msg "Script ended"
+	EndScript
 	return
 }
 }
@@ -407,12 +464,12 @@ If($(Test-CurrentUserLocalAdmin) -eq $false)
 If(! $LocalDebug)
 {
 # Check if relevant files are blocked
-If($null -eq $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*.dll') -Recurse | Get-Item -Stream “Zone.Identifier” -ErrorAction SilentlyContinue))
+If($null -ne $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*.dll') -Recurse | Get-Item -Stream “Zone.Identifier” -ErrorAction SilentlyContinue))
 {
 	Write-LogMessage -Type Error -Msg "Some files are marked as blocked"
 	$command = "Get-ChildItem -Path $ScriptLocation -Recurse | Unblock-File"
 	Write-LogMessage -Type Info -Msg "To solve this you can run the following command: $command"
-	Write-LogMessage -Type Info -Msg "Script ended"
+	EndScript
 	return
 }
 }
@@ -456,7 +513,7 @@ ForEach ($comp in $(Get-DetectedComponents))
 		}
 		Else
 		{
-			throw [System.NotImplementedException]::New('This Hardening Component check is not implemented.')
+			throw [System.NotImplementedException]::new('This Hardening Component check is not implemented.')
 		}
 	}
 	catch {
@@ -466,12 +523,10 @@ ForEach ($comp in $(Get-DetectedComponents))
 
 # Export the Report when Finished
 $outputFile = New-HTMLReportOutput -machineName $machineName -components $(Get-DetectedComponents) -hardeningStatus $hardeningStepsStatus
+# Add the Hardening Scripts folder to the report
+Out-HardeningFolderPath -Path $outputFile
 
 Write-LogMessage -Type Info -MSG "Hardening Health Check Report located in: $outputFile" -LogFile $LOG_FILE_PATH
 . $outputFile
 
-Write-LogMessage -Type Info -MSG "Script ended" -Footer -LogFile $LOG_FILE_PATH
-
-# UnLoad loaded modules
-Remove-ScriptModule $moduleInfos
-
+EndScript
