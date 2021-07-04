@@ -31,7 +31,7 @@ Function Debug_CheckFolder
 	}
 	Process {
 		Try{
-			Write-LogMessage -Type Info -Msg "Start validating Debug folder existance"
+			Write-LogMessage -Type Info -Msg "Start validating Debug folder existence"
 			
             If(Test-Path -Path $DebugFolder)
             {
@@ -50,13 +50,13 @@ Function Debug_CheckFolder
             
             [ref]$refOutput.Value = $tmpStatus
 
-			Write-LogMessage -Type Info -Msg "Finish validating Debug folder existance"
+			Write-LogMessage -Type Info -Msg "Finish validating Debug folder existence"
 
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not validate Debug folder existance.  Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$refOutput.Value = "Could not validate Debug folder existance."
+			Write-LogMessage -Type "Error" -Msg "Could not validate Debug folder existence.  Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$refOutput.Value = "Could not validate Debug folder existence."
 			return "Bad"
 		}
 	}

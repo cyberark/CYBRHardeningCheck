@@ -375,7 +375,7 @@ Function New-HTMLReportOutput
 		$htmlFileContent = $htmlFileContent.Replace("@@@MachineName@@@",$machineName)
 		$htmlFileContent = $htmlFileContent.Replace("@@@ComponentsNum@@@", $($componentsList.Count))
 		$hardeningTable,$summary = $(Get-HardeningStatus $hardeningStatus)
-		$htmlFileContent = $htmlFileContent.Replace("@@@HardeningStatus@@@", $($summary.hardeningPercentage.tostring("#%")))
+		$htmlFileContent = $htmlFileContent.Replace("@@@HardeningStatus@@@", $($summary.hardeningPercentage.ToString("#%")))
 		$htmlFileContent = $htmlFileContent.Replace("@@@ErrorsNum@@@", $($summary.Errors))
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblComponents@@@", $(Write-HTMLComponentsTable $components))
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblHardening@@@", $(Write-HTMLHardeningStatusTable $hardeningTable))
@@ -403,7 +403,7 @@ Function Out-HardeningFolderPath {
 .PARAMETER Path
 	The path to the HTML report to update
 .PARAMETER TotalComponentsFound
-	The number of components found (for makng the search quicker)
+	The number of components found (for making the search quicker)
 #>
 	param (
 		[Parameter(Mandatory=$true)]
@@ -412,12 +412,12 @@ Function Out-HardeningFolderPath {
 		[Parameter(Mandatory=$false)]
 		[int]$TotalComponentsFound = 1
 	)
-	Write-LogMessage -Type Info -Msg "Start looking for hardening fodlers named 'InstallationAutomation'"
+	Write-LogMessage -Type Info -Msg "Start looking for hardening folders named 'InstallationAutomation'"
 	Write-LogMessage -Type Verbose -Msg "Should find maximum of $TotalComponentsFound folders"
 	$fileContent = Get-Content $Path
 	$stringToReplace = "@@@Hardening_Scripts_Folder@@@"
 	$x = 0 
-	# Start a background job to search all InstallaiotnAutomation folders and limit it to the maximum number of Total Components found
+	# Start a background job to search all InstallationAutomation folders and limit it to the maximum number of Total Components found
 	# Might want to add in the future filter on the actual components folder names (e.g. "CPM|PVWA|PSM|AIM")
 	Start-Job -Name FileCollection -ScriptBlock {Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Select-Object -First $args[0] } -ArgumentList $TotalComponentsFound | Out-Null
 	While((Get-Job -Name FileCollection).State -eq "Running") 
@@ -427,7 +427,7 @@ Function Out-HardeningFolderPath {
 	} 
 	Write-Progress -Activity "Searching for Hardening folders..." -Completed 
 	$allFolders = Receive-Job -Name FileCollection -AutoRemoveJob -Wait
-	Write-LogMessage -Type Debug -Msg "Found $($allFolders.FullName.Count) fodlers named 'InstallationAutomation'"
+	Write-LogMessage -Type Debug -Msg "Found $($allFolders.FullName.Count) folders named 'InstallationAutomation'"
 	If($allFolders.FullName.Count -gt 1)
 	{
 		# Assuming that all found folders relate to CyberArk
@@ -485,7 +485,7 @@ If(! $LocalDebug)
 # Check that you are running with Admin privileges (So that we can access all paths that are hardened)
 If($(Test-CurrentUserLocalAdmin) -eq $false)
 {
-	Write-LogMessage -Type Error -Msg "In order to get all information, plesae run the script again on an Administrator Powershell session (Run as Admin)"
+	Write-LogMessage -Type Error -Msg "In order to get all information, please run the script again on an Administrator Powershell session (Run as Admin)"
 	EndScript
 	return
 }

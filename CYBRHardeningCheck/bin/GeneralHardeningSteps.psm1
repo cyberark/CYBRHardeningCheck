@@ -64,12 +64,12 @@ Function ImportingINFConfiguration
 				Throw "Could not find configuration file in path: $INFconfigFilePath"
 			}
 
-			$seceditRetVaule = secedit /analyze /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet /log $AnalyzeLogName
-			# $seceditRetVaule = secedit /analyze /db $SDBFileName /log $AnalyzeLogName
+			$seceditRetValue = secedit /analyze /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet /log $AnalyzeLogName
+			# $seceditRetValue = secedit /analyze /db $SDBFileName /log $AnalyzeLogName
 
 			if ($LASTEXITCODE -eq 1)
 			{
-				throw "Analyze security configuration has failed - analysis log: $AnalyzeLogName. Error: $seceditRetVaule"
+				throw "Analyze security configuration has failed - analysis log: $AnalyzeLogName. Error: $seceditRetValue"
 				return "Bad"
 			}
 
@@ -195,7 +195,7 @@ Function EnableScreenSaver
 		try{
 			Write-LogMessage -Type Info -Msg "Start EnableScreenSaver"
 
-			$UserDir = "$($env:windir)\system32\GroupPolicy\User\registry.pol"
+			$UserDir = "$($env:WinDir)\system32\GroupPolicy\User\registry.pol"
 			$RegPath = "Software\Policies\Microsoft\Windows\Control Panel\Desktop"
 			try{
 				if((Compare-PolicyEntry -EntryTitle "Enable screen saver" -UserDir $UserDir -RegPath $RegPath -RegName 'ScreenSaveActive' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
@@ -413,7 +413,7 @@ Function RemoteDesktopServices
 		try{
 			Write-LogMessage -Type Info -Msg "Start RemoteDesktopServices"
 
-			$UserDir = "$($env:windir)\system32\GroupPolicy\User\registry.pol"
+			$UserDir = "$($env:WinDir)\system32\GroupPolicy\User\registry.pol"
 			$RegPath = "Software\Policies\Microsoft\Windows NT\Terminal Services"
 
 			if((Compare-PolicyEntry -EntryTitle "Set rules for remote control of Remote Desktop Services user sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'Shadow' -RegData '4' -outStatus ([ref]$myRef)) -ne "Good")
@@ -485,7 +485,7 @@ Function EventLogSizeAndRetention
 	)
 
 	Begin {
-		$maxsize=102432768
+		$MaxSize=102432768
 		$retention="false"
 		$res = "Good"
 		$tmpStatus = ""
@@ -494,19 +494,19 @@ Function EventLogSizeAndRetention
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start validating Event Log Size And Retention"
-			If((Compare-EventLogSizeAndRetentionSettings -LogName "Application" -Size $maxsize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-EventLogSizeAndRetentionSettings -LogName "Application" -Size $MaxSize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
 			{
                 $res = "Warning"
 			}
 			$tmpStatus += $myRef.Value + "<BR>"
 
-			If((Compare-EventLogSizeAndRetentionSettings -LogName "Security" -Size $maxsize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-EventLogSizeAndRetentionSettings -LogName "Security" -Size $MaxSize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
 			{
                 $res = "Warning"
 			}
 			$tmpStatus += $myRef.Value + "<BR>"
 
-			If((Compare-EventLogSizeAndRetentionSettings -LogName "System" -Size $maxsize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-EventLogSizeAndRetentionSettings -LogName "System" -Size $MaxSize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
 			{
                 $res = "Warning"
 			}
