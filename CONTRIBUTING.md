@@ -89,6 +89,8 @@ Two main files are the Hardening steps script (saved as \*.psm1) and the hardeni
 - Vault_WindowsFirewall
 - Vault_DomainJoined
 - Vault_LogicContainerServiceLocalUser
+- Vault_FirewallNonStandardRules
+- Vault_ServerCertificate
 
 #### CPMHardeningSteps.psm1
 - CPM_Password_Manager_Services_LocalUser

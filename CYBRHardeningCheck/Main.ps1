@@ -29,7 +29,7 @@ $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 
 # Script Version
-$ScriptVersion = "2.9.1"
+$ScriptVersion = "3.1"
 
 # Set Log file path
 $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
@@ -118,6 +118,30 @@ Function Remove-ScriptModule
 	}
 	End {
 	}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: EndScript
+# Description....: End the Script with a Footer line and Remove all used modules
+# Parameters.....: Module Info
+# Return Values..: None
+# =================================================================================================================================
+Function EndScript
+{
+<#
+.SYNOPSIS
+	End the Script with a Footer line and Remove all used modules
+.DESCRIPTION
+	End the Script with a Footer line and Remove all used modules
+#>
+	param(
+		$moduleInfos
+	)
+
+	Write-LogMessage -Type Info -MSG "Script ended" -Footer -LogFile $LOG_FILE_PATH
+
+	# UnLoad loaded modules
+	Remove-ScriptModule $moduleInfos	
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -319,18 +343,18 @@ Function New-HTMLReportOutput
 
 #---------------
 #region [Basic Pre-requisites]
+# Load all relevant modules
+$moduleInfos = Import-ScriptModule
+
 # Check if Powershell is running in Constrained Language Mode
 If($ExecutionContext.SessionState.LanguageMode -ne "FullLanguage")
 {
 	Write-LogMessage -Type Error -Msg "Powershell is currently running in $($ExecutionContext.SessionState.LanguageMode) mode which limits the use of some API methods used in this script.`
 	PowerShell Constrained Language mode was designed to work with system-wide application control solutions such as CyberArk EPM or Device Guard User Mode Code Integrity (UMCI).`
 	For more information: https://blogs.msdn.microsoft.com/powershell/2017/11/02/powershell-constrained-language-mode/"
-	Write-LogMessage -Type Info -Msg "Script ended"
+	EndScript
 	return
 }
-
-# Load all relevant modules
-$moduleInfos = Import-ScriptModule
 
 Write-LogMessage -Type Info -MSG "Starting script (v$ScriptVersion)" -Header -LogFile $LOG_FILE_PATH
 if($InDebug) { Write-LogMessage -Type Info -MSG "Running in Debug Mode" -LogFile $LOG_FILE_PATH }
@@ -342,7 +366,7 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 	Write-LogMessage -Type Error -Msg "The Powershell version installed on this machine is not compatible with the required version for this script.`
 	Installed PowerShell version $($PSVersionTable.PSVersion.Major) is compatible with versions $($PSVersionTable.PSCompatibleVersions -join ", ").`
 	Please install at least PowerShell version 3."
-	Write-LogMessage -Type Info -Msg "Script ended"
+	EndScript
 	return
 }
 
@@ -350,7 +374,7 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 If($(Test-CurrentUserLocalAdmin) -eq $false)
 {
 	Write-LogMessage -Type Error -Msg "In order to get all information, plesae run the script again on an Administrator Powershell session (Run as Admin)"
-	Write-LogMessage -Type Info -Msg "Script ended"
+	EndScript
 	return
 }
 
@@ -360,7 +384,7 @@ If($null -ne $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*
 	Write-LogMessage -Type Error -Msg "Some files are marked as blocked"
 	$command = "Get-ChildItem -Path $ScriptLocation -Recurse | Unblock-File"
 	Write-LogMessage -Type Info -Msg "To solve this you can run the following command: $command"
-	Write-LogMessage -Type Info -Msg "Script ended"
+	EndScript
 	return
 }
 #endregion [Basic Pre-requisites]
@@ -438,8 +462,4 @@ $outputFile = New-HTMLReportOutput -machineName $machineName -components $(Get-D
 Write-LogMessage -Type Info -MSG "Hardening Health Check Report located in: $outputFile" -LogFile $LOG_FILE_PATH
 . $outputFile
 
-Write-LogMessage -Type Info -MSG "Script ended" -Footer -LogFile $LOG_FILE_PATH
-
-# UnLoad loaded modules
-Remove-ScriptModule $moduleInfos
-
+EndScript

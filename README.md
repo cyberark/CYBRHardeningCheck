@@ -45,7 +45,7 @@ PS> .\Main.ps1
 
 For troubleshooting or getting more information about the checks done, you can run the script using Verbose logging
 ```powershell
-PS> ./Main.ps1 -Debug -Verbose
+PS> .\Main.ps1 -Debug -Verbose
 ```
 
 The tool creates a log file by default that contains all steps taken by the script (when using Verbose logging you will get a lot more info in the log file)
@@ -76,6 +76,8 @@ Other relevant information will be referenced in the log and the report.
 |Vault_WindowsFirewall				|Check that the Vault has the Firewall active
 |Vault_DomainJoined					|Check that the Vault was not joined to a Domain
 |Vault_LogicContainerServiceLocalUser|Vault Logic Container Service LocalUser
+|Vault_FirewallNonStandardRules|Vault Firewall Rule
+|Vault_ServerCertificate|Vault Server Certificate
 
 ### CPM specific hardening checks
 |Hardening check      				| Description               
