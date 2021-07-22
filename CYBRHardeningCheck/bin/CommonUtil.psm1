@@ -49,7 +49,7 @@ Function Write-LogMessage
 		{
 			# User wanted to write logs, but did not provide a log file - Create a temporary file
 			$LogFile = Join-Path -Path $ENV:Temp -ChildPath "$((Get-Date).ToShortDateString().Replace('/','_')).log"
-			Write-Host "No log file path inputed, created a temporary file at: '$LogFile'"
+			Write-Host "No log file path inputted, created a temporary file at: '$LogFile'"
 		}
 		If ($Header -and $WriteLog) {
 			"=======================================" | Out-File -Append -FilePath $LogFile 
@@ -402,7 +402,7 @@ Function Set-DetectedComponents
 	$_detectedComponents = Find-Components -Component "All"
 	# Add  indication if the server is a domain member
 	$_detectedComponents | Add-Member -NotePropertyName DomainMember -NotePropertyValue $(Test-InDomain)
-	# Make Detected Components availble in Script scope
+	# Make Detected Components available in Script scope
 	Set-Variable -Name DetectedComponents -Value $_detectedComponents -Scope Script
 }
 
@@ -501,7 +501,7 @@ Function New-AccessControlObject{
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Get-IdentityReference
 # Description....: Get Identity Reference
-# Parameters.....: $identityRefernce
+# Parameters.....: $identityReference
 # Return Values..: IdentityReference
 # =================================================================================================================================
 Function Get-IdentityReference
@@ -515,20 +515,20 @@ Function Get-IdentityReference
 	The current Identity Reference we want to get reference to
 #>
 	param(
-		$identityRefernce
+		$identityReference
 	)
 
 	Process {
-		if ($identityRefernce -eq 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES')
+		if ($identityReference -eq 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES')
 		{
-			$identityRefernce = "ALL APPLICATION PACKAGES"
+			$identityReference = "ALL APPLICATION PACKAGES"
 		}
-		if ($identityRefernce -eq 'APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES')
+		if ($identityReference -eq 'APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES')
 		{
-			$identityRefernce = "ALL RESTRICTED APPLICATION PACKAGES"
+			$identityReference = "ALL RESTRICTED APPLICATION PACKAGES"
 		}
 
-		return $identityRefernce
+		return $identityReference
 	}
 }
 
@@ -1921,7 +1921,7 @@ Function Compare-UserPermissions
 .PARAMETER Path
 	The location path we want to check permissions.
 .PARAMETER Identity
-	The user we want to chekc permissions to.
+	The user we want to check permissions to.
 .PARAMETER Rights
 	The rights we want to compare to the identity on this path.
 	Please Notice this needs to be string indicate enum name from System.Security.AccessControl.RegistryRights or System.Security.AccessControl.FileSystemRights enums.
@@ -2613,7 +2613,7 @@ Function Test-CredFileVerificationType
 .SYNOPSIS
 	Check what restrictions have been placed on the component credential files
 .DESCRIPTION
-	This check what (if any) restrictions have been put on to the credential file when it was created, this credential file is utilised by the components to communicate back to the vault
+	This check what (if any) restrictions have been put on to the credential file when it was created, this credential file is utilized by the components to communicate back to the vault
 #>
 
     param (

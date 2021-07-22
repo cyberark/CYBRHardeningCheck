@@ -15,16 +15,21 @@
 [CmdletBinding()]
 param
 (
+	# Use this switch to disable Auto-Update
+	[Parameter(Mandatory=$false)]
+	[Switch]$DisableAutoUpdate
 )
 
+# Get the full script path
+$ScriptFullPath = $MyInvocation.MyCommand.Path
 # Get Script Location
-$ScriptLocation = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptLocation = Split-Path -Parent $ScriptFullPath
 # Get Debug / Verbose parameters for Script
 $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 
 # Script Version
-$ScriptVersion = "2.9"
+$ScriptVersion = "3.1"
 
 # Set Log file path
 $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
@@ -43,8 +48,9 @@ $VAULT_HARDENING_CONFIG = "$ScriptLocation\Vault\Vault_Hardening_Config.xml"
 $TUNNEL_HARDENING_CONFIG = "$ScriptLocation\SecureTunnel\SecureTunnel_Hardening_Config.xml"
 
 # Set modules paths
-$MODULE_COMMON_UTIL = "$MODULE_BIN_PATH\CommonUtil.psm1"
-$MODULE_GENERAL_STEPS = "$MODULE_BIN_PATH\GeneralHardeningSteps.psm1"
+$MODULE_COMMON_UTIL = "$MODULE_BIN_PATH\CommonUtil.psd1"
+$MODULE_GENERAL_STEPS = "$MODULE_BIN_PATH\GeneralHardeningSteps.psd1"
+$MODULE_LATEST_VERSION = "$MODULE_BIN_PATH\LatestVersionCheck.psd1"
 $MODULE_CPM_STEPS = "$ScriptLocation\CPM\CPMHardeningSteps.psm1"
 $MODULE_PVWA_STEPS = "$ScriptLocation\PVWA\PVWAHardeningSteps.psm1"
 $MODULE_PSM_STEPS = "$ScriptLocation\PSM\PSMHardeningSteps.psm1"
@@ -77,9 +83,10 @@ Function Import-ScriptModule
 	Process {
 		$commonUtilInfo = Import-Module $MODULE_COMMON_UTIL -Force -DisableNameChecking -PassThru -ErrorAction Stop
 		$generalInfo = Import-Module $MODULE_GENERAL_STEPS -Force -DisableNameChecking -PassThru -ErrorAction Stop
+		$LatestVersionInfo = Import-Module $MODULE_LATEST_VERSION -Force -DisableNameChecking -PassThru -ErrorAction Stop
 	}
 	End {
-		return $commonUtilInfo,$generalInfo
+		return $commonUtilInfo,$generalInfo,$LatestVersionInfo
 	}
 }
 
@@ -335,6 +342,7 @@ Function New-HTMLReportOutput
 #endregion
 
 #---------------
+#region [Basic Pre-requisites]
 # Load all relevant modules
 $moduleInfos = Import-ScriptModule
 
@@ -365,7 +373,7 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 # Check that you are running with Admin privileges (So that we can access all paths that are hardened)
 If($(Test-CurrentUserLocalAdmin) -eq $false)
 {
-	Write-LogMessage -Type Error -Msg "In order to get all information, plesae run the script again on an Administrator Powershell session (Run as Admin)"
+	Write-LogMessage -Type Error -Msg "In order to get all information, please run the script again on an Administrator Powershell session (Run as Admin)"
 	EndScript
 	return
 }
@@ -378,6 +386,34 @@ If($null -ne $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*
 	Write-LogMessage -Type Info -Msg "To solve this you can run the following command: $command"
 	EndScript
 	return
+}
+#endregion [Basic Pre-requisites]
+
+# Check for latest script version
+If(!$DisableAutoUpdate)
+{
+	$gitHubLatestVersionParameters = @{
+		currentVersion = $ScriptVersion;
+		repositoryName = "cyberark/CYBRHardeningCheck";
+		repositoryFolderPath = "CYBRHardeningCheck";
+		scriptVersionFileName = "Main.ps1";
+		branch = "main";
+		sourceFolderPath = $ScriptLocation;
+	}
+	try{
+		$isLatestVersion = $(Test-GitHubLatestVersion @gitHubLatestVersionParameters)
+		If($isLatestVersion -eq $false)
+		{
+			# Run the updated script
+			$scriptPathAndArgs = "& `"$ScriptFullPath`" "
+			Write-LogMessage -Type Info -MSG "Finished Updating, relaunching the script"
+			Invoke-Expression $scriptPathAndArgs
+			# Exit the current script
+			return
+		}
+	} catch {
+		Write-LogMessage -Type Error -MSG "Error checking for latest version. Error: $(Join-ExceptionMessage $_.Exception)"
+	}
 }
 
 #region Prepare Hardening modules dictionary
@@ -395,7 +431,6 @@ $dicComponentHardening = @{
 Write-LogMessage -Type Info -MSG "Getting Machine Name" -LogFile $LOG_FILE_PATH
 $machineName = Get-DnsHost
 Write-LogMessage -Type Debug -Msg "Machine Name: $machineName"
-
 
 $hardeningStepsStatus = @()
 ForEach ($comp in $(Get-DetectedComponents))
