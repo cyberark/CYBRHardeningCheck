@@ -1,4 +1,4 @@
-﻿Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel","Debug")
+﻿Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")
 Set-Variable -Name UnsupportedHardeningComponents -Option ReadOnly -Value @("AIM","EPM","SecureTunnel")
 
 #region Writer Functions
@@ -655,7 +655,7 @@ Function Find-Components
 		[Parameter(Mandatory=$false)]
 		[ValidateScript({   
 			if($_ -in (@("All")+$DetectionSupportedComponents)) { return $true }
-			else{ throw "Use one of these components: $($validSet -join ', ')" }
+			else{ throw "Use one of these components: $($DetectionSupportedComponents -join ', ')" }
 		})]
 		[String]$Component = "All"
 	)
@@ -792,17 +792,6 @@ Function Find-Components
 							$fileVersion = Get-FileVersion "$tunnelPath\PrivilegeCloudSecureTunnel.exe"
 							return New-Object PSObject -Property @{Name="SecureTunnel";Path=$tunnelPath;Version=$fileVersion}
 						}
-					} catch {
-						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
-					}
-					break
-				}
-				"Debug"
-				{
-					try{
-						# Check if Privilege Cloud Secure tunnel is installed
-						Write-LogMessage -Type "Debug" -MSG "Searching for DEBUG..."
-						return New-Object PSObject -Property @{Name="Debug";Path="C:\Temp";Version="0.1"}
 					} catch {
 						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
@@ -1435,7 +1424,7 @@ Function Get-DetectedComponents
 		[Parameter(Mandatory=$false)]
 		[ValidateScript({   
 			if($_ -in (@("All")+$DetectionSupportedComponents)) { return $true }
-			else{ throw "Use one of these components: $($validSet -join ', ')" }
+			else{ throw "Use one of these components: $($DetectionSupportedComponents -join ', ')" }
 		})]
 		[string]$Component = "All"
 	)
