@@ -373,7 +373,7 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 # Check that you are running with Admin privileges (So that we can access all paths that are hardened)
 If($(Test-CurrentUserLocalAdmin) -eq $false)
 {
-	Write-LogMessage -Type Error -Msg "In order to get all information, plesae run the script again on an Administrator Powershell session (Run as Admin)"
+	Write-LogMessage -Type Error -Msg "In order to get all information, please run the script again on an Administrator Powershell session (Run as Admin)"
 	EndScript
 	return
 }

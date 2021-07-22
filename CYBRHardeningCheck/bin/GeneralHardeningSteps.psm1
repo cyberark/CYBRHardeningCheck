@@ -58,7 +58,7 @@ Function ImportingINFConfiguration
 			# Get the Component relative INF file path
 			$INFconfigFilePath = Get-CurrentComponentFolderPath -FileName $INFconfigFileName
 			
-			# $seceditRetVaule = secedit /import /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet
+			# $seceditRetValue = secedit /import /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet
 
 			# if ((-not (Test-Path $SDBFileName)) -Or ($LASTEXITCODE -eq 1))
 			# {
@@ -66,12 +66,12 @@ Function ImportingINFConfiguration
 			# 	return "Bad"
 			# }
 
-			$seceditRetVaule = secedit /analyze /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet /log $AnalyzeLogName
-			# $seceditRetVaule = secedit /analyze /db $SDBFileName /log $AnalyzeLogName
+			$seceditRetValue = secedit /analyze /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet /log $AnalyzeLogName
+			# $seceditRetValue = secedit /analyze /db $SDBFileName /log $AnalyzeLogName
 
 			if ($LASTEXITCODE -eq 1)
 			{
-				throw "Analyze security configuration has failed - analysis log: $AnalyzeLogName. Error: $seceditRetVaule"
+				throw "Analyze security configuration has failed - analysis log: $AnalyzeLogName. Error: $seceditRetValue"
 				return "Bad"
 			}
 

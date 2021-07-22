@@ -91,7 +91,7 @@ Function Copy-GitHubContent
 .DESCRIPTION
 	Copies all file and folder structure from a specified GitHub repository folder
     Will create the content from a GitHub URL in the output folder
-    Can handle files and folders recursevely
+    Can handle files and folders recursively
 .PARAMETER outputFolderPath
     The folder path to create the files and folders in
 .PARAMETER gitHubItemURL
@@ -151,18 +151,18 @@ Function Replace-Item
             if(Test-Path -Path $(Join-Path -path $destPath -ChildPath $item.name))
             {
                 Rename-Item -Path $(Join-Path -path $destPath -ChildPath $item.name) -NewName $oldName
-                Copy-Item -path $item.fullname -Destination $(Join-Path -path $destPath -ChildPath $item.name)
+                Copy-Item -path $item.FullName -Destination $(Join-Path -path $destPath -ChildPath $item.name)
                 Remove-Item -path $(Join-Path -path $destPath -ChildPath $oldName)
             }
             Else
 			{
 				Write-LogMessage -Type Warning -Msg  "Can't find file $($item.name) in destination location '$destPath' to replace, copying"
-                Copy-Item -path $item.fullname -Destination $destPath
+                Copy-Item -path $item.FullName -Destination $destPath
 			}
         }
     }
     catch{
-        Throw $(New-Object System.Exception ("eplace-Item: Couldn't Replace files",$_.Exception))
+        Throw $(New-Object System.Exception ("Replace-Item: Couldn't Replace files",$_.Exception))
     }
 
 }
@@ -203,6 +203,42 @@ Function Test-GitHubLatestVersion
 .PARAMETER TestOnly
     Switch parameter to perform only test
     If not exclusively selected, the function will update the script if a new version is found
+.EXAMPLE
+    $gitHubLatestVersionParameters = @{
+    currentVersion = $ScriptVersion;
+    repositoryName = "MyUser/MyRepo";
+    scriptVersionFileName = "MyScript.ps1";
+    sourceFolderPath = $ScriptLocation;
+}
+    $isLatestVersion = $(Test-GitHubLatestVersion @gitHubLatestVersionParameters)
+    if($isLatestVersion) {
+        Write-Host "Script was checked and updated to the latest version"
+    }
+.EXAMPLE
+    $gitHubLatestVersionParameters = @{
+    currentVersion = $ScriptVersion;
+    repositoryName = "MyUser/MyRepo";
+    scriptVersionFileName = "MyScript.ps1";
+    sourceFolderPath = $ScriptLocation;
+    repositoryFolderPath = "FolderName";
+    branch = "main";
+    versionPattern = "ScriptVersion";
+}
+    $isLatestVersion = $(Test-GitHubLatestVersion @gitHubLatestVersionParameters)
+    if($isLatestVersion) {
+        Write-Host "Script was checked and updated to the latest version"
+    }
+.EXAMPLE
+    $gitHubLatestVersionParameters = @{
+    currentVersion = $ScriptVersion;
+    repositoryName = "MyUser/MyRepo";
+    scriptVersionFileName = "MyScript.ps1";
+    sourceFolderPath = $ScriptLocation;
+}
+    $isLatestVersion = $(Test-GitHubLatestVersion @gitHubLatestVersionParameters -TestOnly)
+    if($isLatestVersion) {
+        Write-Host "Script was checked to the latest version"
+    }    
 #>
 [CmdletBinding()]
 param (

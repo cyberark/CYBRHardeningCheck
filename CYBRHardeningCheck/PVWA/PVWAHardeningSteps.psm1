@@ -810,7 +810,7 @@ Function PVWA_NonSystemDrive
 			If($currentIISPath -like $systemDriveIISPath)
 			{
 				# IIS is installed on the system drive
-				$tmpStatus += "IIS is installed on the System Drive in the defualt location"
+				$tmpStatus += "IIS is installed on the System Drive in the default location"
 				$statusChanged = $true
 			}
 			else
@@ -963,10 +963,10 @@ Function PVWA_AdditionalAppPool
 {
 <#
 .SYNOPSIS
-	Validates PVWA pplication pool configuration
+	Validates PVWA application pool configuration
 .DESCRIPTION
-	Validates PVWA pplication pool configuration.
-	If PVWA shuold be installed on a dedicated server, no other application pools should exist
+	Validates PVWA application pool configuration.
+	If PVWA should be installed on a dedicated server, no other application pools should exist
 .PARAMETER Parameters
 	(Optional) Parameters from the Configuration
 .PARAMETER Reference Status
@@ -1036,7 +1036,7 @@ Function PVWA_CredFileHardening
 {
 <#
 .SYNOPSIS
-	Return verficiation type on credential file
+	Return verification type on credential file
 .DESCRIPTION
 	Return the verification type on the credential file used by the components to log back in to the vault
 .PARAMETER parameters
