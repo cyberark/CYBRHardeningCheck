@@ -33,7 +33,7 @@ This tool is based on the Automated Hardening scripts that are provided by Cyber
 The tool is based on the same hardening XML that comes with the automated hardening scripts and allows to disable some of the checks as well.
 What this means is that if you disabled a specific hardening step, you can disable the same one in the hardening health check to prevent false positives.
 The tool also provides links to documentation to most of the hardening checks and relevant information in a report where the hardening is not complete or missing.
-<Example Report Image>
+![Example report](https://user-images.githubusercontent.com/11990765/126695257-38322f49-dc5d-44ea-9276-616798cfd03e.png)
 
 ## Usage
 The package ZIP includes a few folders, a Powershell script (Main.ps1) and a HTML template for the report.
