@@ -65,7 +65,7 @@ Other relevant information will be referenced in the log and the report.
 |RegistryPermissions				|Check Registry permissions
 |FileSystemPermissions				|Validates unnecessary permissions on %SystemRoot%\System32\Config and %SystemRoot%\System32\Config\RegBack.
 |FileSystemAudit					|Check audit access rules on %SystemRoot%\System32\Config and %SystemRoot%\System32\Config\RegBack.
-|DisableServices					|Disabling The following services:  "Routing and Remote Access", "Smart Card", "Smart Card Removal Policy", "SNMP Trap", "Special Administration Console Helper","Windows Error Reporting Service", "WinHTTP Web Proxy Auto-Discovery Service"
+|DisableServices					|Check that the following services are disabled:  "Routing and Remote Access", "Smart Card", "Smart Card Removal Policy", "SNMP Trap", "Special Administration Console Helper","Windows Error Reporting Service", "WinHTTP Web Proxy Auto-Discovery Service"
 
 
 ### Vault specific hardening checks

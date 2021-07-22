@@ -1,4 +1,4 @@
-﻿# Consts
+﻿# Const
 Set-Variable PSM_CONNECT -value "PSMConnect"
 Set-Variable PSM_ADMIN_CONNECT -value "PSMAdminConnect"
 Set-Variable PSM_SHADOW_USERS -value "PSMShadowUsers"
@@ -41,7 +41,7 @@ Function ConfigureUsersForPSMSessions
 			Write-LogMessage -Type Info -Msg "Start verify ConfigureUsersForPSMSessions"
 			ForEach ($user in $user_names)
 			{
-				if((Compare-UserFlags -userName $user -flagName "UserFlags" -userflagValue "DONT_EXPIRE_PASSWD" -flagValue $DONT_EXPIRE_PASSWD -outStatus ([ref]$myRef)) -ne "Good")
+				if((Compare-UserFlags -userName $user -flagName "UserFlags" -userFlagValue "DONT_EXPIRE_PASSWD" -flagValue $DONT_EXPIRE_PASSWD -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
@@ -81,90 +81,6 @@ Function ConfigureUsersForPSMSessions
 		catch{
 			Write-LogMessage -Type "Error" -Msg "Could not verify ConfigureUsersForPSMSessions.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify ConfigureUsersForPSMSessions."
-			return "Bad"
-		}
-	}
-	End {
-		# Write output to HTML
-	}
-}
-
-# @FUNCTION@ ======================================================================================================================
-# Name...........: PSMForWebApplications
-# Description....:
-# Parameters.....:
-# Return Values..:
-# =================================================================================================================================
-Function PSMForWebApplications
-{
-<#
-.SYNOPSIS
-
-.DESCRIPTION
-
-.PARAMETER Parameters
-	(Optional) Parameters from the Configuration
-.PARAMETER Reference Status
-	Reference to the Step Status
-#>
-	param(
-		[Parameter(Mandatory=$false)]
-		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
-		[ref]$refOutput
-	)
-
-	Begin {
-		$res = "Good"
-		$tmpStatus = ""
-		$statusChanged = $false
-		$myRef = ""
-	}
-	Process {
-		try{
-			Write-LogMessage -Type Info -Msg "Start verify PSMForWebApplications"
-
-			# Check Disable Internet Explorer Enhanced Security Configuration
-			$regESC = @{
-				"Path" = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
-				"ValueName" = "IsInstalled";
-				"ValueData" = 0;
-				"outStatus" = ([ref]$myRef);
-			}
-
-			if((Compare-RegistryValue @regESC) -ne "Good")
-			{
-				$tmpStatus += $myRef.Value + "<BR>"
-				$statusChanged = $true
-			}
-
-			# Check Prevent-RunningFirstRunWizard
-			$regFRW = @{
-				"Path" = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main";
-				"ValueName" = "DisableFirstRunCustomize";
-				"ValueData" = 2;
-				"outStatus" = ([ref]$myRef);
-			}
-
-			if((Compare-RegistryValue @regFRW) -ne "Good")
-			{
-				$tmpStatus += $myRef.Value + "<BR>"
-				$statusChanged = $true
-			}
-
-			If($statusChanged)
-			{
-				$res = "Warning"
-				[ref]$refOutput.Value = $tmpStatus
-			}
-
-			Write-LogMessage -Type Info -Msg "Finish verify PSMForWebApplications"
-
-			return $res
-		}
-		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not verify PSMForWebApplications.  Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$refOutput.Value = "Could not verify PSMForWebApplications."
 			return "Bad"
 		}
 	}
@@ -312,6 +228,35 @@ Function SupportWebApplications
 				}
 			}
 			
+			# IE Specific hardening settings check
+			# Check Disable Internet Explorer Enhanced Security Configuration
+			$regESC = @{
+				"Path" = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
+				"ValueName" = "IsInstalled";
+				"ValueData" = 0;
+				"outStatus" = ([ref]$myRef);
+			}
+
+			if((Compare-RegistryValue @regESC) -ne "Good")
+			{
+				$tmpStatus += $myRef.Value + "<BR>"
+				$changeStatus = $true
+			}
+
+			# Check Prevent-RunningFirstRunWizard
+			$regFRW = @{
+				"Path" = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main";
+				"ValueName" = "DisableFirstRunCustomize";
+				"ValueData" = 2;
+				"outStatus" = ([ref]$myRef);
+			}
+
+			if((Compare-RegistryValue @regFRW) -ne "Good")
+			{
+				$tmpStatus += $myRef.Value + "<BR>"
+				$changeStatus = $true
+			}
+
 			If($changeStatus)
 			{
 				$res = "Warning"
@@ -362,20 +307,20 @@ Function ClearRemoteDesktopUsers
 		$res = "Good"
 		$tmpStatus = ""
 		$REMOTE_DESKTOP_USERS_GROUP_SID = "S-1-5-32-555"
-		[Array]$MembersOfRDusersGroup =$null
+		[Array]$MembersOfRDUsersGroup =$null
 		[Array]$MembersOfADGroups = $null
 	}
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify ClearRemoteDesktopUsers"
 			# Get the Remote Desktop USers group members
-			$MembersOfRDusersGroup = Get-LocalGroupMember -SID $REMOTE_DESKTOP_USERS_GROUP_SID
-            If ($null -ne $MembersOfRDusersGroup)
+			$MembersOfRDUsersGroup = Get-LocalGroupMember -SID $REMOTE_DESKTOP_USERS_GROUP_SID
+            If ($null -ne $MembersOfRDUsersGroup)
             {
 				# Check if the PSMConnect and PSMAdminConnect have permissions
-				$psmAccess = $($MembersOfRDusersGroup | Where-Object { $_.Name -like "*$PSM_CONNECT*" } ) -and $($MembersOfRDusersGroup | Where-Object { $_.Name -like "*$PSM_ADMIN_CONNECT*" })
+				$psmAccess = $($MembersOfRDUsersGroup | Where-Object { $_.Name -like "*$PSM_CONNECT*" } ) -and $($MembersOfRDUsersGroup | Where-Object { $_.Name -like "*$PSM_ADMIN_CONNECT*" })
 				# Check other Domain users and groups access
-				ForEach ($item in $($MembersOfRDusersGroup | Where-Object { $_.PrincipalSource -eq "ActiveDirectory" -and $_.ObjectClass -eq "Group" }))
+				ForEach ($item in $($MembersOfRDUsersGroup | Where-Object { $_.PrincipalSource -eq "ActiveDirectory" -and $_.ObjectClass -eq "Group" }))
 				{
 					if($null -ne $item)
 					{
@@ -392,12 +337,12 @@ Function ClearRemoteDesktopUsers
 
 				If($psmAccess)
 				{
-					If($MembersOfRDusersGroup.count -gt 2)
+					If($MembersOfRDUsersGroup.count -gt 2)
 					{
 						$res = "Warning"
 						$tmpStatus += "<B>Too many users/groups in Remote Desktop Users group</B><BR>"
 						$tmpStatus += "Current direct members of the 'Remote Desktop Users' group are:<BR>"
-						$tmpStatus += ("<ul><li>" + $($MembersOfRDusersGroup.Name -join "<li>") + "</ul>")
+						$tmpStatus += ("<ul><li>" + $($MembersOfRDUsersGroup.Name -join "<li>") + "</ul>")
 						if($null -ne $MembersOfADGroups)
 						{
 							$tmpStatus += "<b>Members of the AD groups that are members of the 'Remote Desktop Users' Group are: </b><br>"
@@ -441,12 +386,12 @@ Function ClearRemoteDesktopUsers
 }
 
 # @FUNCTION@ ======================================================================================================================
-# Name...........: RunApplocker
+# Name...........: RunAppLocker
 # Description....:
 # Parameters.....:
 # Return Values..:
 # =================================================================================================================================
-Function RunApplocker
+Function RunAppLocker
 {
 <#
 .SYNOPSIS
@@ -469,28 +414,28 @@ Function RunApplocker
 		$res = "Good"
 		$tmpStatus = ""
 		$changeStatus = $false
-		$PSM_ApplockerConfiguration = Join-Path -Path $(Get-DetectedComponents -Component "PSM").Path -ChildPath "Hardening\PSMConfigureAppLocker.xml"
+		$PSM_AppLockerConfiguration = Join-Path -Path $(Get-DetectedComponents -Component "PSM").Path -ChildPath "Hardening\PSMConfigureAppLocker.xml"
 		$ruleTypesList = @("Exe","Script","Msi","Dll")
 	}
 	Process {
 		try{
-			Write-LogMessage -Type Info -Msg "Start verify RunApplocker"
-			If(Test-Path $PSM_ApplockerConfiguration)
+			Write-LogMessage -Type Info -Msg "Start verify RunAppLocker"
+			If(Test-Path $PSM_AppLockerConfiguration)
 			{
 
-				# Get current applocker configuration (incase it wasn't configured, an empty policy will be returned)
+				# Get current AppLocker configuration (incase it wasn't configured, an empty policy will be returned)
 				$xmlAppLockerConfiguration = [xml](get-AppLockerPolicy -effective -xml)
 				# Load the current PSM AppLocker Configuration
-				$xmlPSM_ApplockerConfig = [xml](Get-Content $PSM_ApplockerConfiguration)
-				If(($null -ne $xmlAppLockerConfiguration) -and ($null -ne $xmlPSM_ApplockerConfig))
+				$xmlPSM_AppLockerConfig = [xml](Get-Content $PSM_AppLockerConfiguration)
+				If(($null -ne $xmlAppLockerConfiguration) -and ($null -ne $xmlPSM_AppLockerConfig))
 				{
 					# For each type check that all rules exist
 					ForEach($type in $ruleTypesList)
 					{
 						Write-LogMessage -type Verbose "Checking rules for '$type'..."
-						$psmApplockerConfig = $xmlPSM_ApplockerConfig.PSMAppLockerConfiguration.SelectNodes("//Application[@Type='$type']")
-						$currentApplockerConfig = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='$type']")
-						$compareResult = Compare-Object -ReferenceObject $currentApplockerConfig.Conditions.FilePathCondition.Path -DifferenceObject $psmApplockerConfig.Path
+						$psmAppLockerConfig = $xmlPSM_AppLockerConfig.PSMAppLockerConfiguration.SelectNodes("//Application[@Type='$type']")
+						$currentAppLockerConfig = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='$type']")
+						$compareResult = Compare-Object -ReferenceObject $currentAppLockerConfig.Conditions.FilePathCondition.Path -DifferenceObject $psmAppLockerConfig.Path
 						If($compareResult.Count -gt 0)
 						{
 							$tmpStatus += "The following '$type' rules are different between the current AppLocker configuration and the PSM AppLocker configuration file<BR><ul>"
@@ -513,18 +458,18 @@ Function RunApplocker
 				}
 			}
 			else {
-				Write-LogMessage -Type Warning -Msg "PSM AppLocker configuration file does not exist in $PSM_ApplockerConfiguration. Skiping AppLocker check"
+				Write-LogMessage -Type Warning -Msg "PSM AppLocker configuration file does not exist in $PSM_AppLockerConfiguration. Skipping AppLocker check"
 				$res = "Warning"
-				[ref]$refOutput.Value = "PSM AppLocker configuration file does not exist in $PSM_ApplockerConfiguration"
+				[ref]$refOutput.Value = "PSM AppLocker configuration file does not exist in $PSM_AppLockerConfiguration"
 			}
 			
-			Write-LogMessage -Type Info -Msg "Finish verify RunApplocker"
+			Write-LogMessage -Type Info -Msg "Finish verify RunAppLocker"
 
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not verify RunApplocker.  Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$refOutput.Value = "Could not verify RunApplocker."
+			Write-LogMessage -Type "Error" -Msg "Could not verify RunAppLocker.  Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$refOutput.Value = "Could not verify RunAppLocker."
 			return "Bad"
 		}
 	}
@@ -673,7 +618,7 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 		$myRef = ""
 		$user_names = ($PSM_CONNECT, $PSM_ADMIN_CONNECT)
 		$RegPath = "Software\Policies\Microsoft\Windows\Control Panel\Desktop"
-		$UserDir = "$($ENV:WINDIR)\system32\GroupPolicyUsers\{0}\User\registry.pol"
+		$UserDir = "$($ENV:WinDir)\system32\GroupPolicyUsers\{0}\User\registry.pol"
 	}
 	Process {
 		try{
@@ -1010,8 +955,8 @@ Function HardenPSMUsersAccess
 		$PSM_PVCONF_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "temp\PVConfiguration.xml"
 		$PSM_BASICPSM_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "basic_psm.ini"
 
-        [XML]$xmlPSMconfig = Get-Content -Path $PSM_PVCONF_FILE_PATH
-        $PSM_RECORDING_PATH = ($xmlPSMconfig | Select-XML -XPath "//RecorderSettings" | Select-Object -ExpandProperty Node).LocalRecordingsFolder
+        [XML]$xmlPSMConfig = Get-Content -Path $PSM_PVCONF_FILE_PATH
+        $PSM_RECORDING_PATH = ($xmlPSMConfig | Select-XML -XPath "//RecorderSettings" | Select-Object -ExpandProperty Node).LocalRecordingsFolder
 
         $PSM_BasicPSM = get-content -Path $PSM_BASICPSM_FILE_PATH | Select-String 'LogsFolder'
         $PSM_LOGS_PATH = $PSM_BasicPSM -Replace "LogsFolder=", '' -Replace '"', ''
@@ -1040,7 +985,7 @@ Function HardenPSMUsersAccess
 			Write-LogMessage -Type Info -Msg "Start verify HardenPSMUsersAccess"
 			# Set a list of paths of paths to get access to
 			# OS Paths
-			$accessPaths = @("$($env:systemroot)\explorer.exe", "$($env:systemroot)\SysWOW64\explorer.exe", "$($env:systemroot)\System32\taskmgr.exe", "$($env:systemroot)\SysWOW64\taskmgr.exe")
+			$accessPaths = @("$($env:SystemRoot)\explorer.exe", "$($env:SystemRoot)\SysWOW64\explorer.exe", "$($env:SystemRoot)\System32\taskmgr.exe", "$($env:SystemRoot)\SysWOW64\taskmgr.exe")
 			# PSM paths
 			$accessPaths += @($PSM_PATH, $PSM_VAULT_FILE_PATH)
 			# PVWA paths (if installed on the same server)
@@ -1257,7 +1202,7 @@ Function PSM_CredFileHardening
 {
 <#
 .SYNOPSIS
-	Return verficiation type on credential file
+	Return verification type on credential file
 .DESCRIPTION
 	Return the verification type on the credential file used by the components to log back in to the vault
 .PARAMETER parameters
@@ -1281,9 +1226,9 @@ Function PSM_CredFileHardening
         Try{
    			Write-LogMessage -Type Info -Msg "Start validating hardening of PSM credential file"
             $PSMPath = (Get-DetectedComponents -Component "PSM").Path
-            $credentialsfolder = join-path -Path $PSMPath -ChildPath 'Vault'
+            $credentialsFolder = join-path -Path $PSMPath -ChildPath 'Vault'
 			# Go over all PSM Cred Files in the folder
-			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.cred))
+			ForEach ($credFile in (Get-ChildItem -Path $credentialsFolder -Filter *.cred))
 			{
 				Write-LogMessage -Type Debug -Msg "Checking '$($credFile.Name)' credential file"
 				if((Test-CredFileVerificationType -CredentialFilePath $credFile.FullName -outStatus ([ref]$myRef)) -ne "Good")
