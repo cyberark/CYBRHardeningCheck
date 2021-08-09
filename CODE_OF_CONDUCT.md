@@ -1,143 +1,66 @@
-# Contributor Covenant Code of Conduct
+# CyberArk Community Code of Conduct
 
-## Our Pledge
+CyberArk is a leader in Privileged Access Management, thanks to its customers and community. We listen to our community and wish to provide additional relevant tools.  We believe that our mission is best served in an environment that is friendly, safe, and accepting; free from intimidation or harassment.
+Towards this end, CyberArk’s developers have created this Community Code of Conduct for the CyberArk open source community.  Our Code of Conduct sets the standard for how developers, and community members can work together in a respectful and collaborative manner.  Those who do not abide by this Code of Conduct will not be permitted to remain part of our community.
 
-We as members, contributors, and leaders pledge to make participation in our
-community a harassment-free experience for everyone, regardless of age, body
-size, visible or invisible disability, ethnicity, sex characteristics, gender
-identity and expression, level of experience, education, socio-economic status,
-nationality, personal appearance, race, religion, or sexual identity
-and orientation.
 
-We pledge to act and interact in ways that contribute to an open, welcoming,
-diverse, inclusive, and healthy community.
+## Summary of Key Principles
 
-## Our Standards
+- Be respectful to others in the community at all times.
+- Report harassing or abusive behavior that you experience or witness at ReportAbuse@cyberark.com
+- The CyberArk community will not tolerate abusive or disrespectful behavior towards its members; anyone engaging in such behavior will be suspended from the CyberArk community.
 
-Examples of behavior that contributes to a positive environment for our
-community include:
-
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologizing to those affected by our mistakes,
-  and learning from the experience
-* Focusing on what is best not just for us as individuals, but for the
-  overall community
-
-Examples of unacceptable behavior include:
-
-* The use of sexualized language or imagery, and sexual attention or
-  advances of any kind
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or email
-  address, without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
-
-## Enforcement Responsibilities
-
-Community leaders are responsible for clarifying and enforcing our standards of
-acceptable behavior and will take appropriate and fair corrective action in
-response to any behavior that they deem inappropriate, threatening, offensive,
-or harmful.
-
-Community leaders have the right and responsibility to remove, edit, or reject
-comments, commits, code, wiki edits, issues, and other contributions that are
-not aligned to this Code of Conduct, and will communicate reasons for moderation
-decisions when appropriate.
 
 ## Scope
 
-This Code of Conduct applies within all community spaces, and also applies when
-an individual is officially representing the community in public spaces.
-Examples of representing our community include using an official e-mail address,
-posting via an official social media account, or acting as an appointed
-representative at an online or offline event.
+This Code of Conduct applies to all members of the CyberArk community, including paid and unpaid agents, administrators, users, and customers of CyberArk.  It applies in all CyberArk community venues, online and in person, including CyberArk Open Source project communities (such as public GitHub repositories, chat channels, social media, mailing lists, and public events) and in one-on-one communications pertaining to CyberArk affairs.
+This policy covers the usage of CyberArk hosted services, as well as the CyberArk website, CyberArk related events, and any other services offered by or on behalf of CyberArk (collectively, the "Service"). 
+This Code of Conduct is in addition to, and does not in any way nullify or invalidate, any other terms or conditions related to use of the Service.
 
-## Reporting Violations of this Code of Conduct
 
-Please select the method of contact you think is most appropriate for
-the form of violation:
+## Maintaining a Friendly, Harassment-Free Space
 
-* For urgent security issues, contact <security@cyberark.com>.
+We are committed to providing a friendly, safe and welcoming environment for all, regardless of gender identity, sexual orientation, ability, ethnicity, religion, age, physical appearance, body size, race, or similar personal characteristics.
+We ask that you please respect that people have differences of opinion regarding technical choices, and that every design or implementation choice carries a trade-off and numerous costs. There is seldom a single right answer. A difference of technology preferences is not a license to be rude.
+Harassing other users of the Service for any reason is never tolerated, whether via public or private media. Any spamming, trolling, flaming, baiting, or other attention-stealing behavior is not welcome, and will not be tolerated.
+Even if your intent is not to harass or offend others, be mindful of how your comments might be perceived by others in the community.
 
-* If you believe someone is harassing you or is demonstrating some other form of
-  malicious or inappropriate behavior, contact <abuse@conjur.org>. If this is
-  the initial report of a problem, please include as much detail as possible. It
-  is easiest for us to address issues when we have more context.
 
-* If you have concerns about a potential copyright violation, contact
-  <legal@cyberark.com>.
+## Unacceptable Behavior
 
-## Enforcement
+The following behaviors are considered harassment under this Code of Conduct and are unacceptable within our community:
+- Violence, threats of violence, or violent language directed against another person or group of people.
+- Sexist, racist, homophobic, transphobic, ableist, or otherwise discriminatory jokes and language.
+- Posting or displaying sexually explicit or violent material.
+- Posting or threatening to post other people’s personally identifying information ("doxing").
+- Personal insults, particularly those related to related to gender identity, sexual orientation, ability, ethnicity, religion, age, physical appearance, body size, race, or similar personal characteristics.
+- Using offensive or harassing nicknames or other identifiers.
+- Inappropriate photography or recording.
+- Inappropriate physical contact. You should have someone’s consent before touching them.
+- Unwelcome sexual attention. This includes: sexualized comments or jokes; inappropriate touching, groping, and unwelcome sexual advances.
+- Deliberate intimidation, stalking, or following (online or in person).
+- Sustained disruption of community events, including talks and presentations.
+- Advocating for, or encouraging, any of the above behavior.
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-abuse@conjur.org.
-All complaints will be reviewed and investigated promptly and fairly.
+## Reporting Violations 
 
-All community leaders are obligated to respect the privacy and security of the
-reporter of any incident.
+If you witness or experience unacceptable behavior in the CyberArk community, please promptly report it to our team at ReportAbuse@conjur.org.  If this is the initial report of a problem, please include as much detail as possible. It is easiest for us to address issues when we have more context.
+The CyberArk Community Team will look into any reported issues in a confidential manner and take any necessary actions to address and resolve the problem.
+We will not tolerate any form of retaliation towards users who report these issues to us.
+If you feel that you have been falsely or unfairly accused of violating this Code of Conduct by others in the community, you should notify the ReportAbuse@conjur.org team so that we can address and resolve the accusation.
+As always, if you have an urgent security issue, contact product_security@cyberark.com and if you have concerns about a potential copyright violation, contact legal@cyberark.com.
 
-## Enforcement Guidelines
+## Consequences
 
-Community leaders will follow these Community Impact Guidelines in determining
-the consequences for any action they deem in violation of this Code of Conduct:
+All content published to the Service, including user account credentials, is hosted at the sole discretion of the CyberArk administrators.  If a community member engages in unacceptable behavior, the CyberArk administrators may take any action they deem appropriate, up to and including a temporary ban or permanent expulsion from the community without warning. In general, we will choose the course of action that we judge as being most in the interest of fostering a safe and friendly community.
 
-### 1. Correction
+## Contact Info
+Please contact ReportAbuse@conjur.org if you need to report a problem or address a grievance related to an abuse report.
+You are also encouraged to contact us if you have questions about what constitutes appropriate and inappropriate content. We are happy to provide guidance to help you be a successful part of our community. Our technical community is available [here](https://cyberark-customers.force.com/s/).
 
-**Community Impact**: Use of inappropriate language or other behavior deemed
-unprofessional or unwelcome in the community.
+## Credit and License
 
-**Consequence**: A private, written warning from community leaders, providing
-clarity around the nature of the violation and an explanation of why the
-behavior was inappropriate. A public apology may be requested.
+This Code of Conduct borrows from the [npm Code of Conduct](https://www.npmjs.com/policies/conduct), Stumptown Syndicate [Citizen's Code of Conduct](http://citizencodeofconduct.org/), and the [Rust Project Code of Conduct](https://www.rust-lang.org/conduct.html).
+This document may be reused under a [Creative Commons Attribution-ShareAlike License](https://creativecommons.org/licenses/by-sa/4.0/).
 
-### 2. Warning
 
-**Community Impact**: A violation through a single incident or series
-of actions.
-
-**Consequence**: A warning with consequences for continued behavior. No
-interaction with the people involved, including unsolicited interaction with
-those enforcing the Code of Conduct, for a specified period of time. This
-includes avoiding interactions in community spaces as well as external channels
-like social media. Violating these terms may lead to a temporary or
-permanent ban.
-
-### 3. Temporary Ban
-
-**Community Impact**: A serious violation of community standards, including
-sustained inappropriate behavior.
-
-**Consequence**: A temporary ban from any sort of interaction or public
-communication with the community for a specified period of time. No public or
-private interaction with the people involved, including unsolicited interaction
-with those enforcing the Code of Conduct, is allowed during this period.
-Violating these terms may lead to a permanent ban.
-
-### 4. Permanent Ban
-
-**Community Impact**: Demonstrating a pattern of violation of community
-standards, including sustained inappropriate behavior,  harassment of an
-individual, or aggression toward or disparagement of classes of individuals.
-
-**Consequence**: A permanent ban from any sort of public interaction within
-the community.
-
-## Attribution
-
-This Code of Conduct is adapted from the [Contributor Covenant][homepage],
-version 2.0, available at
-https://www.contributor-covenant.org/version/2/0/code_of_conduct.html.
-
-Community Impact Guidelines were inspired by [Mozilla's code of conduct
-enforcement ladder](https://github.com/mozilla/diversity).
-
-[homepage]: https://www.contributor-covenant.org
-
-For answers to common questions about this code of conduct, see the FAQ at
-https://www.contributor-covenant.org/faq. Translations are available at
-https://www.contributor-covenant.org/translations.
