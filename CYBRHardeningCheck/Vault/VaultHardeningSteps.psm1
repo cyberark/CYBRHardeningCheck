@@ -1,4 +1,6 @@
-﻿# @FUNCTION@ ======================================================================================================================
+﻿$script:NICTeamingName = ""
+
+# @FUNCTION@ ======================================================================================================================
 # Name...........: Vault_NICHardening
 # Description....: NIC Hardening
 # Parameters.....:
@@ -44,6 +46,7 @@ Function Vault_NICHardening
 					{
 						# If the Vault has NIC Teaming, then this is OK - just report it
 						$nicTeam = Get-NetLbfoTeam | Where-Object { $_.Status -eq "Up" }
+						$script:NICTeamingName = $nicTeam.Name
 						$myRef += "NIC Teaming is enabled.<BR>Team Name: {0}<BR>Team NIC Members: {1}" -f $nicTeam.Name, $($nicTeam.Members -join ", ")
 					}
 					else
@@ -97,12 +100,18 @@ Function Vault_StaticIP
 
 	Begin {
 		$res = "Good"
+		$interfaceAliasPattern = "Eth*"
 	}
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify Vault has static IP"
-			$getdhcpstatus = Get-NetIPAddress -InterfaceAlias "Ethernet" -AddressFamily IPv4
-			ForEach ($item in $getdhcpstatus)
+			If(! [string]::IsNullOrEmpty($NICTeamingName))
+			{
+				Write-LogMessage -Type Verbose -Msg "Checking Team ($NICTeamingName) and not Ethernet"
+				$interfaceAliasPattern = $NICTeamingName
+			}
+			$getDHCPStatus = Get-NetIPAddress -InterfaceAlias $interfaceAliasPattern -AddressFamily IPv4
+			ForEach ($item in $getDHCPStatus)
 			{
 				if ($item.PrefixOrigin -eq "Dhcp")
 				{
@@ -316,8 +325,6 @@ Function Vault_LogicContainerServiceLocalUser
 				[ref]$refOutput.Value = $tmpStatus
 			}
 
-			[ref]$refOutput.Value = $myRef.Value
-
 			Write-LogMessage -Type Info -Msg "Finish validating Logic Container Service configuration"
 
 			return $res
@@ -325,6 +332,359 @@ Function Vault_LogicContainerServiceLocalUser
 		catch{
 			Write-LogMessage -Type "Error" -Msg "Could not validate Logic Container Service configuration.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate Logic Container Service configuration."
+			return "Bad"
+		}
+	}
+	End {
+		# Write output to HTML
+	}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Vault_FirewallNonStandardRules
+# Description....: Check that all the existing firewall rules are allowed (either standard or documented non-standard in the DBParm.ini)
+# Parameters.....:
+# Return Values..:
+# =================================================================================================================================
+Function Vault_FirewallNonStandardRules
+{
+<#
+.SYNOPSIS
+	Method to Check that all the existing firewall rules are allowed
+.DESCRIPTION
+	Returns true if all firewall rules are either standard or documented non-standard in the DBParm.ini
+.PARAMETER Parameters
+	(Optional) Parameters from the Configuration
+.PARAMETER Reference Status
+	Reference to the Step Status
+#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[array]$Parameters = $null,
+		[Parameter(Mandatory=$false)]
+		[ref]$refOutput
+	)
+
+	Begin {
+		$res = "Good"
+		$tmpStatus = ""
+	}
+	Process {
+		try{
+			Write-LogMessage -Type Info -Msg "Start validation of Vault Firewall Non-Standard rules"
+			$vaultFolder = $(Get-DetectedComponents -Component Vault).Path
+			# Find the DBParm.ini file
+			$DBParmFile = $(Get-ChildItem -Path $vaultFolder -Include "DBParm.ini" -Recurse).FullName
+			$dbParmFWRules = @()
+			ForEach($rule in $(Get-Content -Path $DBParmFile | Select-String "AllowNonStandardFWAddresses=").Line)
+			{
+				# Rule Parts: [0] - Address; [1] - Enabled; [2-3] - <Port>:<Direction>/<Protocol>
+				$ruleParts = $rule.Replace("AllowNonStandardFWAddresses=","").Split(',')
+				Foreach($direction in $ruleParts[2..5])
+				{
+					If($direction -Match "(\d{1,}):(\w{1,})/(\w{1,})")
+					{
+						$fwRule = "" | Select-Object DisplayGroup,Enabled,Direction,LocalAddress,RemoteAddress,Protocol,LocalPort,RemotePort	
+						$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
+							"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress,$this.Enabled,$(If($this.Direction -eq "inbound") {$this.LocalPort} else {$this.RemotePort}),$this.Direction,$this.Protocol
+						}
+						$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
+						If($ruleParts[1] -eq "Yes")
+						{
+							$fwRule.Enabled = "True"
+						}
+						$fwRule.Direction = $Matches[2]
+						$fwRule.LocalAddress = "Any"
+						$fwRule.RemoteAddress = $ruleParts[0].Replace("[","").Replace("]","")
+						$fwRule.Protocol = $Matches[3]
+						Switch ($fwRule.Direction)
+						{
+							"inbound" {
+								$fwRule.LocalPort = $Matches[1]
+								$fwRule.RemotePort = "Any"
+								break
+							}
+							"outbound" {
+								$fwRule.LocalPort = "Any"
+								$fwRule.RemotePort = $Matches[1]
+								break
+							}
+						}
+						Write-LogMessage -Type Verbose -Msg "Added DBParm.ini rule: $($fwRule.FWRuleLine)"
+						$dbParmFWRules += $fwRule
+					}
+					Else
+					{
+						Write-Host "Non valid rule line ($rule)"
+					}
+				}
+			}
+			
+			Write-LogMessage -Type Verbose -Msg "There are $($dbParmFWRules.count) Non-Standard Firewall rules defined in DBParm.ini"
+			Write-LogMessage -Type Verbose -Msg "Adding ICMP rules for the DBParm.ini collection"
+
+			# Add ICMPv4
+			If($dbParmFWRules.count -gt 0)
+			{
+				# Add an ICMP rule for every address
+				$addresses = @($dbParmFWRules.RemoteAddress | select-object -Unique)
+				# Add general ICMP rule (any - any)
+				$addresses += "Any"
+				Foreach ($address in $addresses) {
+					Foreach ($direction in @("inbound","outbound"))
+					{
+						$fwRule = "" | Select-Object DisplayGroup,Enabled,Direction,LocalAddress,RemoteAddress,Protocol,LocalPort,RemotePort	
+						$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
+							"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress,$this.Enabled,$(If($this.Direction -eq "inbound") {$this.LocalPort} else {$this.RemotePort}),$this.Direction,$this.Protocol
+						}
+						$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
+						$fwRule.Protocol = "ICMPv4"
+						$fwRule.Enabled = "True"
+						$fwRule.LocalPort = "Any"
+						$fwRule.RemotePort = "Any"
+						$fwRule.LocalAddress = "Any"
+						$fwRule.RemoteAddress = $address
+						$fwRule.Direction = $direction
+						Write-LogMessage -Type Verbose -Msg "Added DBParm.ini rule: $($fwRule.FWRuleLine)"
+						$dbParmFWRules += $fwRule
+					}
+				}
+			}
+
+			$FWRules = @()
+			ForEach($rule in $(get-NetFirewallRule -PolicyStore ActiveStore))
+			{
+				$addressFilter = $($rule | Get-NetFirewallAddressFilter)
+				$portFilter = $($rule | Get-NetFirewallPortFilter)
+				$fwRule = "" | Select-Object DisplayGroup,Enabled,Direction,LocalAddress,RemoteAddress,Protocol,LocalPort,RemotePort
+				$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
+					"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress,$this.Enabled,$(If($this.Direction -eq "inbound") {$this.LocalPort} else {$this.RemotePort}),$this.Direction,$this.Protocol
+				}
+				$fwRule.DisplayGroup = $rule.DisplayGroup
+				$fwRule.Enabled = $rule.Enabled.ToString()
+				$fwRule.Direction = $rule.Direction.ToString()
+				$fwRule.LocalAddress = $addressFilter.LocalAddress
+				$fwRule.RemoteAddress = $addressFilter.RemoteAddress
+				$fwRule.Protocol = $portFilter.Protocol
+				$fwRule.LocalPort = $portFilter.LocalPort
+				$fwRule.RemotePort = $portFilter.RemotePort
+				Write-LogMessage -Type Verbose -Msg "Added Configured Firewall rule: $($fwRule.FWRuleLine)"
+				$FWRules += $fwRule
+			}
+
+			Write-LogMessage -Type Verbose -Msg "There are $($FWRules.count) Firewall rules currently configured"
+			Write-LogMessage -Type Verbose -Msg "There are $(($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }).count) Non-Standard CyberArk Firewall rules currently configured"
+			If($(($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }).count) -gt 0)
+			{
+				$res = "Warning"
+				$tmpStatus += "<li>There are $(($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }).count) Firewall rules that were not created by CyberArk Vault currently configured </li>"
+			}
+			
+			ForEach($rule in $($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }))
+			{
+				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
+				If($dbParmFWRules.FWRuleLine -NotContains $rule.FWRuleLine)
+				{
+					$res = "Warning"
+					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is applied but not configured in DBParm.ini </li>"
+				}
+			}
+
+			ForEach($rule in $dbParmFWRules)
+			{
+				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
+				If($FWRules.FWRuleLine -NotContains $rule.FWRuleLine)
+				{
+					$res = "Warning"
+					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is configured in DBParm.ini but does not exist in the Vault Firewall policy </li>"
+				}
+			}
+
+			[ref]$refOutput.Value = "<ul>$tmpStatus</ul>"
+
+			Write-LogMessage -Type Info -Msg "Finish validation of Vault Firewall Non-Standard rules"
+
+			return $res
+		}
+		catch{
+			Write-LogMessage -Type "Error" -Msg "Could not verify Vault Firewall Non-Standard rules.  Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$refOutput.Value = "Could not verify Vault Firewall Non-Standard rules."
+			return "Bad"
+		}
+	}
+	End {
+		# Write output to HTML
+	}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Vault_ServerCertificate
+# Description....: Check that the Vault has a signed CA certificate
+# Parameters.....:
+# Return Values..:
+# =================================================================================================================================
+Function Vault_ServerCertificate
+{
+<#
+.SYNOPSIS
+	Method to Check that the Vault has a signed CA certificate
+.DESCRIPTION
+	Returns the Status of the Vault certificate
+.PARAMETER Parameters
+	(Optional) Parameters from the Configuration
+.PARAMETER Reference Status
+	Reference to the Step Status
+#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[array]$Parameters = $null,
+		[Parameter(Mandatory=$false)]
+		[ref]$refOutput
+	)
+
+	Begin {
+		$res = "Good"
+		$tmpStatus = ""
+	}
+	Process {
+		try{
+			Write-LogMessage -Type Info -Msg "Start validating Vault Server Certificate"
+			# Run the CACert tool
+			$vaultFolder = $(Get-DetectedComponents -Component Vault).Path
+			Push-Location $vaultFolder
+			$caCertOutput = .\cacert.exe show
+			Pop-Location
+			# Parse the output
+			$selfSigned = $(($caCertOutput | Select-String "Subject:").line.Replace("Subject:","").Trim() -match "self-signed")
+			$algorithm = ""
+			foreach ($line in $($caCertOutput | Select-String "Signature Algorithm:").Line) {
+				$algorithm = $line.Replace("Signature Algorithm:","").Trim()
+				break
+			}
+			If($selfSigned)
+			{
+				$res = "Warning"
+				$tmpStatus += "Vault currently using Self-Signed certificate<BR>"
+			}
+			If($algorithm -match "sha1")
+			{
+				$res = "Warning"
+				$tmpStatus += "Vault Certificate is using SHA1 encryption ($algorithm)"
+			}
+
+			[ref]$refOutput.Value = $tmpStatus
+			
+			Write-LogMessage -Type Info -Msg "Finish validating  Vault Server Certificate"
+
+			return $res
+		}
+		catch{
+			Write-LogMessage -Type "Error" -Msg "Could not verify Vault Server Certificate.  Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$refOutput.Value = "Could not verify Vault Server Certificate."
+			return "Bad"
+		}
+	}
+	End {
+		# Write output to HTML
+	}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Vault_KeysProtection
+# Description....: Check that the Vault Encryption keys are protected and have the right permissions
+# Parameters.....:
+# Return Values..:
+# =================================================================================================================================
+Function Vault_KeysProtection
+{
+<#
+.SYNOPSIS
+	Method to Check that the Vault Encryption keys are protected and have the right permissions
+.DESCRIPTION
+	Returns the Status of the Vault Encryption keys permissions
+.PARAMETER Parameters
+	(Optional) Parameters from the Configuration
+.PARAMETER Reference Status
+	Reference to the Step Status
+#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[array]$Parameters = $null,
+		[Parameter(Mandatory=$false)]
+		[ref]$refOutput
+	)
+
+	Begin {
+		$res = "Good"
+		$tmpStatus = ""
+	}
+	Process {
+		try{
+			Write-LogMessage -Type Info -Msg "Start validating Vault Encryption keys permissions"
+			$vaultFolder = $(Get-DetectedComponents -Component Vault).Path
+			$DBParmFile = $(Get-ChildItem -Path $vaultFolder -Include "DBParm.ini" -Recurse).FullName
+			# Get the location of all Vault Keys
+			$keysList = $(Get-Content -Path $DBParmFile | Select-String -List "RecoveryPubKey","ServerKey","ServerPrivateKey","RecoveryPrvKey","BackupKey").Line
+			Write-LogMessage -Type Verbose -Msg "Found the following Keys paths: $($KeysList -join '; ')"
+			$KeysLocations = @()
+			$KeysLocations += $($keysList | ForEach-Object { Split-Path -Parent -Path $($_.Split("=")[1]) } ) | Select-Object -Unique
+			
+			# Check if the Recovery key exists on the server
+			$RecoveryKey = ($keysList | Where-Object { $_ -match "RecoveryPrvKey=" }).Split("=")[1]
+			Write-LogMessage -Type Verbose -Msg "Checking if the RecoveryKey exists on the machine"
+			Write-LogMessage -Type Verbose -Msg "Current RecoveryKey path: $RecoveryKey"
+			If(Test-Path $RecoveryKey)
+			{
+				$res = "Warning"
+				$tmpStatus += "<li>It is not recommended to have the Recovery Key on the Vault server.</li>"
+			}
+			else {
+				Write-LogMessage -Type Verbose -Msg "RecoveryKey is not accessible on machine"
+			}
+
+			# Check that all paths have the right permissions
+			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
+			foreach ($path in $KeysLocations) {
+				Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
+				if((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+				{
+					$KeysFolderLocalAdmins = $false
+					$res = "Warning"
+				}
+				$tmpStatus += "<li>" + $myRef.Value + "</li>"
+
+				if((Compare-UserPermissions -path $path -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+				{
+					$KeysFolderLocalSystem = $false
+					$res = "Warning"
+				}
+				$tmpStatus += "<li>" + $myRef.Value + "</li>"
+
+				# Verify if Administrators, System and the CPM User are the only ones that has permissions
+				if(($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
+				{
+					If((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
+					{
+						$tmpStatus += "<li>" + $myRef.Value + "</li>"
+						$res = "Warning"
+					}
+					Else { $tmpStatus += "<li> Permissions are set correctly on the path: " + $path + "</li>" }
+				}
+				Else {
+					$tmpStatus += "<li>" + "The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user" + "</li>"
+					$res = "Warning"
+				}
+			}
+
+			[ref]$refOutput.Value = "<ul>"+$tmpStatus+"</ul>"
+			
+			Write-LogMessage -Type Info -Msg "Finish validating Vault Encryption keys permissions"
+
+			return $res
+		}
+		catch{
+			Write-LogMessage -Type "Error" -Msg "Could not verify Vault Server Certificate. Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$refOutput.Value = "Could not verify Vault Server Certificate."
 			return "Bad"
 		}
 	}

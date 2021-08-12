@@ -174,7 +174,7 @@ Function PVWA_Cryptography_Settings
 
 			Initialize-WebAdministrationModule
 
-			$currentValue = Get-WebConfigurationProperty -pspath $iisPath -filter $filter -name $value
+			$currentValue = Get-WebConfigurationProperty -PSPath $iisPath -filter $filter -name $value
 			if($null -ne $currentValue)
 			{
 				if($currentValue.ToLower() -ne $value)
@@ -236,10 +236,10 @@ Function PVWA_IIS_MimeTypes
 		Try{
 			Write-LogMessage -Type Info -Msg "Start verify allowed mime types"
 
-			$sysdir = [environment]::SystemDirectory
-			$configPath = "$sysdir\inetsrv\config\applicationHost.config"
+			$SYSDir = [environment]::SystemDirectory
+			$configPath = "$SYSDir\inetsrv\config\applicationHost.config"
 			$configXML = [xml](Get-Content $configPath)
-			$NotAllowedMimeTypes = ($configXML.configuration.'system.webServer'.staticContent.mimeMap | Where-Object { $_.FileExtension -notin $allowedMimeTypes })
+			$NotAllowedMimeTypes = ($configXML.configuration.'system.webServer'.staticContent.mimeMap | Where-Object { $_.FileExtension -NotIn $allowedMimeTypes })
 			if($NotAllowedMimeTypes.Count -gt 0)
 			{
 				[ref]$refOutput.Value = "There are $($NotAllowedMimeTypes.Count) mime types that does not adhere the Hardening best practice"
@@ -292,8 +292,8 @@ Function PVWA_AnonymousAuthentication
 		Try{
 			Write-LogMessage -Type Info -Msg "Start verify Anonymous Authentication in application pools"
 
-			$sysdir = [environment]::SystemDirectory
-			$configPath = "$sysdir\inetsrv\config\applicationHost.config"
+			$SYSDir = [environment]::SystemDirectory
+			$configPath = "$SYSDir\inetsrv\config\applicationHost.config"
 			$configXML = [xml](Get-Content $configPath)
 			$AnonAuth = ($configXML.configuration.'system.webServer'.security.authentication.anonymousAuthentication)
 			ForEach($auth in $AnonAuth)
@@ -350,8 +350,8 @@ Function PVWA_DirectoryBrowsing
 		Try{
 			Write-LogMessage -Type Info -Msg "Start verify Directory Browsing"
 
-			$sysdir = [environment]::SystemDirectory
-			$configPath = "$sysdir\inetsrv\config\applicationHost.config"
+			$SYSDir = [environment]::SystemDirectory
+			$configPath = "$SYSDir\inetsrv\config\applicationHost.config"
 			$configXML = [xml](Get-Content $configPath)
 			$DirectoryBrowsing = ($configXML.configuration.directoryBrowse)
 			ForEach($item in $DirectoryBrowsing)
@@ -552,7 +552,7 @@ Function PVWA_IIS_Cypher_Suites
 {
 <#
 .SYNOPSIS
-	Method to check the IIS Chyper suites
+	Method to check the IIS Cypher suites
 .PARAMETER Parameters
 	(Optional) Parameters from the Configuration
 .PARAMETER Reference Status
@@ -810,7 +810,7 @@ Function PVWA_NonSystemDrive
 			If($currentIISPath -like $systemDriveIISPath)
 			{
 				# IIS is installed on the system drive
-				$tmpStatus += "IIS is installed on the System Drive in the defualt location"
+				$tmpStatus += "IIS is installed on the System Drive in the default location"
 				$statusChanged = $true
 			}
 			else
@@ -963,10 +963,10 @@ Function PVWA_AdditionalAppPool
 {
 <#
 .SYNOPSIS
-	Validates PVWA pplication pool configuration
+	Validates PVWA Application pool configuration
 .DESCRIPTION
-	Validates PVWA pplication pool configuration.
-	If PVWA shuold be installed on a dedicated server, no other application pools should exist
+	Validates PVWA Application pool configuration.
+	If PVWA should be installed on a dedicated server, no other application pools should exist
 .PARAMETER Parameters
 	(Optional) Parameters from the Configuration
 .PARAMETER Reference Status
@@ -998,7 +998,7 @@ Function PVWA_AdditionalAppPool
 			$nonPVWAAppPools = ""
 			if($iisWebApplications.Count -gt 2)
 			{
-				$nonPVWAAppPools = ($iisWebApplications | Select-Object Name | Where-Object { $_.Name -notlike "PasswordVault*" -and $_.Name -ne "DefaultAppPool" })
+				$nonPVWAAppPools = ($iisWebApplications | Select-Object Name | Where-Object { $_.Name -NotLike "PasswordVault*" -and $_.Name -ne "DefaultAppPool" })
 				Write-LogMessage -Type Verbose -Msg "Existing Application Pools: $($nonPVWAAppPools | ForEach-Object{$_.Name + '`n'})"
 				[ref]$refOutput.Value = "The following Application Pools are installed on the PVWA server: $($nonPVWAAppPools | ForEach-Object{$_.Name + '<BR>'})"
 				If($PVWADedicatedServer)
@@ -1036,7 +1036,7 @@ Function PVWA_CredFileHardening
 {
 <#
 .SYNOPSIS
-	Return verficiation type on credential file
+	Return verification type on credential file
 .DESCRIPTION
 	Return the verification type on the credential file used by the components to log back in to the vault
 .PARAMETER parameters
@@ -1060,9 +1060,9 @@ Function PVWA_CredFileHardening
         Try{
    			Write-LogMessage -Type Info -Msg "Start validating hardening of PVWA credential file"
             $pvwaPath = (Get-DetectedComponents -Component "PVWA").Path
-            $credentialsfolder = join-path -Path $pvwaPath -ChildPath 'CredFiles'
+            $credentialsFolder = join-path -Path $pvwaPath -ChildPath 'CredFiles'
 			# Go over all PVWA Cred Files in the folder
-			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.ini))
+			ForEach ($credFile in (Get-ChildItem -Path $credentialsFolder -Filter *.ini))
 			{
 				Write-LogMessage -Type Debug -Msg "Checking '$($credFile.Name)' credential file"
 				if((Test-CredFileVerificationType -CredentialFilePath $credFile.FullName -outStatus ([ref]$myRef)) -ne "Good")
