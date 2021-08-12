@@ -44,10 +44,10 @@ The following behaviors are considered harassment under this Code of Conduct and
 
 ## Reporting Violations 
 
-If you witness or experience unacceptable behavior in the CyberArk community, please promptly report it to our team at ReportAbuse@conjur.org.  If this is the initial report of a problem, please include as much detail as possible. It is easiest for us to address issues when we have more context.
+If you witness or experience unacceptable behavior in the CyberArk community, please promptly report it to our team at ReportAbuse@cyberark.com.  If this is the initial report of a problem, please include as much detail as possible. It is easiest for us to address issues when we have more context.
 The CyberArk Community Team will look into any reported issues in a confidential manner and take any necessary actions to address and resolve the problem.
 We will not tolerate any form of retaliation towards users who report these issues to us.
-If you feel that you have been falsely or unfairly accused of violating this Code of Conduct by others in the community, you should notify the ReportAbuse@conjur.org team so that we can address and resolve the accusation.
+If you feel that you have been falsely or unfairly accused of violating this Code of Conduct by others in the community, you should notify the ReportAbuse@cyberark.com team so that we can address and resolve the accusation.
 As always, if you have an urgent security issue, contact product_security@cyberark.com and if you have concerns about a potential copyright violation, contact legal@cyberark.com.
 
 ## Consequences
@@ -55,7 +55,7 @@ As always, if you have an urgent security issue, contact product_security@cybera
 All content published to the Service, including user account credentials, is hosted at the sole discretion of the CyberArk administrators.  If a community member engages in unacceptable behavior, the CyberArk administrators may take any action they deem appropriate, up to and including a temporary ban or permanent expulsion from the community without warning. In general, we will choose the course of action that we judge as being most in the interest of fostering a safe and friendly community.
 
 ## Contact Info
-Please contact ReportAbuse@conjur.org if you need to report a problem or address a grievance related to an abuse report.
+Please contact ReportAbuse@cyberark.com if you need to report a problem or address a grievance related to an abuse report.
 You are also encouraged to contact us if you have questions about what constitutes appropriate and inappropriate content. We are happy to provide guidance to help you be a successful part of our community. Our technical community is available [here](https://cyberark-customers.force.com/s/).
 
 ## Credit and License
