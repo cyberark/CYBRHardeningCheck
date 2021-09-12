@@ -1,10 +1,13 @@
 [![release][]][github-site]
 [![license][]][license-link]
+[![downloads][]][github-site]
 
 [release]:https://img.shields.io/github/v/release/cyberark/CYBRHardeningCheck?color=brightgreen
 [github-site]:https://github.com/cyberark/CYBRHardeningCheck/releases/latest
 [license]:https://img.shields.io/github/license/cyberark/CYBRHardeningCheck.svg
 [license-link]:https://github.com/cyberark/CYBRHardeningCheck/blob/main/LICENSE
+[downloads]:https://img.shields.io/github/downloads/cyberark/CYBRHardeningCheck/total?color=brightgreen
+
 
 # CyberArk Hardening Health Check
 One of the most important recommendations for any application, and especially for security applications is to harden the server.
@@ -30,7 +33,7 @@ This tool is based on the Automated Hardening scripts that are provided by Cyber
 The tool is based on the same hardening XML that comes with the automated hardening scripts and allows to disable some of the checks as well.
 What this means is that if you disabled a specific hardening step, you can disable the same one in the hardening health check to prevent false positives.
 The tool also provides links to documentation to most of the hardening checks and relevant information in a report where the hardening is not complete or missing.
-<Example Report Image>
+![Example report](https://user-images.githubusercontent.com/11990765/126695257-38322f49-dc5d-44ea-9276-616798cfd03e.png)
 
 ## Usage
 The package ZIP includes a few folders, a Powershell script (Main.ps1) and a HTML template for the report.
@@ -42,7 +45,7 @@ PS> .\Main.ps1
 
 For troubleshooting or getting more information about the checks done, you can run the script using Verbose logging
 ```powershell
-PS> ./Main.ps1 -Debug -Verbose
+PS> .\Main.ps1 -Debug -Verbose
 ```
 
 The tool creates a log file by default that contains all steps taken by the script (when using Verbose logging you will get a lot more info in the log file)
@@ -54,7 +57,7 @@ Other relevant information will be referenced in the log and the report.
 |--------      						| -------               
 |ImportingINFConfiguration			|Importing an INF File to the Local Machine
 |ValidateServerRoles				|This function checks for unnecessary roles
-|DisableScreenSaver					|Checks if the screen saver is disabled
+|EnableScreenSaver					|Checks if the screen saver is disabled
 |AdvancedAuditPolicyConfiguration	|Advanced Audit Policy Configuration
 |RemoteDesktopServices				|Check Remote Desktop Services settings
 |EventLogSizeAndRetention			|Check Event Log and Retention settings
@@ -62,7 +65,7 @@ Other relevant information will be referenced in the log and the report.
 |RegistryPermissions				|Check Registry permissions
 |FileSystemPermissions				|Validates unnecessary permissions on %SystemRoot%\System32\Config and %SystemRoot%\System32\Config\RegBack.
 |FileSystemAudit					|Check audit access rules on %SystemRoot%\System32\Config and %SystemRoot%\System32\Config\RegBack.
-|DisableServices					|Disabling The following services:  "Routing and Remote Access", "Smart Card", "Smart Card Removal Policy", "SNMP Trap", "Special Administration Console Helper","Windows Error Reporting Service", "WinHTTP Web Proxy Auto-Discovery Service"
+|DisableServices					|Check that the following services are disabled:  "Routing and Remote Access", "Smart Card", "Smart Card Removal Policy", "SNMP Trap", "Special Administration Console Helper","Windows Error Reporting Service", "WinHTTP Web Proxy Auto-Discovery Service"
 
 
 ### Vault specific hardening checks

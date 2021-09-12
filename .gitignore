@@ -1,2 +1,3 @@
 CYBRHardeningCheck/Hardening_HealthCheck.log
-settings.json
+CYBRHardeningCheck/Hardening_HealthCheck_Report_*.html
+.vscode/settings.json

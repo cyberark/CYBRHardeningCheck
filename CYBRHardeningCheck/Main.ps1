@@ -24,7 +24,7 @@ $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 
 # Script Version
-$ScriptVersion = "2.8.2"
+$ScriptVersion = "3.0"
 
 # Set Log file path
 $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
@@ -113,6 +113,65 @@ Function Remove-ScriptModule
 	}
 }
 
+Function Get-HardeningStatus
+{
+<#
+.SYNOPSIS
+	Gets the Hardening status row to the HTML report output table
+.DESCRIPTION
+	Write a new Hardening status row to the HTML report output table
+.PARAMETER HardeningStatus
+	The hardening status object to build the report from
+#>
+param(
+	$hardeningStatus
+)
+	Begin {
+		If($null -eq $hardeningStatus)
+		{
+			Throw $(New-Object System.Exception ("Hardening Status object is NULL",$_.Exception))
+		}
+	}
+	Process {
+		$summary = "" | Select-Object "Errors", "hardeningPercentage"
+		$summary.errors = 0
+		$summary.hardeningPercentage = 0.0
+		# Get the Unique sorted list of hardening steps
+		$sortedHardeningStatus = $hardeningStatus | Sort-Object -Property Name -Unique
+		# Concatenate the status of duplicated items
+		ForEach($item in $sortedHardeningStatus)
+		{
+			# Check for duplicates
+			If(($hardeningStatus.Name -match $item.Name).Count -gt 1)
+			{
+				Write-LogMessage -Type Verbose -Msg "Handling '$($item.Name)' duplication..."
+				$tempDupStatus = $hardeningStatus | Where-Object { $_.Name -eq $item.Name }
+				$tempOutput += $($tempDupStatus | ForEach-Object {
+					Get-SummaryOutput -Component $_.Component -Status $_.Status -Details $_.Output
+				})
+				Write-LogMessage -Type Verbose -Msg ("Component:{0}`nName:{1}`nStatus:{2}`n" -f $item.Component, $item.Name, $item.Status)
+				$item.Name = $Item.Name
+				$Item.Output = $tempOutput
+				Write-LogMessage -Type Verbose -Msg "New output: $($Item.Output)"
+			}
+			Else
+			{
+				$Item.Output = $(Get-SummaryOutput -Component $Item.Component -Status $Item.Status -Details $Item.Output)
+			}
+			# Count Errors
+			If($item.Status -ne "Good")
+			{
+				$summary.errors++
+			}
+		}
+		$summary.hardeningPercentage = ($summary.errors / $sortedHardeningStatus.count)
+
+		# return the Hardening setup and the Summary
+		return @( $sortedHardeningStatus, $summary )
+	}
+	End{}
+}
+
 # @FUNCTION@ ======================================================================================================================
 # Name...........: EndScript
 # Description....: End the Script with a Footer line and Remove all used modules
@@ -160,16 +219,16 @@ Function Get-SummaryOutput
 param(
 	$Component, $status, $details
 )
-	If([string]::IsNullOrEmpty($details))
-	{
-		return "<b>{0}</b> step was completed with status '{1}'.<BR>" -f `
-			$Component, $Status
-	}
-	else
-	{
-		return "<details><summary><b>{0}</b> step was completed with status '{1}'. See more details</summary><p>{2}</p></details><BR>" -f `
-					$Component, $Status, $Details
-	}
+	$outputSummary =  $(
+@"
+	<li> 
+		<div class="{1}">{0}<span class="status">{1}</span>
+			<span class="info">{2}</span>
+		</div>
+	</li>	
+"@ -f $Component, $Status, $Details
+	)
+	return $outputSummary
 }
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Write-HTMLHardeningStatusTable
@@ -190,55 +249,31 @@ Function Write-HTMLHardeningStatusTable
 	param(
 		$hardeningStatus
 	)
-
-	Begin {
-		If($null -eq $hardeningStatus)
+	$retText = ""
+	Write-LogMessage -type Verbose -Msg "Printing $($hardeningStatus.count) hardening steps"
+	ForEach ($status in $hardeningStatus)
+	{
+		$docLink = ""
+		If(-not [string]::IsNullOrEmpty($status.Description))
 		{
-			Throw $(New-Object System.Exception ("Hardening Status object is NULL",$_.Exception))
+			$docLink = "<a href=$($status.Description)>Link to documentation</a>"
 		}
+		$retText += 
+@"
+		<tr>
+			<td>
+			<details>
+				<summary class="$($status.Status)">$($status.Name)</summary>
+				<ul>
+					$($status.Output)
+				</ul>
+			</details>
+			</td>	
+			<td>$docLink</td>
+		</tr>
+"@
 	}
-	Process {
-		$retText = ""
-		# Get the Unique sorted list of hardening steps
-		$sortedHardeningStatus = $hardeningStatus | Sort-Object -Property Name -Unique
-		# Concatenate the status of duplicated items
-		ForEach($item in $sortedHardeningStatus)
-		{
-			# Check for duplicates
-			If(($hardeningStatus.Name -match $item.Name).Count -gt 1)
-			{
-				Write-LogMessage -Type Verbose -Msg "Handling '$($item.Name)' duplication..."
-				$tempDupStatus = $hardeningStatus | Where-Object { $_.Name -eq $item.Name }
-				$tempOutput = $tempDupStatus | ForEach-Object {
-					Get-SummaryOutput -Component $_.Component -Status $_.Status -Details $_.Output
-				}
-				#$tempComponent = "<B>[$($tempDupStatus.Component -join "]</B><B>[")]</B>"
-				Write-LogMessage -Type Verbose -Msg ("Component:{0}`nName:{1}`nStatus:{2}`n" -f $item.Component, $item.Name, $item.Status)
-				#$item.Name = $tempComponent+$Item.Name
-				$item.Name = $Item.Name
-				$Item.Output = $tempOutput
-				Write-LogMessage -Type Verbose -Msg "New output: $($Item.Output)"
-			}
-			Else
-			{
-				$Item.Output = Get-SummaryOutput -Component $Item.Component -Status $Item.Status -Details $Item.Output
-			}
-		}
-
-		Write-LogMessage -type Verbose -Msg "Printing $($sortedHardeningStatus.count) hardening steps"
-		ForEach ($status in $sortedHardeningStatus)
-		{
-			$docLink = ""
-			If(-not [string]::IsNullOrEmpty($status.Description))
-			{
-				$docLink = "<a href=$($status.Description)>Link to documentation</a>"
-			}
-			$retText += "<tr style='border:1px solid black;'>	<td>$($status.Name)</td> 	<td><div class=$($status.Status) /></td>	<td>$($status.Output)</td>	<td>$docLink</td></tr>"
-		}
-		return $retText
-	}
-	End {
-	}
+	return $retText
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -321,16 +356,85 @@ Function New-HTMLReportOutput
 		{
 			$machineName += " <B>(In Domain)</B>"
 		}
+		$componentsList = @()
+		$componentsList += $Components
 		$htmlFileContent = $htmlFileContent.Replace("@@@MachineName@@@",$machineName)
+		$htmlFileContent = $htmlFileContent.Replace("@@@ComponentsNum@@@", $($componentsList.Count))
+		$hardeningTable,$summary = $(Get-HardeningStatus $hardeningStatus)
+		$htmlFileContent = $htmlFileContent.Replace("@@@HardeningStatus@@@", $($summary.hardeningPercentage.ToString("#%")))
+		$htmlFileContent = $htmlFileContent.Replace("@@@ErrorsNum@@@", $($summary.Errors))
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblComponents@@@", $(Write-HTMLComponentsTable $components))
-		$htmlFileContent = $htmlFileContent.Replace("@@@tblHardening@@@", $(Write-HTMLHardeningStatusTable $hardeningStatus))
+		$htmlFileContent = $htmlFileContent.Replace("@@@tblHardening@@@", $(Write-HTMLHardeningStatusTable $hardeningTable))
 		$htmlFileContent = $htmlFileContent.Replace("@@@DateTime@@@",$reportDateTime)
 		# Export the data to the file
-		$htmlFileContent | Out-File $exportFilePath
+		$htmlFileContent | Out-File $exportFilePath -Encoding utf8
 	}
 	End {
 		return $exportFilePath
 	}
+}
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Out-HardeningFolderPath
+# Description....: Adds the Hardening folder path found on the machine
+# Parameters.....: Path to HTML report, number of detected components
+# Return Values..: Updates the HTML file with the relevant folder paths
+# =================================================================================================================================
+Function Out-HardeningFolderPath {
+<#
+.SYNOPSIS
+	Searches the Hardening folder on the machine
+.DESCRIPTION
+	Updates the Hardening folder path found on the machine in the HTML report
+.PARAMETER Path
+	The path to the HTML report to update
+.PARAMETER TotalComponentsFound
+	The number of components found (for making the search quicker)
+#>
+	param (
+		[Parameter(Mandatory=$true)]
+		[ValidateScript({ Test-Path $_ })]
+		[string]$Path,
+		[Parameter(Mandatory=$false)]
+		[int]$TotalComponentsFound = 1
+	)
+	Write-LogMessage -Type Info -Msg "Start looking for hardening folders named 'InstallationAutomation'"
+	Write-LogMessage -Type Verbose -Msg "Should find maximum of $TotalComponentsFound folders"
+	$fileContent = Get-Content $Path
+	$stringToReplace = "@@@Hardening_Scripts_Folder@@@"
+	$x = 0 
+	# Start a background job to search all InstallationAutomation folders and limit it to the maximum number of Total Components found
+	# Might want to add in the future filter on the actual components folder names (e.g. "CPM|PVWA|PSM|AIM")
+	Start-Job -Name FileCollection -ScriptBlock {Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Select-Object -First $args[0] } -ArgumentList $TotalComponentsFound | Out-Null
+	While((Get-Job -Name FileCollection).State -eq "Running") 
+	{ 
+		Write-Progress -Activity "Searching for Hardening folders..." -PercentComplete $x 
+		If($x -eq 100){ $x = 1 } Else { $x += 1 } 
+	} 
+	Write-Progress -Activity "Searching for Hardening folders..." -Completed 
+	$allFolders = Receive-Job -Name FileCollection -AutoRemoveJob -Wait
+	Write-LogMessage -Type Debug -Msg "Found $($allFolders.FullName.Count) folders named 'InstallationAutomation'"
+	If($allFolders.FullName.Count -gt 1)
+	{
+		# Assuming that all found folders relate to CyberArk
+		$outString = "<ul>"
+		Foreach($folder in $allFolders)
+		{
+			$outString += "<li>$($folder.FullName)</li>"
+		}
+		$outString += "</ul>"
+	}
+	elseif($allFolders.FullName.Count -eq 1)
+	{
+		$outString = "'$($allFolders.FullName)'"
+	}
+	else {
+		$outString = "Did not find CyberArk Hardening scripts folder on this machine."
+	}
+	# Replace the data
+	$fileContent = $fileContent.Replace($stringToReplace,$outString)
+	# Export the data to the file
+	$fileContent | Out-File $path -Encoding utf8
 }
 #endregion
 
@@ -365,7 +469,7 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 # Check that you are running with Admin privileges (So that we can access all paths that are hardened)
 If($(Test-CurrentUserLocalAdmin) -eq $false)
 {
-	Write-LogMessage -Type Error -Msg "In order to get all information, plesae run the script again on an Administrator Powershell session (Run as Admin)"
+	Write-LogMessage -Type Error -Msg "In order to get all information, please run the script again on an Administrator Powershell session (Run as Admin)"
 	EndScript
 	return
 }
@@ -413,7 +517,7 @@ ForEach ($comp in $(Get-DetectedComponents))
 		}
 		Else
 		{
-			throw [System.NotImplementedException]::New('This Hardening Component check is not implemented.')
+			throw [System.NotImplementedException]::new('This Hardening Component check is not implemented.')
 		}
 	}
 	catch {
@@ -423,6 +527,8 @@ ForEach ($comp in $(Get-DetectedComponents))
 
 # Export the Report when Finished
 $outputFile = New-HTMLReportOutput -machineName $machineName -components $(Get-DetectedComponents) -hardeningStatus $hardeningStepsStatus
+# Add the Hardening Scripts folder to the report
+Out-HardeningFolderPath -Path $outputFile -TotalComponentsFound $(Get-DetectedComponents).Name.Count
 
 Write-LogMessage -Type Info -MSG "Hardening Health Check Report located in: $outputFile" -LogFile $LOG_FILE_PATH
 . $outputFile

@@ -1,4 +1,7 @@
-﻿#region Writer Functions
+﻿Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")
+Set-Variable -Name UnsupportedHardeningComponents -Option ReadOnly -Value @("AIM","EPM","SecureTunnel")
+
+#region Writer Functions
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Write-LogMessage
 # Description....: Writes the message to log and screen
@@ -49,7 +52,7 @@ Function Write-LogMessage
 		{
 			# User wanted to write logs, but did not provide a log file - Create a temporary file
 			$LogFile = Join-Path -Path $ENV:Temp -ChildPath "$((Get-Date).ToShortDateString().Replace('/','_')).log"
-			Write-Host "No log file path inputed, created a temporary file at: '$LogFile'"
+			Write-Host "No log file path inputted, created a temporary file at: '$LogFile'"
 		}
 		If ($Header -and $WriteLog) {
 			"=======================================" | Out-File -Append -FilePath $LogFile 
@@ -402,7 +405,7 @@ Function Set-DetectedComponents
 	$_detectedComponents = Find-Components -Component "All"
 	# Add  indication if the server is a domain member
 	$_detectedComponents | Add-Member -NotePropertyName DomainMember -NotePropertyValue $(Test-InDomain)
-	# Make Detected Components availble in Script scope
+	# Make Detected Components available in Script scope
 	Set-Variable -Name DetectedComponents -Value $_detectedComponents -Scope Script
 }
 
@@ -501,7 +504,7 @@ Function New-AccessControlObject{
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Get-IdentityReference
 # Description....: Get Identity Reference
-# Parameters.....: $identityRefernce
+# Parameters.....: $identityReference
 # Return Values..: IdentityReference
 # =================================================================================================================================
 Function Get-IdentityReference
@@ -515,20 +518,20 @@ Function Get-IdentityReference
 	The current Identity Reference we want to get reference to
 #>
 	param(
-		$identityRefernce
+		$identityReference
 	)
 
 	Process {
-		if ($identityRefernce -eq 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES')
+		if ($identityReference -eq 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES')
 		{
-			$identityRefernce = "ALL APPLICATION PACKAGES"
+			$identityReference = "ALL APPLICATION PACKAGES"
 		}
-		if ($identityRefernce -eq 'APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES')
+		if ($identityReference -eq 'APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES')
 		{
-			$identityRefernce = "ALL RESTRICTED APPLICATION PACKAGES"
+			$identityReference = "ALL RESTRICTED APPLICATION PACKAGES"
 		}
 
-		return $identityRefernce
+		return $identityReference
 	}
 }
 
@@ -650,7 +653,10 @@ Function Find-Components
 #>
 	param(
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")]
+		[ValidateScript({   
+			if($_ -in (@("All")+$DetectionSupportedComponents)) { return $true }
+			else{ throw "Use one of these components: $($DetectionSupportedComponents -join ', ')" }
+		})]
 		[String]$Component = "All"
 	)
 
@@ -794,7 +800,7 @@ Function Find-Components
 				"All"
 				{
 					try{
-						ForEach($comp in @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel"))
+						ForEach($comp in $DetectionSupportedComponents)
 						{
 							$retArrComponents += Find-Components -Component $comp
 						}
@@ -1120,11 +1126,11 @@ Function Get-DnsHost
 	Begin {}
 	Process{
 		try{
-			return [system.net.dns]::GetHostByName($env:COMPUTERNAME) | Format-List hostname | Out-String | ForEach-Object{ "{0}" -f $_.Split(':')[1].Trim()};
+			return [system.net.dns]::GetHostByName($env:ComputerName) | Format-List hostname | Out-String | ForEach-Object{ "{0}" -f $_.Split(':')[1].Trim()};
 		}
 		catch{
 			Write-LogMessage -Type Error -Msg "Failed to retrieve DNS Host name. Error: $(Join-ExceptionMessage $_.Exception)"
-			return $env:COMPUTERNAME
+			return $env:ComputerName
 		}
 	}
 	End {}
@@ -1223,7 +1229,7 @@ Function Get-ServiceInstallPath
 		try{
 			if ($null -eq $m_ServiceList)
 			{
-				Set-Variable -Name m_ServiceList -Value $(Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.pspath }) -Scope Script
+				Set-Variable -Name m_ServiceList -Value $(Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.PSPath }) -Scope Script
 				#$m_ServiceList = Get-Reg -Hive "LocalMachine" -Key System\CurrentControlSet\Services -Value $null
 			}
 			$regPath =  $m_ServiceList | Where-Object {$_.PSChildName -eq $ServiceName}
@@ -1330,7 +1336,7 @@ Function Get-ParsedFileNameByOS
 	)
 
 	Begin {
-		if($fileName -notmatch "@OS@")
+		if($fileName -NotMatch "@OS@")
 		{
 			return $fileName
 		}
@@ -1376,7 +1382,7 @@ Function Get-ParsedFileNameByComponent
 	)
 
 	Begin {
-		if($fileName -notmatch "@Component@")
+		if($fileName -NotMatch "@Component@")
 		{
 			return $fileName
 		}
@@ -1384,8 +1390,8 @@ Function Get-ParsedFileNameByComponent
 	Process {
 		if($fileName -match "@Component@")
 		{
-			# Exclude SecureTunnel
-			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_ -ne "SecureTunnel" })
+			# Exclude Non-supported components
+			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_ -NotIn $UnsupportedHardeningComponents })
 			return ($fileName -Replace "@Component@", $($componentsList -join " "))
 		}
 		else
@@ -1414,9 +1420,12 @@ Function Get-DetectedComponents
 	Gets the Detected Components in a Script scope
 #>
 	param(
-		# Component naem
+		# Component name
 		[Parameter(Mandatory=$false)]
-		[ValidateSet("All","Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")]
+		[ValidateScript({   
+			if($_ -in (@("All")+$DetectionSupportedComponents)) { return $true }
+			else{ throw "Use one of these components: $($DetectionSupportedComponents -join ', ')" }
+		})]
 		[string]$Component = "All"
 	)
 	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script -ErrorAction Ignore)
@@ -1787,8 +1796,8 @@ Function Compare-UserRight
 		Try{
 			Write-LogMessage -Type "Debug" -Msg "Checking ""$userRight"" user rights to user $userName"
 			# Get User SID
-			$userSidstr = (Convert-NameToSID -userName $userName)
-			if($null -eq $userSidstr) { throw "User $userName could not be found" }
+			$userSIDStr = (Convert-NameToSID -userName $userName)
+			if($null -eq $userSIDStr) { throw "User $userName could not be found" }
 			# Setting temp file paths
 			$tempPath = [System.IO.Path]::GetTempPath()
 			$exportPath = Join-Path -Path $tempPath -ChildPath "export.inf"
@@ -1800,7 +1809,7 @@ Function Compare-UserRight
 			$currentRightKeyValue = (Select-String $exportPath -Pattern "$userRight").Line
 			$currentSidsValue = $currentRightKeyValue.split("=",[System.StringSplitOptions]::RemoveEmptyEntries)[1].Trim()
 
-			if( ($currentSidsValue -notlike "*$($userSidstr)*") -and ($currentSidsValue -notlike "*$($userName)*")) {
+			if( ($currentSidsValue -NotLike "*$($userSIDStr)*") -and ($currentSidsValue -NotLike "*$($userName)*")) {
 				$msg = "User $userName does not have the correct ""$userRight"" user right settings"
 				Write-LogMessage -Type "Warning" -Msg $msg
 				$retValue = "Warning"
@@ -1921,7 +1930,7 @@ Function Compare-UserPermissions
 .PARAMETER Path
 	The location path we want to check permissions.
 .PARAMETER Identity
-	The user we want to chekc permissions to.
+	The user we want to check permissions to.
 .PARAMETER Rights
 	The rights we want to compare to the identity on this path.
 	Please Notice this needs to be string indicate enum name from System.Security.AccessControl.RegistryRights or System.Security.AccessControl.FileSystemRights enums.
@@ -2018,13 +2027,13 @@ Function Compare-UserFlags
 	   "PASSWD_CANT_CHANGE","ENCRYPTED_TEXT_PASSWORD_ALLOWED","TEMP_DUPLICATE_ACCOUNT","NORMAL_ACCOUNT",`
 	   "INTERDOMAIN_TRUST_ACCOUNT","WORKSTATION_TRUST_ACCOUNT","SERVER_TRUST_ACCOUNT","DONT_EXPIRE_PASSWD","MNS_LOGON_ACCOUNT",`
 	   "SMARTCARD_REQUIRED","TRUSTED_FOR_DELEGATION","NOT_DELEGATED","USE_DES_KEY_ONLY","DONT_REQUIRE_PREAUTH","PASSWORD_EXPIRED","TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION")]
-	   $userflagValue = $null,
+	   $userFlagValue = $null,
 	   [Parameter(Mandatory=$true)]
 	   [ref]$outStatus
 	)
 	Begin{
 		$retValue = "Good"
-		Switch($userflagValue)
+		Switch($userFlagValue)
 		{
 			"SCRIPT" {
 				$bUserFlag = "1";
@@ -2115,8 +2124,8 @@ Function Compare-UserFlags
 	Process{
 		try{
 			Write-LogMessage -Type Debug -Msg "Check user flag: '$flagName' on user: '$userName' to value: '$flagValue'"
-			$user=[ADSI]"WinNT://$ENV:COMPUTERNAME/$userName,user"
-			if($null -ne $userflagValue)
+			$user=[ADSI]"WinNT://$ENV:ComputerName/$userName,user"
+			if($null -ne $userFlagValue)
 			{
 				$val = $user.InvokeGet($flagName) -band $bUserFlag
 			}
@@ -2410,18 +2419,18 @@ Function Convert-NameToSID {
 	}
    	Process {
 		Write-LogMessage -Type Debug -Msg "Get SID value for user: $userName"
-		$userSidstr = $null
+		$userSIDStr = $null
 		Try {
-			$ntprincipal = new-object System.Security.Principal.NTAccount "$userName"
-			$userSid = $ntprincipal.Translate([System.Security.Principal.SecurityIdentifier])
-			$userSidstr = $userSid.Value.ToString()
-			Write-LogMessage -Type Debug -Msg "User SID: $userSidstr"
+			$NTPrincipal = new-object System.Security.Principal.NTAccount "$userName"
+			$userSid = $NTPrincipal.Translate([System.Security.Principal.SecurityIdentifier])
+			$userSIDStr = $userSid.Value.ToString()
+			Write-LogMessage -Type Debug -Msg "User SID: $userSIDStr"
 		} Catch {
-			$userSidstr = $null
+			$userSIDStr = $null
 			Throw $(New-Object System.Exception ("Failed to get SID for user: $userName",$_.Exception))
 		}
 
-		return $userSidstr
+		return $userSIDStr
 	}
 	End{
 
@@ -2441,7 +2450,7 @@ Function Convert-SIDToName{
 	Method to convert SID to Name
 .DESCRIPTION
 	Returns the user name value
-.PARAMETER SIDID
+.PARAMETER sidID
 	The User/Group SID to convert to Name
 #>
    param(
@@ -2613,7 +2622,7 @@ Function Test-CredFileVerificationType
 .SYNOPSIS
 	Check what restrictions have been placed on the component credential files
 .DESCRIPTION
-	This check what (if any) restrictions have been put on to the credential file when it was created, this credential file is utilised by the components to communicate back to the vault
+	This check what (if any) restrictions have been put on to the credential file when it was created, this credential file is utilized by the components to communicate back to the vault
 #>
 
     param (
@@ -2643,12 +2652,12 @@ Function Test-CredFileVerificationType
 				
 				# Check Cred File Verifications
 				$typeOfVerification = @{0 = "No" ; 1 = "Client Type" ; 2 = "Execution Path" ; 4 = "IP" ; 8 = "OS User" ; 32 = "Hostname"}
-				If($verificationsflag -gt 16)
+				If($verificationsFlag -gt 16)
 				{
-					$verificationMsg = $($typeOfVerification.Keys | Where-Object { $_ -band $verificationsflag } | ForEach-Object { $typeOfVerification.Get_Item($_) }) -join ', '
+					$verificationMsg = $($typeOfVerification.Keys | Where-Object { $_ -band $verificationsFlag } | ForEach-Object { $typeOfVerification.Get_Item($_) }) -join ', '
 					If($verificationMsg.Contains(','))
 					{
-						# Organizae the text a bit in case of list
+						# Organize the text a bit in case of list
 						$verificationMsg = $verificationMsg.Remove($verificationMsg.LastIndexOf(','),$verificationMsg.Length-$verificationMsg.LastIndexOf(','))+$verificationMsg.Substring($verificationMsg.LastIndexOf(',')).Replace(','," and")
 					}
 					$retValue = "Good"

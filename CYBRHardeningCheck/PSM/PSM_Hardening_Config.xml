@@ -14,17 +14,15 @@
 		</Parameters>
    </Step>
    
-   <Step Name="DisableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableTheScreenSaverForThePSMLocalUsers" Enable="Yes"/>
+   <Step Name="EnableScreenSaver" DisplayName="Disable ScreenSaver" ScriptName="DisableTheScreenSaverForThePSMLocalUsers" Enable="Yes"/>
 
 	<!-- The following step configures properties for users PSMConnect and PSMAdminConnect-->
 	<Step Name ="ConfigurePSMUsers" DisplayName="Configure users for PSM sessions" ScriptName="ConfigureUsersForPSMSessions" Enable="Yes"/>
 
-	<!-- The following step secures the IE browser- Configure IE ESC, Configure the IE first run settings and adding IE.exe and Chrome.exe to PSMConfigureAppLocker.xml-->
-	<Step Name="WebApplications" DisplayName="PSM for web applications" ScriptName="PSMForWebApplications" Enable="Yes" />
-
 	<!-- The following step changes PSM user properties to enable users to print PSM sessions-->
 	<Step Name="EnablePrintSessions" DisplayName="Enable users to print PSM sessions" ScriptName="EnableUsersToPrintPSMSessions" Enable="Yes"/>
 	
+	<!-- The following step secures the installed browsers - Configure IE ESC, Configure the IE first run settings and adding IE.exe and Chrome.exe to PSMConfigureAppLocker.xml-->
 	<Step Name="SupportWebApplications" DisplayName="Support Web Applications on PSM" ScriptName="SupportWebApplications" Enable="Yes"/>
 	
 	<Step Name="ClearRemoteDesktopUsers" DisplayName="Clear Remote Desktop Users group from PSM Server" ScriptName="ClearRemoteDesktopUsers" Enable="Yes"/>
