@@ -1,4 +1,4 @@
-﻿$script:NICteamingName = ""
+﻿$script:NICTeamingName = ""
 
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Vault_NICHardening
@@ -46,7 +46,7 @@ Function Vault_NICHardening
 					{
 						# If the Vault has NIC Teaming, then this is OK - just report it
 						$nicTeam = Get-NetLbfoTeam | Where-Object { $_.Status -eq "Up" }
-						$script:NICteamingName = $nicTeam.Name
+						$script:NICTeamingName = $nicTeam.Name
 						$myRef += "NIC Teaming is enabled.<BR>Team Name: {0}<BR>Team NIC Members: {1}" -f $nicTeam.Name, $($nicTeam.Members -join ", ")
 					}
 					else
@@ -105,13 +105,13 @@ Function Vault_StaticIP
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start verify Vault has static IP"
-			If(! [string]::IsNullOrEmpty($NICteamingName))
+			If(! [string]::IsNullOrEmpty($NICTeamingName))
 			{
-				Write-LogMessage -Type Verbose -Msg "Checking Team ($NICteamingName) and not Ethernet"
-				$interfaceAliasPattern = $NICteamingName
+				Write-LogMessage -Type Verbose -Msg "Checking Team ($NICTeamingName) and not Ethernet"
+				$interfaceAliasPattern = $NICTeamingName
 			}
-			$getdhcpstatus = Get-NetIPAddress -InterfaceAlias $interfaceAliasPattern -AddressFamily IPv4
-			ForEach ($item in $getdhcpstatus)
+			$getDHCPStatus = Get-NetIPAddress -InterfaceAlias $interfaceAliasPattern -AddressFamily IPv4
+			ForEach ($item in $getDHCPStatus)
 			{
 				if ($item.PrefixOrigin -eq "Dhcp")
 				{
@@ -452,7 +452,7 @@ Function Vault_FirewallNonStandardRules
 			}
 
 			$FWRules = @()
-			ForEach($rule in $(get-netfirewallrule -policystore ActiveStore))
+			ForEach($rule in $(get-NetFirewallRule -PolicyStore ActiveStore))
 			{
 				$addressFilter = $($rule | Get-NetFirewallAddressFilter)
 				$portFilter = $($rule | Get-NetFirewallPortFilter)
@@ -474,16 +474,16 @@ Function Vault_FirewallNonStandardRules
 
 			Write-LogMessage -Type Verbose -Msg "There are $($FWRules.count) Firewall rules currently configured"
 			Write-LogMessage -Type Verbose -Msg "There are $(($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }).count) Non-Standard CyberArk Firewall rules currently configured"
-			If($(($FWRules | Where-Object { $_.DisplayGroup -notmatch "CYBERARK_" }).count) -gt 0)
+			If($(($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }).count) -gt 0)
 			{
 				$res = "Warning"
-				$tmpStatus += "<li>There are $(($FWRules | Where-Object { $_.DisplayGroup -notmatch "CYBERARK_" }).count) Firewall rules that were not created by CyberArk Vault currently configured </li>"
+				$tmpStatus += "<li>There are $(($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }).count) Firewall rules that were not created by CyberArk Vault currently configured </li>"
 			}
 			
 			ForEach($rule in $($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }))
 			{
 				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
-				If($dbParmFWRules.FWRuleLine -notcontains $rule.FWRuleLine)
+				If($dbParmFWRules.FWRuleLine -NotContains $rule.FWRuleLine)
 				{
 					$res = "Warning"
 					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is applied but not configured in DBParm.ini </li>"
@@ -493,7 +493,7 @@ Function Vault_FirewallNonStandardRules
 			ForEach($rule in $dbParmFWRules)
 			{
 				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
-				If($FWRules.FWRuleLine -notcontains $rule.FWRuleLine)
+				If($FWRules.FWRuleLine -NotContains $rule.FWRuleLine)
 				{
 					$res = "Warning"
 					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is configured in DBParm.ini but does not exist in the Vault Firewall policy </li>"

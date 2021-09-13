@@ -30,8 +30,8 @@ Function CPM_Password_Manager_Services_LocalUser
         $CPMFolderLocalAdmins = $true
         $CPMFolderLocalSystem = $true
         $CPMFolderLocalCPMUser = $true
-		$CPMserviceName = "CyberArk Password Manager"
-		$ScannerserviceName = "CyberArk Central Policy Manager Scanner"
+		$CPMServiceName = "CyberArk Password Manager"
+		$ScannerServiceName = "CyberArk Central Policy Manager Scanner"
 	}
 	Process {
 		Try{
@@ -44,13 +44,13 @@ Function CPM_Password_Manager_Services_LocalUser
             $python27Path = Join-Path -Path $drive -ChildPath "Python27"
             $oraclePath = Join-Path -Path $drive -ChildPath "oracle"
 
-			if((Test-ServiceRunWithLocalUser -serviceName $CPMserviceName -userName $CPMServiceUserName -outStatus ([ref]$myRef)) -ne "Good")
+			if((Test-ServiceRunWithLocalUser -serviceName $CPMServiceName -userName $CPMServiceUserName -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$res = "Warning"
 			}
 			$tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-			if((Test-ServiceRunWithLocalUser -serviceName $ScannerserviceName -userName $CPMServiceUserName -outStatus ([ref]$myRef)) -ne "Good")
+			if((Test-ServiceRunWithLocalUser -serviceName $ScannerServiceName -userName $CPMServiceUserName -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$res = "Warning"
 			}
@@ -258,16 +258,22 @@ Function CPM_DisableDEPForExecutables
 					break 
 				}
 				3 {
-					$res = "Warning"
+					$res = "Good"
 					$retDEPSettings += "DEP is enabled for all processes. Administrators can manually create a list of specific applications which do not have DEP applied (OptOut)."
                     $retDEPSettings += "This is required for PMTerminal but not for the replacement application TPC."
-					$retDEPSettings += "The current Exclusions are:<ul>"
-					ForEach ($exc in $depExclusionsList)
+					If($depExclusionsList.Count -eq 0)
 					{
-						$retDEPSettings += "<li>$($exc.Name)</li>"
+						Write-LogMessage -Type Error "Could not get DEP Exclusions List"
 					}
-					$retDEPSettings += "</ul>"
-                    $retDEPSettings += "Note that PMTerminal is end of life in September 2020"
+					else {
+						$retDEPSettings += "The current Exclusions are:<ul>"
+						ForEach ($exc in $depExclusionsList)
+						{
+							$retDEPSettings += "<li>$($exc.Name)</li>"
+						}
+						$retDEPSettings += "</ul>"
+					}
+                    $retDEPSettings += "Note that PMTerminal is end of life in December 2021"
 					$retDEPSettings += "'TPC' is the replacement application that does not require DEP exceptions"
 					break
 				}
@@ -300,7 +306,7 @@ Function CPM_CredFileHardening
 {
 <#
 .SYNOPSIS
-	Return verficiation type on credential file
+	Return verification type on credential file
 .DESCRIPTION
 	Return the verification type on the credential file used by the components to log back in to the vault
 .PARAMETER parameters
@@ -324,9 +330,9 @@ Function CPM_CredFileHardening
         Try{
    			Write-LogMessage -Type Info -Msg "Start validating hardening of CPM credential file"
             $cpmPath = (Get-DetectedComponents -Component "CPM").Path
-            $credentialsfolder = join-path -Path $cpmPath -ChildPath 'Vault'
+            $credentialsFolder = join-path -Path $cpmPath -ChildPath 'Vault'
 			# Go over all CPM Cred Files in the folder
-			ForEach ($credFile in (Get-ChildItem -Path $credentialsfolder -Filter *.ini -File | Where-Object { $_.Name -ne "Vault.ini" }))
+			ForEach ($credFile in (Get-ChildItem -Path $credentialsFolder -Filter *.ini -File | Where-Object { $_.Name -ne "Vault.ini" }))
 			{
 				Write-LogMessage -Type Debug -Msg "Checking '$($credFile.Name)' credential file"
 				if((Test-CredFileVerificationType -CredentialFilePath $credFile.FullName -outStatus ([ref]$myRef)) -ne "Good")
