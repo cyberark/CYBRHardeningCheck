@@ -166,7 +166,7 @@ Function PVWA_Cryptography_Settings
 		$res = "Good"
 		$iisPath = "iis:\Sites\Default Web Site\PasswordVault"
 		$filter = "/appSettings/add[@key='AdvancedFIPSCryptography']"
-		$value = "yes"
+		$value = "value.value"
 	}
 	Process {
 		try{
@@ -177,16 +177,21 @@ Function PVWA_Cryptography_Settings
 			$currentValue = Get-WebConfigurationProperty -pspath $iisPath -filter $filter -name $value
 			if($null -ne $currentValue)
 			{
-				if($currentValue.ToLower() -ne $value)
+				if($currentValue -ne 'yes')
 				{
 					$res = "Warning"
-					[ref]$refOutput.Value = "AdvancedFIPSCryptography is not properly set in PVWA Configuration. Current value: $currentValue"
+					[ref]$refOutput.Value = "AdvancedFIPSCryptography is set but does not have the correct value configured. Current value is: $currentValue"
+				}
+				else
+				{
+				$res = "Good"
+				[ref]$refOutput.Value = "AdvancedFIPSCryptography is set and has the correct value of 'yes'"
 				}
 			}
 			else
 			{
 				$res = "Warning"
-				[ref]$refOutput.Value = "AdvancedFIPSCryptography is not set in PVWA Configuration"
+				[ref]$refOutput.Value = "AdvancedFIPSCryptography key has not been set at the 'PasswordManager' level"
 			}
 
 			Write-LogMessage -Type Info -Msg "Finish verify if Web DAV Publishing is installed"
