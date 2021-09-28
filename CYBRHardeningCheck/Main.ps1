@@ -164,7 +164,7 @@ param(
 				$summary.errors++
 			}
 		}
-		$summary.hardeningPercentage = ($summary.errors / $sortedHardeningStatus.count)
+		$summary.hardeningPercentage = 1-($summary.errors / $sortedHardeningStatus.count)
 
 		# return the Hardening setup and the Summary
 		return @( $sortedHardeningStatus, $summary )
