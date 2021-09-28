@@ -74,7 +74,7 @@ Function PVWA_IIS_Registry_Shares
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not verify PVWA IIS Registry Shares.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not verify PVWA IIS Registry Shares. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify PVWA IIS Registry Shares."
 			return "Bad"
 		}
@@ -126,7 +126,7 @@ Function PVWA_IIS_WebDAV
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not verify if Web DAV Publishing is installed.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not verify if Web DAV Publishing is installed. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify if Web DAV Publishing is installed."
 			return "Bad"
 		}
@@ -177,21 +177,21 @@ Function PVWA_Cryptography_Settings
 			$currentValue = Get-WebConfigurationProperty -PSPath $iisPath -filter $filter -name $value
 			if($null -ne $currentValue)
 			{
-				if($currentValue -ne 'yes')
+				if($currentValue.ToLower() -ne 'yes')
 				{
 					$res = "Warning"
 					[ref]$refOutput.Value = "AdvancedFIPSCryptography is set but does not have the correct value configured. Current value is: $currentValue"
 				}
 				else
 				{
-				$res = "Good"
-				[ref]$refOutput.Value = "AdvancedFIPSCryptography is set and has the correct value of 'yes'"
+					$res = "Good"
+					[ref]$refOutput.Value = "AdvancedFIPSCryptography is set and has the correct value of 'yes'"
 				}
 			}
 			else
 			{
 				$res = "Warning"
-				[ref]$refOutput.Value = "AdvancedFIPSCryptography key has not been set at the 'PasswordManager' level"
+				[ref]$refOutput.Value = "AdvancedFIPSCryptography key has not been set at the 'PasswordVault' level"
 			}
 
 			Write-LogMessage -Type Info -Msg "Finish verify if Web DAV Publishing is installed"
@@ -199,7 +199,7 @@ Function PVWA_Cryptography_Settings
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not verify PVWA Cryptography Mode Settings.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not verify PVWA Cryptography Mode Settings. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify PVWA Cryptography Mode Settings."
 			return "Bad"
 		}
@@ -257,7 +257,7 @@ Function PVWA_IIS_MimeTypes
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not verify allowed mime types.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not verify allowed mime types. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify allowed mime types."
 			return "Bad"
 		}
@@ -315,7 +315,7 @@ Function PVWA_AnonymousAuthentication
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not verify Anonymous Authentication in application pools.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not verify Anonymous Authentication in application pools. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify Anonymous Authentication in application pools."
 			return "Bad"
 		}
@@ -373,7 +373,7 @@ Function PVWA_DirectoryBrowsing
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not verify Directory Browsing.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not verify Directory Browsing. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify Directory Browsing."
 			return "Bad"
 		}
@@ -537,7 +537,7 @@ Function PVWA_IIS_SSL_TLS_Settings
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not validate hardening machine use only TLS 1.2.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not validate hardening machine use only TLS 1.2. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate hardening machine use only TLS 1.2."
 			return "Bad"
 		}
@@ -630,7 +630,7 @@ Function PVWA_IIS_Cypher_Suites
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not validate Cypher Suites.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not validate Cypher Suites. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate Cypher Suites."
 			return "Bad"
 		}
@@ -754,7 +754,7 @@ Function PVWA_Scheduled_Task_Service_LocalUser
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not validate Scheduled Task Service configuration.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not validate Scheduled Task Service configuration. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate Scheduled Task Service configuration."
 			return "Bad"
 		}
@@ -864,7 +864,7 @@ Function PVWA_NonSystemDrive
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not validate PVWA is not installed on the system drive.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not validate PVWA is not installed on the system drive. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate PVWA is not installed on the system drive."
 			return "Bad"
 		}
@@ -948,7 +948,7 @@ Function PVWA_IIS_Hardening
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not validate PVWA IIS hardening configuration.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not validate PVWA IIS hardening configuration. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate PVWA IIS hardening configuration."
 			return "Bad"
 		}
@@ -1021,7 +1021,7 @@ Function PVWA_AdditionalAppPool
 			return $res
 		}
 		catch{
-			Write-LogMessage -Type "Error" -Msg "Could not validate PVWA application pool settings.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not validate PVWA application pool settings. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate PVWA application pool settings."
 			return "Bad"
 		}
@@ -1081,7 +1081,7 @@ Function PVWA_CredFileHardening
             Write-LogMessage -Type Info -Msg "Finish validating PVWA component credential file"
    			return $res
         } catch {
-			Write-LogMessage -Type "Error" -Msg "Could not validate the PVWA component credential file.  Error: $(Join-ExceptionMessage $_.Exception)"
+			Write-LogMessage -Type "Error" -Msg "Could not validate the PVWA component credential file. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate PVWA component credential file."
 			return "Bad"
 		}
