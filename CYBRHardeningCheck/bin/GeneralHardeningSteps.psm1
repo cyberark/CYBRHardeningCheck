@@ -415,14 +415,29 @@ Function RemoteDesktopServices
 
 			$UserDir = "$($env:WinDir)\system32\GroupPolicy\User\registry.pol"
 			$RegPath = "Software\Policies\Microsoft\Windows NT\Terminal Services"
+			
+			 init variables
+			$regShadowData = $reMaxIdleTimeData = 0
+			# Checking for cases where PSM is installed vs. CPM/PVWA are installed
+			If($(Get-DetectedComponents).Name -contains "PSM")
+			{
+				# Set values according to PSM hardening
+				$regShadowData = '4'
+				$reMaxIdleTimeData = '1800000'
+			}
+			else {
+				# Set values according to general CPM/PVWA hardening
+				$regShadowData = '0'
+				$reMaxIdleTimeData = '1'
+			}
 
-			if((Compare-PolicyEntry -EntryTitle "Set rules for remote control of Remote Desktop Services user sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'Shadow' -RegData '4' -outStatus ([ref]$myRef)) -ne "Good")
+			if((Compare-PolicyEntry -EntryTitle "Set rules for remote control of Remote Desktop Services user sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'Shadow' -RegData $regShadowData -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
 			}
 
-			if((Compare-PolicyEntry -EntryTitle "Set time limit for active but idle Remote Desktop Services sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'MaxIdleTime' -RegData '1800000' -outStatus ([ref]$myRef)) -ne "Good")
+			if((Compare-PolicyEntry -EntryTitle "Set time limit for active but idle Remote Desktop Services sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'MaxIdleTime' -RegData $reMaxIdleTimeData -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
