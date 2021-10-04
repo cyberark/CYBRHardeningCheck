@@ -15,7 +15,6 @@
 [CmdletBinding()]
 param
 (
-	[switch]$LocalDebug
 )
 
 # Get Script Location
@@ -23,10 +22,9 @@ $ScriptLocation = Split-Path -Parent $MyInvocation.MyCommand.Path
 # Get Debug / Verbose parameters for Script
 $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
-$global:LocalDebug = $LocalDebug
 
 # Script Version
-$ScriptVersion = "2.9"
+$ScriptVersion = "3.0"
 
 # Set Log file path
 $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
@@ -43,12 +41,6 @@ $PVWA_HARDENING_CONFIG = "$ScriptLocation\PVWA\PVWA_Hardening_Config.xml"
 $PSM_HARDENING_CONFIG = "$ScriptLocation\PSM\PSM_Hardening_Config.xml"
 $VAULT_HARDENING_CONFIG = "$ScriptLocation\Vault\Vault_Hardening_Config.xml"
 $TUNNEL_HARDENING_CONFIG = "$ScriptLocation\SecureTunnel\SecureTunnel_Hardening_Config.xml"
-If($LocalDebug)
-{
-	#debug only
-	$DEBUG_HARDENING_CONFIG = "$ScriptLocation\Debug\Debug_Hardening_Config.xml"
-	#enddebug
-}
 
 # Set modules paths
 $MODULE_COMMON_UTIL = "$MODULE_BIN_PATH\CommonUtil.psm1"
@@ -58,12 +50,6 @@ $MODULE_PVWA_STEPS = "$ScriptLocation\PVWA\PVWAHardeningSteps.psm1"
 $MODULE_PSM_STEPS = "$ScriptLocation\PSM\PSMHardeningSteps.psm1"
 $MODULE_VAULT_STEPS = "$ScriptLocation\Vault\VaultHardeningSteps.psm1"
 $MODULE_TUNNEL_STEPS = "$ScriptLocation\SecureTunnel\SecureTunnelHardeningSteps.psm1"
-If($LocalDebug)
-{
-	#debug only
-	$MODULE_DEBUG_STEPS = "$ScriptLocation\Debug\DebugHardeningSteps.psm1"
-	#enddebug
-}
 
 # Output file template
 $REPORT_TEMPLATE_PATH = "$ScriptLocation\Hardening_HealthCheck_Report.html"
@@ -178,7 +164,7 @@ param(
 				$summary.errors++
 			}
 		}
-		$summary.hardeningPercentage = ($summary.errors / $sortedHardeningStatus.count)
+		$summary.hardeningPercentage = 1-($summary.errors / $sortedHardeningStatus.count)
 
 		# return the Hardening setup and the Summary
 		return @( $sortedHardeningStatus, $summary )
@@ -375,7 +361,7 @@ Function New-HTMLReportOutput
 		$htmlFileContent = $htmlFileContent.Replace("@@@MachineName@@@",$machineName)
 		$htmlFileContent = $htmlFileContent.Replace("@@@ComponentsNum@@@", $($componentsList.Count))
 		$hardeningTable,$summary = $(Get-HardeningStatus $hardeningStatus)
-		$htmlFileContent = $htmlFileContent.Replace("@@@HardeningStatus@@@", $($summary.hardeningPercentage.tostring("#%")))
+		$htmlFileContent = $htmlFileContent.Replace("@@@HardeningStatus@@@", $($summary.hardeningPercentage.ToString("#%")))
 		$htmlFileContent = $htmlFileContent.Replace("@@@ErrorsNum@@@", $($summary.Errors))
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblComponents@@@", $(Write-HTMLComponentsTable $components))
 		$htmlFileContent = $htmlFileContent.Replace("@@@tblHardening@@@", $(Write-HTMLHardeningStatusTable $hardeningTable))
@@ -388,17 +374,54 @@ Function New-HTMLReportOutput
 	}
 }
 
-function Out-HardeningFolderPath {
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Out-HardeningFolderPath
+# Description....: Adds the Hardening folder path found on the machine
+# Parameters.....: Path to HTML report, number of detected components
+# Return Values..: Updates the HTML file with the relevant folder paths
+# =================================================================================================================================
+Function Out-HardeningFolderPath {
+<#
+.SYNOPSIS
+	Searches the Hardening folder on the machine
+.DESCRIPTION
+	Updates the Hardening folder path found on the machine in the HTML report
+.PARAMETER Path
+	The path to the HTML report to update
+.PARAMETER TotalComponentsFound
+	The number of components found (for making the search quicker)
+#>
 	param (
 		[Parameter(Mandatory=$true)]
 		[ValidateScript({ Test-Path $_ })]
-		[string]$Path
+		[string]$Path,
+		[Parameter(Mandatory=$false)]
+		[int]$TotalComponentsFound = 1
 	)
+	Write-LogMessage -Type Info -Msg "Start looking for hardening folders named 'InstallationAutomation'"
+	Write-LogMessage -Type Verbose -Msg "Should find maximum of $TotalComponentsFound folders"
 	$fileContent = Get-Content $Path
 	$stringToReplace = "@@@Hardening_Scripts_Folder@@@"
-	$allFolders = $(Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "CPM|PVWA|PSM|AIM" })
-	Write-LogMessage -Type Debug -Msg "Found $($allFolders.count) fodlers named 'InstallationAutomation'"
-	If($allFolders.Count -gt 1)
+	$x = 0 
+	# Start a background job to search all InstallationAutomation folders and limit it to the maximum number of Total Components found
+	# Might want to add in the future filter on the actual components folder names (e.g. "CPM|PVWA|PSM|AIM")
+	Start-Job -Name FileCollection -ScriptBlock {Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Select-Object -First $args[0] } -ArgumentList $TotalComponentsFound | Out-Null
+	# set a timeout of max 2 minutes
+	$timeout = [timespan]::FromMinutes(2)
+	While((Get-Job -Name FileCollection | Where-Object { $_.State -eq "Running" -and (($now - $_.PSBeginTime) -gt $timeout)} )) 
+	{ 
+		Write-Progress -Activity "Searching for Hardening folders..." -PercentComplete $x 
+		If($x -eq 100){ $x = 1 } Else { $x += 1 }
+	}
+	Write-Progress -Activity "Searching for Hardening folders..." -Completed 
+	if($x -lt 100)
+	{
+		Write-LogMessage -Type Warning -Msg "Timeout reached - canceling search"
+		Get-Job -Name FileCollection | Stop-Job
+	}
+	$allFolders = Receive-Job -Name FileCollection -AutoRemoveJob -Wait
+	Write-LogMessage -Type Debug -Msg "Found $($allFolders.FullName.Count) folders named 'InstallationAutomation'"
+	If($allFolders.FullName.Count -gt 1)
 	{
 		# Assuming that all found folders relate to CyberArk
 		$outString = "<ul>"
@@ -408,7 +431,7 @@ function Out-HardeningFolderPath {
 		}
 		$outString += "</ul>"
 	}
-	elseif($allFolders -eq 1)
+	elseif($allFolders.FullName.Count -eq 1)
 	{
 		$outString = "'$($allFolders.FullName)'"
 	}
@@ -450,19 +473,14 @@ If (!($PSVersionTable.PSCompatibleVersions -join ", ") -like "*3*")
 	return
 }
 
-If(! $LocalDebug)
-{
 # Check that you are running with Admin privileges (So that we can access all paths that are hardened)
 If($(Test-CurrentUserLocalAdmin) -eq $false)
 {
-	Write-LogMessage -Type Error -Msg "In order to get all information, plesae run the script again on an Administrator Powershell session (Run as Admin)"
+	Write-LogMessage -Type Error -Msg "In order to get all information, please run the script again on an Administrator Powershell session (Run as Admin)"
 	EndScript
 	return
 }
-}
 
-If(! $LocalDebug)
-{
 # Check if relevant files are blocked
 If($null -ne $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*.dll') -Recurse | Get-Item -Stream “Zone.Identifier” -ErrorAction SilentlyContinue))
 {
@@ -471,7 +489,6 @@ If($null -ne $(Get-ChildItem -Path $ScriptLocation -Include ('*.ps1','*.psm1','*
 	Write-LogMessage -Type Info -Msg "To solve this you can run the following command: $command"
 	EndScript
 	return
-}
 }
 
 #region Prepare Hardening modules dictionary
@@ -483,12 +500,6 @@ $dicComponentHardening = @{
 	"AIM" = @{"Module" = ""; "Configuration" = ""};
 	"EPM" = @{"Module" = ""; "Configuration" = ""};
 	"SecureTunnel" = @{"Module" = $MODULE_TUNNEL_STEPS; "Configuration" = $TUNNEL_HARDENING_CONFIG};
-}
-If($LocalDebug)
-{
-	$dicComponentHardening += @{ 
-		"Debug" = @{"Module" = $MODULE_DEBUG_STEPS; "Configuration" = $DEBUG_HARDENING_CONFIG};
-	}
 }
 #endregion
 
@@ -524,7 +535,7 @@ ForEach ($comp in $(Get-DetectedComponents))
 # Export the Report when Finished
 $outputFile = New-HTMLReportOutput -machineName $machineName -components $(Get-DetectedComponents) -hardeningStatus $hardeningStepsStatus
 # Add the Hardening Scripts folder to the report
-Out-HardeningFolderPath -Path $outputFile
+Out-HardeningFolderPath -Path $outputFile -TotalComponentsFound $(Get-DetectedComponents).Name.Count
 
 Write-LogMessage -Type Info -MSG "Hardening Health Check Report located in: $outputFile" -LogFile $LOG_FILE_PATH
 . $outputFile

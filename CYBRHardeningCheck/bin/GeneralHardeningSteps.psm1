@@ -64,12 +64,12 @@ Function ImportingINFConfiguration
 				Throw "Could not find configuration file in path: $INFconfigFilePath"
 			}
 
-			$seceditRetVaule = secedit /analyze /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet /log $AnalyzeLogName
-			# $seceditRetVaule = secedit /analyze /db $SDBFileName /log $AnalyzeLogName
+			$seceditRetValue = secedit /analyze /db $SDBFileName /cfg $INFconfigFilePath /overwrite /quiet /log $AnalyzeLogName
+			# $seceditRetValue = secedit /analyze /db $SDBFileName /log $AnalyzeLogName
 
 			if ($LASTEXITCODE -eq 1)
 			{
-				throw "Analyze security configuration has failed - analysis log: $AnalyzeLogName. Error: $seceditRetVaule"
+				throw "Analyze security configuration has failed - analysis log: $AnalyzeLogName. Error: $seceditRetValue"
 				return "Bad"
 			}
 
@@ -195,7 +195,7 @@ Function EnableScreenSaver
 		try{
 			Write-LogMessage -Type Info -Msg "Start EnableScreenSaver"
 
-			$UserDir = "$($env:windir)\system32\GroupPolicy\User\registry.pol"
+			$UserDir = "$($env:WinDir)\system32\GroupPolicy\User\registry.pol"
 			$RegPath = "Software\Policies\Microsoft\Windows\Control Panel\Desktop"
 			try{
 				if((Compare-PolicyEntry -EntryTitle "Enable screen saver" -UserDir $UserDir -RegPath $RegPath -RegName 'ScreenSaveActive' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
@@ -413,16 +413,31 @@ Function RemoteDesktopServices
 		try{
 			Write-LogMessage -Type Info -Msg "Start RemoteDesktopServices"
 
-			$UserDir = "$($env:windir)\system32\GroupPolicy\User\registry.pol"
+			$UserDir = "$($env:WinDir)\system32\GroupPolicy\User\registry.pol"
 			$RegPath = "Software\Policies\Microsoft\Windows NT\Terminal Services"
+			
+			# init variables 
+			$regShadowData = $reMaxIdleTimeData = 0
+			# Checking for cases where PSM is installed vs. CPM/PVWA are installed
+			If($(Get-DetectedComponents).Name -contains "PSM")
+			{
+				# Set values according to PSM hardening
+				$regShadowData = '4'
+				$reMaxIdleTimeData = '1800000'
+			}
+			else {
+				# Set values according to general CPM/PVWA hardening
+				$regShadowData = '0'
+				$reMaxIdleTimeData = '1'
+			}
 
-			if((Compare-PolicyEntry -EntryTitle "Set rules for remote control of Remote Desktop Services user sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'Shadow' -RegData '4' -outStatus ([ref]$myRef)) -ne "Good")
+			if((Compare-PolicyEntry -EntryTitle "Set rules for remote control of Remote Desktop Services user sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'Shadow' -RegData $regShadowData -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
 			}
 
-			if((Compare-PolicyEntry -EntryTitle "Set time limit for active but idle Remote Desktop Services sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'MaxIdleTime' -RegData '1800000' -outStatus ([ref]$myRef)) -ne "Good")
+			if((Compare-PolicyEntry -EntryTitle "Set time limit for active but idle Remote Desktop Services sessions" -UserDir $UserDir -RegPath $RegPath -RegName 'MaxIdleTime' -RegData $reMaxIdleTimeData -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
@@ -485,7 +500,7 @@ Function EventLogSizeAndRetention
 	)
 
 	Begin {
-		$maxsize=102432768
+		$MaxSize=102432768
 		$retention="false"
 		$res = "Good"
 		$tmpStatus = ""
@@ -494,19 +509,19 @@ Function EventLogSizeAndRetention
 	Process {
 		try{
 			Write-LogMessage -Type Info -Msg "Start validating Event Log Size And Retention"
-			If((Compare-EventLogSizeAndRetentionSettings -LogName "Application" -Size $maxsize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-EventLogSizeAndRetentionSettings -LogName "Application" -Size $MaxSize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
 			{
                 $res = "Warning"
 			}
 			$tmpStatus += $myRef.Value + "<BR>"
 
-			If((Compare-EventLogSizeAndRetentionSettings -LogName "Security" -Size $maxsize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-EventLogSizeAndRetentionSettings -LogName "Security" -Size $MaxSize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
 			{
                 $res = "Warning"
 			}
 			$tmpStatus += $myRef.Value + "<BR>"
 
-			If((Compare-EventLogSizeAndRetentionSettings -LogName "System" -Size $maxsize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-EventLogSizeAndRetentionSettings -LogName "System" -Size $MaxSize -SaveRetention $retention -outStatus ([ref]$myRef)) -ne "Good")
 			{
                 $res = "Warning"
 			}
@@ -872,12 +887,12 @@ Function DisableServices
 				Try {
 					If((Compare-ServiceStatus -ServiceName $svc -ServiceStartMode "Disabled" -outStatus ([ref]$myRef)) -ne "Good")
 					{
-						$tmpStatus += $myRef.Value + "<BR>"
+						$tmpStatus += "<li>" + $myRef.Value + "</li>"
 						$statusChanged = $true
 					}
 				} Catch {
 					Write-LogMessage -Type "Error" -Msg "Could not validate service '$svc' status.  Error: $(Join-ExceptionMessage $_.Exception)"
-					$tmpStatus += "Could not validate service '$svc' status."
+					$tmpStatus += "<li>Could not validate service '$svc' status.</li>"
 					$statusChanged = $true
 				}
 			}
@@ -885,7 +900,7 @@ Function DisableServices
 			If($statusChanged)
 			{
 				$res = "Warning"
-				[ref]$refOutput.Value = $tmpStatus
+				[ref]$refOutput.Value = "<ul>" + $tmpStatus + "</ul>"
 			}
 
 			Write-LogMessage -Type Info -Msg "Finish verification of disabled status of the following services: $($serviceList -join ", ")"
