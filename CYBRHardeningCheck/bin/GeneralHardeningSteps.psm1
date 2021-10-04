@@ -416,7 +416,7 @@ Function RemoteDesktopServices
 			$UserDir = "$($env:WinDir)\system32\GroupPolicy\User\registry.pol"
 			$RegPath = "Software\Policies\Microsoft\Windows NT\Terminal Services"
 			
-			 init variables
+			# init variables 
 			$regShadowData = $reMaxIdleTimeData = 0
 			# Checking for cases where PSM is installed vs. CPM/PVWA are installed
 			If($(Get-DetectedComponents).Name -contains "PSM")
