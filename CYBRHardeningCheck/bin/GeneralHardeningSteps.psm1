@@ -653,7 +653,7 @@ Function RegistryPermissions
 
 			$path = "HKLM:\System\CurrentControlSet\Control\SecurePipeServers\Winreg"
 
-			$res = Compare-UserPermissions -Path $path -Identity $(Get-LocalAdministrators) -Rights "FullControl" -outStatus ([ref]$myRef)
+			$res = Compare-UserPermissions -Path $path -Identity $(Get-LocalAdministratorsGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)
 			[ref]$refOutput.Value = $myRef.Value
 
 			Write-LogMessage -Type Info -Msg "Finish validating Registry Permissions"
@@ -709,24 +709,24 @@ Function FileSystemPermissions
 			Write-LogMessage -Type Info -Msg "Start validating File System Permissions"
 
 			# Check Administrators Access
-			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalAdministrators) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalAdministratorsGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
 			}
-			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalAdministrators) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalAdministratorsGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
 			}
 
 			# Check System Access
-			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalSystem) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-UserPermissions -Path $ConfigPath -Identity $(Get-LocalSystemGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
 			}
-			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalSystem) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+			If((Compare-UserPermissions -Path $ConfigRegBackPath -Identity $(Get-LocalSystemGroupName) -Rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
@@ -917,3 +917,96 @@ Function DisableServices
 		# Write output to HTML
 	}
 }
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: LocalPrivilegedUsers
+# Description....: Check the local Privielged users
+# Parameters.....:
+# Return Values..:
+# =================================================================================================================================
+Function LocalPrivilegedUsers
+{
+<#
+.SYNOPSIS
+	Method to check the local Privielged users
+.DESCRIPTION
+	Checks the number of privileged users on the machine
+.PARAMETER Parameters
+	(Optional) Parameters from the Configuration
+.PARAMETER Reference Status
+	Reference to the Step Status
+#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[array]$Parameters = $null,
+		[Parameter(Mandatory=$false)]
+		[ref]$refOutput
+	)
+
+	Begin {
+		# Pre-Checks
+		$myRef = ""
+		$res = "Good"
+		$tmpStatus = ""
+		$localAdminGroup = (Get-LocalAdministratorsGroupName).replace("BUILTIN\","")
+	}
+	Process {
+
+		Write-LogMessage -Type Info -Msg "Start verification of privielged users in local Administrators group ($localAdminGroup)"
+		try{
+			$arrPrivUsers = Get-LocalGroupMember -Name $localAdminGroup
+			
+			#TODO: add more logic here on what should be the process
+			Write-LogMessage -Type Debug -Msg "There are total of $($arrPrivUsers.count) users and groups in the local administrators group"
+			$numOfOtherAdmins = 0
+			
+			ForEach($user in $arrPrivUsers)
+			{
+				if($null -ne $user)
+				{
+					If($user.PrincipalSource -eq "Local")
+					{
+						# Skip local Administrator
+						If(!(Test-LocalAdminUser -name $user.Name))
+						{
+							$numOfOtherAdmins++
+						}	
+					}
+					elseif ($user.PrincipalSource -eq "ActiveDirectory" -and $user.ObjectClass -eq "Group") {
+						try{
+							$Search = New-Object DirectoryServices.DirectorySearcher("(objectSID=$($user.SID))")
+							$Search.PropertiesToLoad.Add("member")
+							$Results = $Search.FindOne()
+							If($null -ne $Results)
+							{
+								$numOfOtherAdmins++
+							}
+						} catch {
+							Throw $(New-Object System.Exception ("LocalPrivilegedUsers: Active Directory Cannot be contacted. Check that you are logged in with a domain user"),$_.Exception)
+						}
+					}
+				}
+				Elseif($user.StartsWith("S-"))
+				{
+					If(!(Test-LocalAdminUser -sid $user))
+					{
+						$numOfOtherAdmins++
+					}
+				}
+				Write-LogMessage -Type Debug -Msg "There are $numOfOtherAdmins users and groups (beside the local Administrator) in the local administrators group"
+			}
+			Write-LogMessage -Type Info -Msg "Finish verification of privielged users in local Administrators group ($localAdminGroup)"
+		}
+		catch
+		{
+			Write-LogMessage -Type "Error" -Msg "Failed to verify privielged users in local Administrators group ($localAdminGroup). Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$refOutput.Value = "Failed to verify privielged users in local Administrators group ($localAdminGroup)."
+			$res = "Bad"
+		}
+		return $res
+	}
+	End {
+		# Write output to HTML
+	}
+}
+Export-ModuleMember -Function LocalPrivilegedUsers

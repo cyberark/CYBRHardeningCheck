@@ -56,14 +56,14 @@ Function CPM_Password_Manager_Services_LocalUser
 			}
 			$tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-			if((Compare-UserPermissions -path $cpmServicesPath -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+			if((Compare-UserPermissions -path $cpmServicesPath -identity $(Get-LocalAdministratorsGroupName) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
                 $CPMFolderLocalAdmins = $false
 				$res = "Warning"
 			}
 			$tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-			if((Compare-UserPermissions -path $cpmServicesPath -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+			if((Compare-UserPermissions -path $cpmServicesPath -identity $(Get-LocalSystemGroupName) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 	            $CPMFolderLocalSystem = $false
     	        $res = "Warning"

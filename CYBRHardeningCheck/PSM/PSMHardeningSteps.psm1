@@ -1046,7 +1046,7 @@ Function HardenPSMUsersAccess
 			ForEach($path in @($PSM_VAULT_FILE_PATH, $PSM_RECORDING_PATH, $PSM_LOGS_PATH, $PSM_LOGS_OLD_PATH, $(Join-Path -Path $PSM_LOGS_PATH -ChildPath "Components"), $(Join-Path -Path $PSM_PATH -ChildPath "Components")))
 			{
 				$userPermissions["Path"] = $path
-				ForEach($user in @($(Get-LocalAdministrators), $(Get-LocalSystem)))
+				ForEach($user in @($(Get-LocalAdministratorsGroupName), $(Get-LocalSystemGroupName)))
 				{
 					$userPermissions["Identity"] = $user
 					If((Compare-UserPermissions @userPermissions) -ne "Good")
