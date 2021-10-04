@@ -164,7 +164,7 @@ param(
 				$summary.errors++
 			}
 		}
-		$summary.hardeningPercentage = ($summary.errors / $sortedHardeningStatus.count)
+		$summary.hardeningPercentage = 1-($summary.errors / $sortedHardeningStatus.count)
 
 		# return the Hardening setup and the Summary
 		return @( $sortedHardeningStatus, $summary )
@@ -406,12 +406,19 @@ Function Out-HardeningFolderPath {
 	# Start a background job to search all InstallationAutomation folders and limit it to the maximum number of Total Components found
 	# Might want to add in the future filter on the actual components folder names (e.g. "CPM|PVWA|PSM|AIM")
 	Start-Job -Name FileCollection -ScriptBlock {Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Select-Object -First $args[0] } -ArgumentList $TotalComponentsFound | Out-Null
-	While((Get-Job -Name FileCollection).State -eq "Running") 
+	# set a timeout of max 2 minutes
+	$timeout = [timespan]::FromMinutes(2)
+	While((Get-Job -Name FileCollection | Where-Object { $_.State -eq "Running" -and (($now - $_.PSBeginTime) -gt $timeout)} )) 
 	{ 
 		Write-Progress -Activity "Searching for Hardening folders..." -PercentComplete $x 
-		If($x -eq 100){ $x = 1 } Else { $x += 1 } 
-	} 
+		If($x -eq 100){ $x = 1 } Else { $x += 1 }
+	}
 	Write-Progress -Activity "Searching for Hardening folders..." -Completed 
+	if($x -lt 100)
+	{
+		Write-LogMessage -Type Warning -Msg "Timeout reached - canceling search"
+		Get-Job -Name FileCollection | Stop-Job
+	}
 	$allFolders = Receive-Job -Name FileCollection -AutoRemoveJob -Wait
 	Write-LogMessage -Type Debug -Msg "Found $($allFolders.FullName.Count) folders named 'InstallationAutomation'"
 	If($allFolders.FullName.Count -gt 1)
