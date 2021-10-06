@@ -1,0 +1,45 @@
+<Stage Name="Hardening" Version="1.0">
+    <!-- 
+        You can alter the Name, DisplayName and Description 
+        The display name will show in the report
+        The Description would be the a link to a relevant documentation
+        You can control if this check is enabled or not using the Enable parameter
+        
+        !DO NOT Change the Script Name!
+    -->
+   <Step Name="ImportingINFConfiguration" DisplayName="Importing INF Configuration" ScriptName="ImportingINFConfiguration" Enable="Yes" Description="">
+	<Parameters>
+    <!-- 
+        You can use an OS parameter @OS@ in order to dynamically select the relevant inf file based on Windows version 
+        Example:
+            - Windows 2012 Server: Windows@OS@Security.inf -> Windows2012Security.inf
+            - Windows 2016 Server: @OS@_Security_Check.inf -> 2016_Security_Check.inf
+        If there is a difference in files whether the server is domain joined or not, use:
+            - LocalINFconfigFileName: For Local security template check
+            - DomainINFconfigFileName: For Domain joined security template check 
+        If it does not matter, use
+            - INFconfigFileName
+        Make sure to selecet either INFconfigFileName or the Local/Domain configurations
+    -->
+        <Parameter Name="INFconfigFileName" Value="Windows@OS@Security.inf" />
+	</Parameters>
+   </Step>
+   
+   <Step Name="AdvancedAuditPolicyConfiguration" DisplayName="Advanced Audit Policy Configuration" ScriptName="AdvancedAuditPolicyConfiguration"  Enable="Yes" Description="">
+	<Parameters>
+    <!-- 
+        You can use an OS parameter @OS@ in order to dynamically select the relevant csv file based on Windows version 
+        Example:
+            - Windows 2012 Server: Windows@OS@Audit.csv -> Windows2012Security.csv
+        If there is a difference in files whether the server is domain joined or not, use:
+            - LocalAuditConfigFileName: For Local Audit policy check
+            - DomainAuditConfigFileName: For Domain joined Audit policy check 
+        If it does not matter, use
+            - AuditConfigFileName
+        Make sure to selecet either AuditConfigFileName or the Local/Domain configurations
+    -->
+			<Parameter Name="LocalAuditConfigFileName" Value="Local Advanced Audit.csv" />
+			<Parameter Name="DomainAuditConfigFileName" Value="Domain GPO Advanced Audit.csv" />
+	</Parameters>
+   </Step>
+</Stage>

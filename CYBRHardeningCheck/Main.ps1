@@ -15,6 +15,10 @@
 [CmdletBinding()]
 param
 (
+	# Path to an external hardenind XML to check
+	[Parameter(Mandatory=$false)]
+	[ValidateScript({ Test-Path $_ })]
+	[String]$CustomXML
 )
 
 # Get Script Location
@@ -509,6 +513,20 @@ Write-LogMessage -Type Debug -Msg "Machine Name: $machineName"
 
 
 $hardeningStepsStatus = @()
+If(![string]::IsNullOrEmpty($CustomXML))
+{
+	# Check the server based on the custom hardening XML
+	try {
+		Write-LogMessage -Type Info -MSG "Running Custom Hardening Validations for current server" -LogFile $LOG_FILE_PATH
+		Write-LogMessage -Type Debug -MSG "Using the hardening XML from: $CustomXML" -LogFile $LOG_FILE_PATH
+		$compHardeningStepsStatus = Start-HardeningSteps $CustomXML
+		$compHardeningStepsStatus | Add-Member -NotePropertyName "Component" -NotePropertyValue "Custom"
+		$hardeningStepsStatus += $compHardeningStepsStatus
+	}
+	catch {
+		Write-LogMessage -type Error -Msg "Error running custom hardening validations for current server. Error: $(Join-ExceptionMessage $_.Exception)" -LogFile $LOG_FILE_PATH
+	}
+}
 ForEach ($comp in $(Get-DetectedComponents))
 {
 	try {

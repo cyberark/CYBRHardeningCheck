@@ -36,6 +36,8 @@ The tool also provides links to documentation to most of the hardening checks an
 ![Example report](https://user-images.githubusercontent.com/11990765/126695257-38322f49-dc5d-44ea-9276-616798cfd03e.png)
 
 ## Usage
+
+### General
 The package ZIP includes a few folders, a Powershell script (Main.ps1) and a HTML template for the report.
 Download the ZIP and extract it on a CyberArk component server you wish to check
 Open Powershell (as an Administrator) and run the Main.ps1 script
@@ -50,6 +52,16 @@ PS> .\Main.ps1 -Debug -Verbose
 
 The tool creates a log file by default that contains all steps taken by the script (when using Verbose logging you will get a lot more info in the log file)
 Other relevant information will be referenced in the log and the report.
+
+### Custom checks
+You can add a custom hardening check by providing a hardening XML
+You can see an exmaple of such XML file in the [Custom folder](https://github.com/cyberark/CYBRHardeningCheck/tree/main/CYBRHardeningCheck/Custom/Custom_Hardening_Config.xml)
+and use the CustomXML parameter
+```powershell
+PS> .\Main.ps1 -CustomXML "C:\Scripts\CYBRHardeningCheck\Custom\Custom_Hardening_Config.xml"
+```
+
+This custom check will be added to any CyberArk component hardening check that is found
 
 ## Available Hardening tests
 ### Cross-Component hardening checks
