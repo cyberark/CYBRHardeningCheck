@@ -24,7 +24,7 @@ $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 
 # Script Version
-$ScriptVersion = "3.0"
+$ScriptVersion = "3.1"
 
 # Set Log file path
 $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
@@ -159,12 +159,12 @@ param(
 				$Item.Output = $(Get-SummaryOutput -Component $Item.Component -Status $Item.Status -Details $Item.Output)
 			}
 			# Count Errors
-			If($item.Status -ne "Good")
+			If($item.Status -ne "Good" -and $item.Status -ne "Ignore")
 			{
 				$summary.errors++
 			}
 		}
-		$summary.hardeningPercentage = 1-($summary.errors / $sortedHardeningStatus.count)
+		$summary.hardeningPercentage = 1-($summary.errors / @($sortedHardeningStatus | Where-Object { $_.Status -ne "Ignore" }).count)
 
 		# return the Hardening setup and the Summary
 		return @( $sortedHardeningStatus, $summary )
@@ -406,17 +406,18 @@ Function Out-HardeningFolderPath {
 	# Start a background job to search all InstallationAutomation folders and limit it to the maximum number of Total Components found
 	# Might want to add in the future filter on the actual components folder names (e.g. "CPM|PVWA|PSM|AIM")
 	Start-Job -Name FileCollection -ScriptBlock {Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Select-Object -First $args[0] } -ArgumentList $TotalComponentsFound | Out-Null
+
 	# set a timeout of max 2 minutes
-	$timeout = [timespan]::FromMinutes(2)
-	While((Get-Job -Name FileCollection | Where-Object { $_.State -eq "Running" -and (($now - $_.PSBeginTime) -gt $timeout)} )) 
+	$timeout = [TimeSpan]::FromMinutes(2)
+	While((Get-Job -Name FileCollection | Where-Object { $_.State -eq "Running" -and (($now - $_.PSBeginTime) -lt $timeout)} )) 
 	{ 
 		Write-Progress -Activity "Searching for Hardening folders..." -PercentComplete $x 
 		If($x -eq 100){ $x = 1 } Else { $x += 1 }
 	}
 	Write-Progress -Activity "Searching for Hardening folders..." -Completed 
-	if($x -lt 100)
+	if((Get-Job -Name FileCollection).State -ne "Completed" -and $x -lt 100)
 	{
-		Write-LogMessage -Type Warning -Msg "Timeout reached - canceling search"
+		Write-LogMessage -type "Warning" -Msg "Timeout reached - canceling search"	
 		Get-Job -Name FileCollection | Stop-Job
 	}
 	$allFolders = Receive-Job -Name FileCollection -AutoRemoveJob -Wait
@@ -460,7 +461,10 @@ If($ExecutionContext.SessionState.LanguageMode -ne "FullLanguage")
 }
 
 Write-LogMessage -Type Info -MSG "Starting script (v$ScriptVersion)" -Header -LogFile $LOG_FILE_PATH
-if($InDebug) { Write-LogMessage -Type Info -MSG "Running in Debug Mode" -LogFile $LOG_FILE_PATH }
+if($InDebug) { 
+	Write-LogMessage -Type Info -MSG "Running in Debug Mode, not stopping for debug messages" -LogFile $LOG_FILE_PATH 
+	$DebugPreference = "Continue"
+}
 if($InVerbose) { Write-LogMessage -Type Info -MSG "Running in Verbose Mode" -LogFile $LOG_FILE_PATH }
 Write-LogMessage -Type Debug -MSG "Running PowerShell version $($PSVersionTable.PSVersion.Major) compatible of versions $($PSVersionTable.PSCompatibleVersions -join ", ")" -LogFile $LOG_FILE_PATH
 # Verify the Powershell version is compatible
