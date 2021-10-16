@@ -1247,13 +1247,16 @@ Function Get-ServiceInstallPath
 				if ($null -eq $m_ServiceList)
 				{
 					Set-Variable -Name m_ServiceList -Value $(Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.PSPath }) -Scope Script
-					#$m_ServiceList = Get-Reg -Hive "LocalMachine" -Key System\CurrentControlSet\Services -Value $null
 				}
 				$regPath =  $m_ServiceList | Where-Object {$_.PSChildName -eq $ServiceName}
 				If ($Null -ne $regPath)
 				{
 					$retInstallPath = $regPath.ImagePath.Substring($regPath.ImagePath.IndexOf('"'),$regPath.ImagePath.LastIndexOf('"')+1)
 				}
+			}
+			else 
+			{
+				Write-LogMessage -Type "Warning" -Msg "Skipping Service install path check as user is not a local admin"
 			}
 		}
 		catch{
@@ -2604,7 +2607,6 @@ Function Start-HardeningSteps
 					Write-LogMessage -Type Info -Msg "Finished Step $($step.DisplayName)"
 				}
 				# Add to steps array
-				#Write-LogMessage -Type Debug -Msg "$($refHardeningStepStatus.Name) ($($refHardeningStepStatus.Status)): $($refHardeningStepStatus.Output)"
 				Write-LogMessage -Type Debug -Msg "$($refHardeningStepStatus.Name) ($($refHardeningStepStatus.Status))"
 				$AllHardeningStepsStatus += $refHardeningStepStatus
 			}

@@ -420,6 +420,7 @@ Function Out-HardeningFolderPath {
 	# Start a background job to search all InstallationAutomation folders and limit it to the maximum number of Total Components found
 	# Might want to add in the future filter on the actual components folder names (e.g. "CPM|PVWA|PSM|AIM")
 	Start-Job -Name FileCollection -ScriptBlock {Get-ChildItem -Path "$ENV:SystemDrive\*" -Include "InstallationAutomation" -Recurse -Directory -ErrorAction SilentlyContinue | Select-Object -First $args[0] } -ArgumentList $TotalComponentsFound | Out-Null
+
 	# set a timeout of max 2 minutes
 	$timeout = [TimeSpan]::FromMinutes(2)
 	While((Get-Job -Name FileCollection | Where-Object { $_.State -eq "Running" -and (($now - $_.PSBeginTime) -lt $timeout)} )) 
@@ -430,7 +431,7 @@ Function Out-HardeningFolderPath {
 	Write-Progress -Activity "Searching for Hardening folders..." -Completed 
 	if((Get-Job -Name FileCollection).State -ne "Completed" -and $x -lt 100)
 	{
-		Write-LogMessage -Type Warning -Msg "Timeout reached - canceling search"
+		Write-LogMessage -type "Warning" -Msg "Timeout reached - canceling search"	
 		Get-Job -Name FileCollection | Stop-Job
 	}
 	$allFolders = Receive-Job -Name FileCollection -AutoRemoveJob -Wait
