@@ -1,4 +1,4 @@
-﻿Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")
+﻿Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel","Debug")
 Set-Variable -Name UnsupportedHardeningComponents -Option ReadOnly -Value @("AIM","EPM","SecureTunnel")
 
 #region Writer Functions
@@ -797,6 +797,17 @@ Function Find-Components
 					}
 					break
 				}
+				"Debug"
+				{
+					try{
+						# Check if Privilege Cloud Secure tunnel is installed
+						Write-LogMessage -Type "Debug" -MSG "Searching for DEBUG..."
+						return New-Object PSObject -Property @{Name="Debug";Path="C:\Temp";Version="0.1"}
+					} catch {
+						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
+					}
+					break
+				}
 				"All"
 				{
 					try{
@@ -1230,13 +1241,12 @@ Function Get-ServiceInstallPath
 	Process {
 		$retInstallPath = $Null
 		try{
-			# Search only if user is an admin (will fail otherwise)
+			# Search only if user is an admin (will always fail otherwise)
 			if(Test-CurrentUserLocalAdmin)
 			{
 				if ($null -eq $m_ServiceList)
 				{
 					Set-Variable -Name m_ServiceList -Value $(Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.PSPath }) -Scope Script
-					#$m_ServiceList = Get-Reg -Hive "LocalMachine" -Key System\CurrentControlSet\Services -Value $null
 				}
 				$regPath =  $m_ServiceList | Where-Object {$_.PSChildName -eq $ServiceName}
 				If ($Null -ne $regPath)
