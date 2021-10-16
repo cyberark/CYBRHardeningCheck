@@ -1231,22 +1231,29 @@ Function Get-ServiceInstallPath
   .PARAMETER ServiceName
   The service name to query. Just one.
  #>
-	param ($ServiceName)
+	param (
+		[Parameter(Mandatory=$true)]
+		[String]$ServiceName
+	)
 	Begin {
 
 	}
 	Process {
 		$retInstallPath = $Null
 		try{
-			if ($null -eq $m_ServiceList)
+			# Search only if user is an admin (will always fail otherwise)
+			if(Test-CurrentUserLocalAdmin)
 			{
-				Set-Variable -Name m_ServiceList -Value $(Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.PSPath }) -Scope Script
-				#$m_ServiceList = Get-Reg -Hive "LocalMachine" -Key System\CurrentControlSet\Services -Value $null
-			}
-			$regPath =  $m_ServiceList | Where-Object {$_.PSChildName -eq $ServiceName}
-			If ($Null -ne $regPath)
-			{
-				$retInstallPath = $regPath.ImagePath.Substring($regPath.ImagePath.IndexOf('"'),$regPath.ImagePath.LastIndexOf('"')+1)
+				if ($null -eq $m_ServiceList)
+				{
+					Set-Variable -Name m_ServiceList -Value $(Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.PSPath }) -Scope Script
+					#$m_ServiceList = Get-Reg -Hive "LocalMachine" -Key System\CurrentControlSet\Services -Value $null
+				}
+				$regPath =  $m_ServiceList | Where-Object {$_.PSChildName -eq $ServiceName}
+				If ($Null -ne $regPath)
+				{
+					$retInstallPath = $regPath.ImagePath.Substring($regPath.ImagePath.IndexOf('"'),$regPath.ImagePath.LastIndexOf('"')+1)
+				}
 			}
 		}
 		catch{
@@ -2566,9 +2573,9 @@ Function Start-HardeningSteps
 				if ($(ConvertTo-Bool $step.Enable) -eq $False)
 				{
 					Write-LogMessage -Type Debug -Msg "Step $($step.Name) is disabled"
-					$refHardeningStepStatus.Status = "Bad"
+					$refHardeningStepStatus.Status = "Ignore"
 					$refHardeningStepStatus.Output = "Step is disabled, verification was not performed"
-					$AllStepsArray += New-Object PSObject -Property @{Name=$step.Name;CompletedSuccessfully=$false}
+					$AllStepsArray += New-Object PSObject -Property @{Name=$step.Name;CompletedSuccessfully=$true}
 				}
 				else
 				{
