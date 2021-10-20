@@ -689,6 +689,7 @@ Function Vault_KeysProtection
 			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
 			foreach ($path in $KeysLocations)
 			{
+				$path = '"'+$path+'"'
 				Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
 				if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 				{
