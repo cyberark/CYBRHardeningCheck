@@ -106,7 +106,7 @@ Function Vault_StaticIP
 	Begin
 	{
 		$res = "Good"
-		$interfaceAliasPattern = "Eth*"
+		$interfaceAliasPattern = "*"
 	}
 	Process
 	{
