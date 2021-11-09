@@ -58,7 +58,8 @@ Function ImportingINFConfiguration
 			# Get the Component relative INF file path
 			$INFconfigFilePath = Get-CurrentComponentFolderPath -FileName $INFconfigFileName
 			
-			if(!Test-Path $INFconfigFilePath)
+			#if(!Test-Path $INFconfigFilePath)
+			if( -not (Test-Path $INFconfigFilePath))
 			{
 				# INF Configuration was not found
 				Throw "Could not find configuration file in path: $INFconfigFilePath"
