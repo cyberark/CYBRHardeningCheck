@@ -35,30 +35,38 @@ Function Vault_NICHardening
 		try
 		{
 			Write-LogMessage -Type Info -Msg "Start verify Vault NIC is Hardened"
-			# Get all Network Bindings that are not TCP/IPv4
-			$netBindings = Get-NetAdapterBinding | Where-Object { $_.ComponentID -ne "ms_tcpip" }
-			If ($netBindings.Count -gt 0)
+			if(Get-OSVersion -eq "2019")
 			{
-				ForEach ($net in $netBindings)
+				Write-LogMessage -Type Info -Msg "Skipping NIC hardening verification - not relevant for Win219"
+				Write-LogMessage -Type LogOnly -Msg "For more info see: https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/Before-CyberArk-Vault-Installation.htm?tocpath=Installation%7CInstall%20PAS%7CCyberArk%20Digital%20Vault%20installation%7CInstall%20a%20Primary-DR%20Environment%7C_____2#PreparetheCyberArkVaultserver"
+			}
+			else 
+			{
+				# Get all Network Bindings that are not TCP/IPv4
+				$netBindings = Get-NetAdapterBinding | Where-Object { $_.ComponentID -ne "ms_tcpip" }
+				If ($netBindings.Count -gt 0)
 				{
-					If (($net.ComponentID -eq "ms_tcpip6") -and ($net.Enabled -eq $True))
+					ForEach ($net in $netBindings)
 					{
-						$myRef += "TCP/IPv6 needs to be Disabled<BR>"
+						If (($net.ComponentID -eq "ms_tcpip6") -and ($net.Enabled -eq $True))
+						{
+							$myRef += "TCP/IPv6 needs to be Disabled<BR>"
+						}
+						elseif ($net.DisplayName -match "Microsoft Network Adapter Multiplexor Protocol")
+						{
+							# If the Vault has NIC Teaming, then this is OK - just report it
+							$nicTeam = Get-NetLbfoTeam | Where-Object { $_.Status -eq "Up" }
+							$script:NICTeamingName = $nicTeam.Name
+							$myRef += "NIC Teaming is enabled.<BR>Team Name: {0}<BR>Team NIC Members: {1}" -f $nicTeam.Name, $($nicTeam.Members -join ", ")
+						}
+						else
+						{
+							$myRef += "{0} needs to be Uninstalled<BR>" -f $net.DisplayName
+						}
 					}
-					elseif ($net.DisplayName -match "Microsoft Network Adapter Multiplexor Protocol")
-					{
-						# If the Vault has NIC Teaming, then this is OK - just report it
-						$nicTeam = Get-NetLbfoTeam | Where-Object { $_.Status -eq "Up" }
-						$script:NICTeamingName = $nicTeam.Name
-						$myRef += "NIC Teaming is enabled.<BR>Team Name: {0}<BR>Team NIC Members: {1}" -f $nicTeam.Name, $($nicTeam.Members -join ", ")
-					}
-					else
-					{
-						$myRef += "{0} needs to be Uninstalled<BR>" -f $net.DisplayName
-					}
+					[ref]$refOutput.Value = $myRef
+					$res = "Warning"
 				}
-				[ref]$refOutput.Value = $myRef
-				$res = "Warning"
 			}
 
 			Write-LogMessage -Type Info -Msg "Finish verify Vault NIC is Hardened"
@@ -86,7 +94,7 @@ Function Vault_NICHardening
 # =================================================================================================================================
 Function Vault_StaticIP
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Check that the Vault has Static IP
 .DESCRIPTION
@@ -153,7 +161,7 @@ Function Vault_StaticIP
 # =================================================================================================================================
 Function Vault_WindowsFirewall
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Check that the Vault has the Firewall active
 .DESCRIPTION
@@ -209,7 +217,7 @@ Function Vault_WindowsFirewall
 # =================================================================================================================================
 Function Vault_DomainJoined
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Check that the Vault was not joined to a domain
 .DESCRIPTION
@@ -428,7 +436,7 @@ Function Vault_FirewallNonStandardRules
 						Switch ($fwRule.Direction)
 						{
 							"inbound"
-       {
+							{
 								$fwRule.LocalPort = $Matches[1]
 								$fwRule.RemotePort = "Any"
 								break
@@ -514,7 +522,7 @@ Function Vault_FirewallNonStandardRules
 			ForEach ($rule in $($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }))
 			{
 				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
-				If ($dbParmFWRules.FWRuleLine -NotContains $rule.FWRuleLine)
+				If (($dbParmFWRules.count -eq 0) -or ($dbParmFWRules.FWRuleLine -NotContains $rule.FWRuleLine))
 				{
 					$res = "Warning"
 					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is applied but not configured in DBParm.ini </li>"
@@ -689,7 +697,7 @@ Function Vault_KeysProtection
 			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
 			foreach ($path in $KeysLocations)
 			{
-				$path = '"'+$path+'"'
+				$path = '"' + $path + '"'
 				Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
 				if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 				{

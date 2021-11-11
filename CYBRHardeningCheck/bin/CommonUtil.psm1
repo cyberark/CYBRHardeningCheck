@@ -1,5 +1,5 @@
-﻿Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault","CPM","PVWA","PSM","AIM","EPM","SecureTunnel")
-Set-Variable -Name UnsupportedHardeningComponents -Option ReadOnly -Value @("AIM","EPM","SecureTunnel")
+﻿Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault", "CPM", "PVWA", "PSM", "AIM", "EPM", "SecureTunnel")
+Set-Variable -Name UnsupportedHardeningComponents -Option ReadOnly -Value @("AIM", "EPM", "SecureTunnel")
 
 #region Writer Functions
 # @FUNCTION@ ======================================================================================================================
@@ -10,7 +10,7 @@ Set-Variable -Name UnsupportedHardeningComponents -Option ReadOnly -Value @("AIM
 # =================================================================================================================================
 Function Write-LogMessage
 {
-<# 
+	<# 
 .SYNOPSIS 
 	Method to log a message on screen and in a log file
 .DESCRIPTION
@@ -30,85 +30,93 @@ Function Write-LogMessage
 	The type of the message to log (Info, Warning, Error, Debug)
 #>
 	param(
-		[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
 		[AllowEmptyString()]
 		[String]$MSG,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[Switch]$Header,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[Switch]$SubHeader,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[Switch]$Footer,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[Bool]$WriteLog = $true,
-		[Parameter(Mandatory=$false)]
-		[ValidateSet("Info","Warning","Error","Debug","Verbose", "Success", "LogOnly")]
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("Info", "Warning", "Error", "Debug", "Verbose", "Success", "LogOnly")]
 		[String]$type = "Info",
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[String]$LogFile = $LOG_FILE_PATH
 	)
-	Try{
-		If([string]::IsNullOrEmpty($LogFile) -and $WriteLog)
+	Try
+	{
+		If ([string]::IsNullOrEmpty($LogFile) -and $WriteLog)
 		{
 			# User wanted to write logs, but did not provide a log file - Create a temporary file
 			$LogFile = Join-Path -Path $ENV:Temp -ChildPath "$((Get-Date).ToShortDateString().Replace('/','_')).log"
 			Write-Host "No log file path inputted, created a temporary file at: '$LogFile'"
 		}
-		If ($Header -and $WriteLog) {
+		If ($Header -and $WriteLog)
+		{
 			"=======================================" | Out-File -Append -FilePath $LogFile 
 			Write-Host "=======================================" -ForegroundColor Magenta
 		}
-		ElseIf($SubHeader -and $WriteLog) { 
+		ElseIf ($SubHeader -and $WriteLog)
+		{ 
 			"------------------------------------" | Out-File -Append -FilePath $LogFile 
 			Write-Host "------------------------------------" -ForegroundColor Magenta
 		}
 		
 		# Replace empty message with 'N/A'
-		if([string]::IsNullOrEmpty($Msg)) { $Msg = "N/A" }
+		if ([string]::IsNullOrEmpty($Msg)) { $Msg = "N/A" }
 		$msgToWrite = ""
 		
 		# Mask Passwords
-		if($Msg -match '((?:password|credentials|secret)\s{0,}["\:=]{1,}\s{0,}["]{0,})(?=([\w`~!@#$%^&*()-_\=\+\\\/|;:\.,\[\]{}]+))')
+		if ($Msg -match '((?:password|credentials|secret)\s{0,}["\:=]{1,}\s{0,}["]{0,})(?=([\w`~!@#$%^&*()-_\=\+\\\/|;:\.,\[\]{}]+))')
 		{
-			$Msg = $Msg.Replace($Matches[2],"****")
+			$Msg = $Msg.Replace($Matches[2], "****")
 		}
 		# Check the message type
 		switch ($type)
 		{
-			{($_ -eq "Info") -or ($_ -eq "LogOnly")} 
+			{ ($_ -eq "Info") -or ($_ -eq "LogOnly") } 
 			{ 
-				If($_ -eq "Info")
+				If ($_ -eq "Info")
 				{
-					Write-Host $MSG.ToString() -ForegroundColor $(If($Header -or $SubHeader) { "Magenta" } Else { "White" })
+					Write-Host $MSG.ToString() -ForegroundColor $(If ($Header -or $SubHeader) { "Magenta" } Else { "White" })
 				}
 				$msgToWrite = "[INFO]`t$Msg"
 				break
 			}
-			"Success" { 
+			"Success"
+			{ 
 				Write-Host $MSG.ToString() -ForegroundColor Green
 				$msgToWrite = "[SUCCESS]`t$Msg"
 				break
 			}
-			"Warning" {
+			"Warning"
+			{
 				Write-Host $MSG.ToString() -ForegroundColor Yellow
 				$msgToWrite = "[WARNING]`t$Msg"
 				break
 			}
-			"Error" {
+			"Error"
+			{
 				Write-Host $MSG.ToString() -ForegroundColor Red
 				$msgToWrite = "[ERROR]`t$Msg"
 				break
 			}
-			"Debug" { 
-				if($InDebug -or $InVerbose)
+			"Debug"
+			{ 
+				if ($InDebug -or $InVerbose)
 				{
 					Write-Debug $MSG
 					$msgToWrite = "[DEBUG]`t$Msg"
 				}
 				break
 			}
-			"Verbose" { 
-				if($InVerbose)
+			"Verbose"
+			{ 
+				if ($InVerbose)
 				{
 					Write-Verbose -Msg $MSG
 					$msgToWrite = "[VERBOSE]`t$Msg"
@@ -117,20 +125,22 @@ Function Write-LogMessage
 			}
 		}
 
-		If($WriteLog) 
+		If ($WriteLog) 
 		{ 
-			If(![string]::IsNullOrEmpty($msgToWrite))
+			If (![string]::IsNullOrEmpty($msgToWrite))
 			{				
 				"[$(Get-Date -Format "yyyy-MM-dd hh:mm:ss")]`t$msgToWrite" | Out-File -Append -FilePath $LogFile
 			}
 		}
-		If ($Footer -and $WriteLog) { 
+		If ($Footer -and $WriteLog)
+		{ 
 			"=======================================" | Out-File -Append -FilePath $LogFile 
 			Write-Host "=======================================" -ForegroundColor Magenta
 		}
 	}
-	catch{
-		Throw $(New-Object System.Exception ("Cannot write message"),$_.Exception)
+	catch
+	{
+		Throw $(New-Object System.Exception ("Cannot write message"), $_.Exception)
 	}
 }
 Export-ModuleMember -Function Write-LogMessage
@@ -143,7 +153,7 @@ Export-ModuleMember -Function Write-LogMessage
 # =================================================================================================================================
 Function Join-ExceptionMessage
 {
-<#
+	<#
 .SYNOPSIS
 	Formats exception messages
 .DESCRIPTION
@@ -155,17 +165,21 @@ Function Join-ExceptionMessage
 		[Exception]$e
 	)
 
-	Begin {
+	Begin
+	{
 	}
-	Process {
+	Process
+	{
 		$msg = "Source:{0}; Message: {1}" -f $e.Source, $e.Message
-		while ($e.InnerException) {
-		  $e = $e.InnerException
-		  $msg += "`n`t->Source:{0}; Message: {1}" -f $e.Source, $e.Message
+		while ($e.InnerException)
+		{
+			$e = $e.InnerException
+			$msg += "`n`t->Source:{0}; Message: {1}" -f $e.Source, $e.Message
 		}
 		return $msg
 	}
-	End {
+	End
+	{
 	}
 }
 Export-ModuleMember -Function Join-ExceptionMessage
@@ -181,7 +195,7 @@ Export-ModuleMember -Function Join-ExceptionMessage
 # =================================================================================================================================
 Function Test-Service
 {
-<#
+	<#
 .SYNOPSIS
 	Method to query a service status
 .DESCRIPTION
@@ -190,25 +204,30 @@ Function Test-Service
 	The Service Name to Check Status for
 #>
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[string]$ServiceName
 	)
-	Begin {
+	Begin
+	{
 
 	}
-	Process {
+	Process
+	{
 		$svcStatus = "" # Init
-		try{
+		try
+		{
 			# Create command to run
 			$svcStatus = Get-Service -Name $ServiceName | Select-Object Status
 			Write-LogMessage -Type "Debug" -Msg "$ServiceName Service Status is: $($svcStatus.Status)" -LogFile $LOG_FILE_PATH
 			return $svcStatus.Status
 		}
-		catch{
-			Throw $(New-Object System.Exception ("Cannot get Service ($ServiceName) status",$_.Exception))
+		catch
+		{
+			Throw $(New-Object System.Exception ("Cannot get Service ($ServiceName) status", $_.Exception))
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -221,7 +240,7 @@ Function Test-Service
 # =================================================================================================================================
 Function Get-Reg
 {
-<#
+	<#
 .SYNOPSIS
 	Method that will connect to a remote computer Registry using the Parameters it receives
 
@@ -238,43 +257,50 @@ Function Get-Reg
 	The Computer Name that we want to Query (Default Value is Local Computer)
 #>
 	param(
-		[Parameter(Mandatory=$true)]
-		[ValidateSet("HKLM:","LocalMachine", "HKU:", "Users", "CurrentUser")]
+		[Parameter(Mandatory = $true)]
+		[ValidateSet("HKLM:", "LocalMachine", "HKU:", "Users", "CurrentUser")]
 		[String]$Hive,
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[String]$Key,
-		[Parameter(Mandatory=$false)]
-		[String]$Value=$null,
-		[Parameter(Mandatory=$false)]
-		[String]$RemoteComputer="." # If not entered Local Computer is Selected
+		[Parameter(Mandatory = $false)]
+		[String]$Value = $null,
+		[Parameter(Mandatory = $false)]
+		[String]$RemoteComputer = "." # If not entered Local Computer is Selected
 	)
-	Begin {
+	Begin
+	{
 		$regCommandParameters = ""
 		$retOutput = $null
 	}
-	Process {
-		try{
-			if($Hive -eq "LocalMachine") { $Hive = "HKLM:" }
+	Process
+	{
+		try
+		{
+			if ($Hive -eq "LocalMachine") { $Hive = "HKLM:" }
 			Write-LogMessage -Type "Verbose" -Msg "Opening Key:'$key' on Hive:'$Hive'" -LogFile $LOG_FILE_PATH
 			$regPath = Join-Path -Path $Hive -ChildPath $Key
-			If(($RemoteComputer -ne ".") -and ($RemoteComputer -ne "localhost"))
+			If (($RemoteComputer -ne ".") -and ($RemoteComputer -ne "localhost"))
 			{
 				# Connect to Remote Computer Registry
 				$regCommandParameters = "-ComputerName $RemoteComputer"
 			}
 		}
-		catch{
-			Throw $(New-Object System.Exception ("Get-Reg: Registry Error",$_.Exception))
-		}
-		if($null -eq $Value) # Enumerate Keys
+		catch
 		{
-			If(Test-Path $regPath)
+			Throw $(New-Object System.Exception ("Get-Reg: Registry Error", $_.Exception))
+		}
+		if ($null -eq $Value) # Enumerate Keys
+		{
+			If (Test-Path $regPath)
 			{
-				try{
+				try
+    {
 					# Return Sub Key Names
 					$retOutput = (Get-ChildItem -Path $regPath $regCommandParameters | Select-Object Name)
-				} catch {
-					Throw $(New-Object System.Exception ("Get-Reg: Could not enumerate keys in registry path $regPath",$_.Exception))
+				}
+				catch
+				{
+					Throw $(New-Object System.Exception ("Get-Reg: Could not enumerate keys in registry path $regPath", $_.Exception))
 				}
 			}
 			else
@@ -284,18 +310,21 @@ Function Get-Reg
 		}
 		else
 		{
-			If(Test-Path $regPath)
+			If (Test-Path $regPath)
 			{
 				$regItems = Get-ItemProperty -Path $regPath
-				if($null -ne $regItems)
+				if ($null -ne $regItems)
 				{
-					try{
-						if((Get-ItemProperty -Path $regPath | Get-Member).Name -contains $Value)
+					try
+     {
+						if ((Get-ItemProperty -Path $regPath | Get-Member).Name -contains $Value)
 						{
 							$retOutput = (Get-ItemProperty -Path $regPath -Name $Value | Select-Object $Value).$Value
 						}
-					} catch {
-						Throw $(New-Object System.Exception ("Get-Reg: Could not find value $Value in registry path $regPath",$_.Exception))
+					}
+					catch
+					{
+						Throw $(New-Object System.Exception ("Get-Reg: Could not find value $Value in registry path $regPath", $_.Exception))
 					}
 				}
 				else { Throw ("Get-Reg: No items in registry path $regPath") }
@@ -308,7 +337,8 @@ Function Get-Reg
 
 		return $retOutput
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -321,7 +351,7 @@ Function Get-Reg
 # =================================================================================================================================
 Function Get-FileVersion
 {
-<#
+	<#
 .SYNOPSIS
 	Method to return a file version
 
@@ -333,12 +363,15 @@ Function Get-FileVersion
 	The path to the file to query
 #>
 	param ($filePath)
-	Begin {
+	Begin
+	{
 
 	}
-	Process {
+	Process
+	{
 		$retFileVersion = $Null
-		try{
+		try
+		{
 			If (($null -ne $filePath) -and (Test-Path $filePath))
 			{
 				$path = Resolve-Path $filePath
@@ -351,14 +384,17 @@ Function Get-FileVersion
 
 			return $retFileVersion
 		}
-		catch{
-			Throw $(New-Object System.Exception ("Cannot get File ($filePath) version",$_.Exception))
+		catch
+		{
+			Throw $(New-Object System.Exception ("Cannot get File ($filePath) version", $_.Exception))
 		}
-		finally{
+		finally
+		{
 
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -371,7 +407,7 @@ Function Get-FileVersion
 # =================================================================================================================================
 Function Test-CommandExists
 {
-<#
+	<#
 .SYNOPSIS
 	Method to check if a command exists in the script run scope
 .DESCRIPTION
@@ -379,12 +415,12 @@ Function Test-CommandExists
 .PARAMETER Command
 	The Command name to check
 #>
-    Param ($command)
-    $oldPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'stop'
-    try {if(Get-Command $command){RETURN $true}}
-    Catch {RETURN $false}
-    Finally {$ErrorActionPreference=$oldPreference}
+	Param ($command)
+	$oldPreference = $ErrorActionPreference
+	$ErrorActionPreference = 'stop'
+	try { if (Get-Command $command) { RETURN $true } }
+	Catch { RETURN $false }
+	Finally { $ErrorActionPreference = $oldPreference }
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -395,7 +431,7 @@ Function Test-CommandExists
 # =================================================================================================================================
 Function Set-DetectedComponents
 {
-<#
+	<#
 .SYNOPSIS
 	Sets the Detected Components in a Script scope
 .DESCRIPTION
@@ -418,7 +454,7 @@ Function Set-DetectedComponents
 # =================================================================================================================================
 Function Test-InstalledRole
 {
-<#
+	<#
 .SYNOPSIS
 	Method to check if a server role is installed on the machine
 .DESCRIPTION
@@ -427,21 +463,26 @@ Function Test-InstalledRole
 	The Role Name to Check Status for
 #>
 	Param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[string]$roleName
 	)
-	Begin {
+	Begin
+	{
 
 	}
-	Process{
-		try{
+	Process
+	{
+		try
+		{
 			return ((Get-WindowsFeature $roleName).Installed -eq 1)
 		}
-		catch{
-			Throw $(New-Object System.Exception ("Error checking Windows Role/Feature '$roleName'",$_.Exception))
+		catch
+		{
+			Throw $(New-Object System.Exception ("Error checking Windows Role/Feature '$roleName'", $_.Exception))
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -455,8 +496,9 @@ Function Test-InstalledRole
 #							 Please Notice this needs to be string indicate enum name from System.Security.AccessControl.RegistryRights or System.Security.AccessControl.FileSystemRights enums.
 # Return Values..: $NUll is couldn't create object, otherwise it return the relevant object.
 # =================================================================================================================================
-Function New-AccessControlObject{
-<#
+Function New-AccessControlObject
+{
+	<#
 .SYNOPSIS
 	Method to get the relevant access control object for this path.
 .DESCRIPTION
@@ -470,35 +512,46 @@ Function New-AccessControlObject{
 	Please Notice this needs to be string indicate enum name from System.Security.AccessControl.RegistryRights or System.Security.AccessControl.FileSystemRights enums.
 #>
 	param(
-		[parameter(Mandatory=$true)]
+		[parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]$path,
-		[parameter(Mandatory=$true)]
+		[parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]$identity,
 		[ValidateNotNullOrEmpty()]$rights
 	)
-	Begin{
+	Begin
+	{
 
 	}
-	Process{
+	Process
+	{
 		$returnVal = $NULL
-		Try {
+		Try
+		{
 			$item = Get-Item -Path $path
 
-			If ($item -is [System.IO.DirectoryInfo]) {
-				$returnVal = New-Object System.Security.AccessControl.FileSystemAccessRule ($identity,$rights,"ContainerInherit,ObjectInherit","None","Allow")
-			} ElseIf ($item -is [Microsoft.Win32.RegistryKey]) {
-				$returnVal = New-Object System.Security.AccessControl.RegistryAccessRule ($identity,$rights,"ContainerInherit,ObjectInherit","None","Allow")
-			} ElseIf ($item -is [System.IO.FileInfo]){
-				$returnVal = New-Object System.Security.AccessControl.FileSystemAccessRule ($identity,$rights,"Allow")
+			If ($item -is [System.IO.DirectoryInfo])
+			{
+				$returnVal = New-Object System.Security.AccessControl.FileSystemAccessRule ($identity, $rights, "ContainerInherit,ObjectInherit", "None", "Allow")
 			}
-		} Catch {
-			Throw $(New-Object System.Exception ("Failed to get new Access Control Object",$_.Exception))
+			ElseIf ($item -is [Microsoft.Win32.RegistryKey])
+			{
+				$returnVal = New-Object System.Security.AccessControl.RegistryAccessRule ($identity, $rights, "ContainerInherit,ObjectInherit", "None", "Allow")
+			}
+			ElseIf ($item -is [System.IO.FileInfo])
+			{
+				$returnVal = New-Object System.Security.AccessControl.FileSystemAccessRule ($identity, $rights, "Allow")
+			}
+		}
+		Catch
+		{
+			Throw $(New-Object System.Exception ("Failed to get new Access Control Object", $_.Exception))
 		}
 		return $returnVal
 	}
-	End{
+	End
+	{
 
-   }
+	}
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -509,7 +562,7 @@ Function New-AccessControlObject{
 # =================================================================================================================================
 Function Get-IdentityReference
 {
-<#
+	<#
 .SYNOPSIS
 	Method to get the relevant Identity reference
 .DESCRIPTION
@@ -521,7 +574,8 @@ Function Get-IdentityReference
 		$identityReference
 	)
 
-	Process {
+	Process
+	{
 		if ($identityReference -eq 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES')
 		{
 			$identityReference = "ALL APPLICATION PACKAGES"
@@ -543,7 +597,7 @@ Function Get-IdentityReference
 # =================================================================================================================================
 Function Read-ConfigurationFile
 {
-<#
+	<#
 .SYNOPSIS
 	Parse Configuration File and get all the steps to execute
 .DESCRIPTION
@@ -552,15 +606,16 @@ Function Read-ConfigurationFile
 	The Configuration file path to parse
 #>
 	param(
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[string]$ConfigurationFilePath
 	)
 
-	Process {
+	Process
+	{
 		try
 		{
 			[xml]$ConfigurationObject = Get-Content $ConfigurationFilePath
-			$ConfigurationSteps=@()
+			$ConfigurationSteps = @()
 			$StepsNodes = $ConfigurationObject.SelectNodes("//Step")
 
 			foreach ($node in $StepsNodes)
@@ -572,18 +627,18 @@ Function Read-ConfigurationFile
 				$descriptionLink = $node.attributes['Description'].value
 				$parametersNode = $node.FirstChild
 
-				$ParamsList=@()  # Will be empty if the step does not contain parameters
+				$ParamsList = @()  # Will be empty if the step does not contain parameters
 
 				if ($null -ne $parametersNode)
 				{
 					$ParametersNodeContent = $parametersNode.SelectNodes("//Parameter")
 					foreach ($param in $ParametersNodeContent)
 					{
-						$ParamsList += new-object PSObject -prop @{Name=$($param.attributes['Name'].value);Value=$($param.attributes['Value'].value)}
+						$ParamsList += New-Object PSObject -prop @{Name = $($param.attributes['Name'].value); Value = $($param.attributes['Value'].value) }
 					}
 				}
 
-				$StepObject = new-object PSObject -prop @{Name=$name;DisplayName=$displayName;ScriptName=$scriptName;Parameters=$ParamsList;Enable=$scriptEnable;Description=$descriptionLink}
+				$StepObject = New-Object PSObject -prop @{Name = $name; DisplayName = $displayName; ScriptName = $scriptName; Parameters = $ParamsList; Enable = $scriptEnable; Description = $descriptionLink }
 
 				$ConfigurationSteps += $StepObject
 			}
@@ -592,7 +647,7 @@ Function Read-ConfigurationFile
 		}
 		Catch
 		{
-			Throw $(New-Object System.Exception ("Failed to parse configuration file: $ConfigurationFilePath",$_.Exception))
+			Throw $(New-Object System.Exception ("Failed to parse configuration file: $ConfigurationFilePath", $_.Exception))
 		}
 	}
 }
@@ -605,7 +660,7 @@ Function Read-ConfigurationFile
 # =================================================================================================================================
 Function Test-EnabledPolicySetting
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Verifies a policy condition matches
 .DESCRIPTION
@@ -617,19 +672,19 @@ Function Test-EnabledPolicySetting
 .PARAMETER NotMatchCriteria
 	The NOT verification criteria
 #>
-    Param (
-		[Parameter(Mandatory=$true)]
-		[ValidateSet("enable","disable")]	
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateSet("enable", "disable")]	
 		[string]$PolicyStatus, 
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[string]$MatchValue, 
-		[Parameter(Mandatory=$true)]
-		[ValidateSet("Success","Failure")]	
+		[Parameter(Mandatory = $true)]
+		[ValidateSet("Success", "Failure")]	
 		[string]$NotMatchCriteria
 	)
 	$retValue = $true
 
-	if(($PolicyStatus -eq "enable") -and !($MatchValue -match $NotMatchCriteria))
+	if (($PolicyStatus -eq "enable") -and !($MatchValue -match $NotMatchCriteria))
 	{
 		$retValue = $false
 	}
@@ -645,22 +700,23 @@ Function Test-EnabledPolicySetting
 # =================================================================================================================================
 Function Find-Components
 {
-<#
+	<#
 .SYNOPSIS
 	Method to query a local server for CyberArk components
 .DESCRIPTION
 	Detects all CyberArk Components installed on the local server
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ValidateScript({   
-			if($_ -in (@("All")+$DetectionSupportedComponents)) { return $true }
-			else{ throw "Use one of these components: $($DetectionSupportedComponents -join ', ')" }
-		})]
+				if ($_ -in (@("All") + $DetectionSupportedComponents)) { return $true }
+				else { throw "Use one of these components: $($DetectionSupportedComponents -join ', ')" }
+			})]
 		[String]$Component = "All"
 	)
 
-	Begin {
+	Begin
+	{
 		$retArrComponents = @()
 		# COMPONENTS SERVICE NAMES
 		$REGKEY_VAULTSERVICE_NEW = "CyberArk Logic Container"
@@ -673,139 +729,165 @@ Function Find-Components
 		$REGKEY_EPMSERVICE = "VfBackgroundWorker"
 		$REGKEY_SECURETUNNELSERVICE = "CyberArkPrivilegeCloudSecureTunnel"
 	}
-	Process {
-		if(![string]::IsNullOrEmpty($Component))
+	Process
+	{
+		if (![string]::IsNullOrEmpty($Component))
 		{
-			Switch ($Component) {
+			Switch ($Component)
+   {
 				"Vault"
 				{
-					try{
+					try
+     {
 						# Check if Vault is installed
 						Write-LogMessage -Type "Debug" -MSG "Searching for Vault..."
-						if(($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_NEW))))
+						if (($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_VAULTSERVICE_NEW))))
 						{
 							Write-LogMessage -Type "Info" -MSG "Found Vault installation"
-							$vaultPath = $componentPath.Replace("LogicContainer\BLServiceApp.exe","").Replace("Event Notification Engine\ENE.exe","").Replace('"',"").Trim()
+							$vaultPath = $componentPath.Replace("LogicContainer\BLServiceApp.exe", "").Replace("Event Notification Engine\ENE.exe", "").Replace('"', "").Trim()
 							$fileVersion = Get-FileVersion "$vaultPath\dbmain.exe"
-							return New-Object PSObject -Property @{Name="Vault";Path=$vaultPath;Version=$fileVersion}
+							return New-Object PSObject -Property @{Name = "Vault"; Path = $vaultPath; Version = $fileVersion }
 						}
-					} catch {
+					}
+					catch
+					{
 						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
 				"CPM"
 				{
-					try{
+					try
+     {
 						# Check if CPM is installed
 						Write-LogMessage -Type "Debug" -MSG "Searching for CPM..."
-						if(($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_NEW))))
+						if (($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_OLD))) -or ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_CPMSERVICE_NEW))))
 						{
 							# Get the CPM Installation Path
 							Write-LogMessage -Type "Info" -MSG "Found CPM installation"
-							$cpmPath = $componentPath.Replace("Scanner\CACPMScanner.exe","").Replace("PMEngine.exe","").Replace("/SERVICE","").Replace('"',"").Trim()
+							$cpmPath = $componentPath.Replace("Scanner\CACPMScanner.exe", "").Replace("PMEngine.exe", "").Replace("/SERVICE", "").Replace('"', "").Trim()
 							$fileVersion = Get-FileVersion "$cpmPath\PMEngine.exe"
-							return New-Object PSObject -Property @{Name="CPM";Path=$cpmPath;Version=$fileVersion}
+							return New-Object PSObject -Property @{Name = "CPM"; Path = $cpmPath; Version = $fileVersion }
 						}
-					} catch {
+					}
+					catch
+					{
 						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
 				"PVWA"
 				{
-					try{
+					try
+     {
 						# Check if PVWA is installed
 						Write-LogMessage -Type "Debug" -MSG "Searching for PVWA..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PVWASERVICE)))
+						if ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PVWASERVICE)))
 						{
 							Write-LogMessage -Type "Info" -MSG "Found PVWA installation"
-							$pvwaPath = $componentPath.Replace("Services\CyberArkScheduledTasks.exe","").Replace('"',"").Trim()
+							$pvwaPath = $componentPath.Replace("Services\CyberArkScheduledTasks.exe", "").Replace('"', "").Trim()
 							$fileVersion = Get-FileVersion "$pvwaPath\Services\CyberArkScheduledTasks.exe"
-							return New-Object PSObject -Property @{Name="PVWA";Path=$pvwaPath;Version=$fileVersion}
+							return New-Object PSObject -Property @{Name = "PVWA"; Path = $pvwaPath; Version = $fileVersion }
 						}
-					} catch {
+					}
+					catch
+					{
 						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
 				"PSM"
 				{
-					try{
+					try
+     {
 						# Check if PSM is installed
 						Write-LogMessage -Type "Debug" -MSG "Searching for PSM..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PSMSERVICE)))
+						if ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_PSMSERVICE)))
 						{
 							Write-LogMessage -Type "Info" -MSG "Found PSM installation"
-							$PSMPath = $componentPath.Replace("CAPSM.exe","").Replace('"',"").Trim()
+							$PSMPath = $componentPath.Replace("CAPSM.exe", "").Replace('"', "").Trim()
 							$fileVersion = Get-FileVersion "$PSMPath\CAPSM.exe"
-							return New-Object PSObject -Property @{Name="PSM";Path=$PSMPath;Version=$fileVersion}
+							return New-Object PSObject -Property @{Name = "PSM"; Path = $PSMPath; Version = $fileVersion }
 						}
-					} catch {
+					}
+					catch
+					{
 						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
 				"AIM"
 				{
-					try{
+					try
+     {
 						# Check if AIM is installed
 						Write-LogMessage -Type "Debug" -MSG "Searching for AIM..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_AIMSERVICE)))
+						if ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_AIMSERVICE)))
 						{
 							Write-LogMessage -Type "Info" -MSG "Found AIM installation"
-							$AIMPath = $componentPath.Replace("/mode SERVICE","").Replace("AppProvider.exe","").Replace('"',"").Trim()
+							$AIMPath = $componentPath.Replace("/mode SERVICE", "").Replace("AppProvider.exe", "").Replace('"', "").Trim()
 							$fileVersion = Get-FileVersion "$AIMPath\AppProvider.exe"
-							return New-Object PSObject -Property @{Name="AIM";Path=$AIMPath;Version=$fileVersion}
+							return New-Object PSObject -Property @{Name = "AIM"; Path = $AIMPath; Version = $fileVersion }
 						}
-					} catch {
+					}
+					catch
+					{
 						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
 				"EPM"
 				{
-					try{
+					try
+     {
 						# Check if EPM Server is installed
 						Write-LogMessage -Type "Debug" -MSG "Searching for EPM Server..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_EPMSERVICE)))
+						if ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_EPMSERVICE)))
 						{
 							Write-LogMessage -Type "Info" -MSG "Found EPM Server installation"
-							$EPMPath = $componentPath.Replace("VfBackgroundWorker.exe","").Replace('"',"").Trim()
+							$EPMPath = $componentPath.Replace("VfBackgroundWorker.exe", "").Replace('"', "").Trim()
 							$fileVersion = Get-FileVersion "$EPMPath\VfBackgroundWorker.exe"
-							return New-Object PSObject -Property @{Name="EPM";Path=$EPMPath;Version=$fileVersion}
+							return New-Object PSObject -Property @{Name = "EPM"; Path = $EPMPath; Version = $fileVersion }
 						}
-					} catch {
+					}
+					catch
+					{
 						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
 				"SecureTunnel"
 				{
-					try{
+					try
+     {
 						# Check if Privilege Cloud Secure tunnel is installed
 						Write-LogMessage -Type "Debug" -MSG "Searching for Privilege Cloud Secure tunnel..."
-						if($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_SECURETUNNELSERVICE)))
+						if ($NULL -ne ($componentPath = $(Get-ServiceInstallPath $REGKEY_SECURETUNNELSERVICE)))
 						{
 							Write-LogMessage -Type "Info" -MSG "Found Privilege Cloud Secure tunnel installation"
-							$tunnelPath = $componentPath.Replace("PrivilegeCloudSecureTunnel.exe","").Replace('"',"").Trim()
+							$tunnelPath = $componentPath.Replace("PrivilegeCloudSecureTunnel.exe", "").Replace('"', "").Trim()
 							$fileVersion = Get-FileVersion "$tunnelPath\PrivilegeCloudSecureTunnel.exe"
-							return New-Object PSObject -Property @{Name="SecureTunnel";Path=$tunnelPath;Version=$fileVersion}
+							return New-Object PSObject -Property @{Name = "SecureTunnel"; Path = $tunnelPath; Version = $fileVersion }
 						}
-					} catch {
+					}
+					catch
+					{
 						Write-LogMessage -Type "Error" -Msg "Error detecting $Component component. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
 				}
 				"All"
 				{
-					try{
-						ForEach($comp in $DetectionSupportedComponents)
+					try
+     {
+						ForEach ($comp in $DetectionSupportedComponents)
 						{
 							$retArrComponents += Find-Components -Component $comp
 						}
 						return $retArrComponents
-					} catch {
+					}
+					catch
+					{
 						Write-LogMessage -Type "Error" -Msg "Error detecting components. Error: $(Join-ExceptionMessage $_.Exception)"
 					}
 					break
@@ -813,7 +895,8 @@ Function Find-Components
 			}
 		}
 	}
-	End {
+	End
+	{
 	}
 }
 #endregion
@@ -827,22 +910,25 @@ Function Find-Components
 # =================================================================================================================================
 Function Test-InDomain
 {
-<#
+	<#
 .SYNOPSIS
 	Method to check if the machine is a domain member
 .DESCRIPTION
 	Returns True if machine is part of a domain
 #>
 	Param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]$machineName = "."
 	)
 	Begin {}
-	Process{
-		try{
+	Process
+	{
+		try
+		{
 			return $(Get-WMIItem -Class "Win32_ComputerSystem" -Item "PartOfDomain" -RemoteComputer $machineName).PartOfDomain
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type Error -Msg "Failed to check if the machine is a domain member. Error: $(Join-ExceptionMessage $_.Exception)"
 			return $false
 		}
@@ -859,22 +945,25 @@ Export-ModuleMember -Function Test-InDomain
 # =================================================================================================================================
 Function Test-LocalUser
 {
-<#
+	<#
 .SYNOPSIS
 	Method to check if a local user exits on the machine
 .DESCRIPTION
 	Returns True if the input user name exists on the machine
 #>
 	Param(
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[string]$userName
 	)
 	Begin {}
-	Process{
-		try{
+	Process
+	{
+		try
+		{
 			return ($null -ne $(Get-WMIItem -Class "Win32_UserAccount" -Filter "Name='$userName'" -Item "Name"))
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type Error -Msg "Failed to check if user $userName exists. Error: $(Join-ExceptionMessage $_.Exception)"
 			return $null
 		}
@@ -891,7 +980,7 @@ Export-ModuleMember -Function Test-LocalUser
 # =================================================================================================================================
 Function Test-InstalledWindowsRole
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Verify if a Windows Role or feature is installed on the local machine
 .DESCRIPTION
@@ -904,23 +993,26 @@ Function Test-InstalledWindowsRole
 		[ref]$outStatus
 	)
 
-	Begin {
+	Begin
+	{
 
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			$outputMsg = ""
 			$retValue = $true
-			ForEach($item in $Roles)
+			ForEach ($item in $Roles)
 			{
-				if((Test-InstalledRole $item))
+				if ((Test-InstalledRole $item))
 				{
 					$outputMsg += "Windows Role/Feature '$item' is installed.<BR>"
 					$retValue = $false
 				}
 			}
 
-			if(! $retValue)
+			if (! $retValue)
 			{
 				[ref]$outStatus.Value = "$($outputMsg)Consider removing."
 				return "Warning"
@@ -932,13 +1024,15 @@ Function Test-InstalledWindowsRole
 			}
 			return $true
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type Error -Msg "Failed to verify Windows Role/Feature '$name'. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$outStatus.Value = "Failed to verify Windows Roles/Features. Error: $($_.Exception.Message)"
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -953,7 +1047,7 @@ Export-ModuleMember -Function Test-InstalledWindowsRole
 # =================================================================================================================================
 Function Test-ServiceRunWithLocalUser
 {
-<#
+	<#
 .SYNOPSIS
 	Method to check a service login options and verify that the running user has 'Login as service' rights
 .DESCRIPTION
@@ -964,27 +1058,33 @@ Function Test-ServiceRunWithLocalUser
 	The User Name to Check 'Login as a Service' for
 #>
 	param(
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$serviceName,
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$username,
-	   [Parameter(Mandatory=$true)]
-	   [ref]$outStatus
-    )
-	Begin{
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$serviceName,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$username,
+		[Parameter(Mandatory = $true)]
+		[ref]$outStatus
+	)
+	Begin
+	{
 
 	}
-	Process{
-		Try{
+	Process
+	{
+		Try
+		{
 			Write-LogMessage -Type Debug -Msg "Checking if '$serviceName' Service uses '$userName' to login with"
 			$serviceLogin = (Get-WMIItem -class Win32_Service -Item StartName -Filter "Name='$ServiceName'").StartName
 			Write-LogMessage -Type Debug -Msg "Service '$serviceName' is running with '$serviceLogin'"
-		}Catch{
+		}
+		Catch
+		{
 			Write-LogMessage -Type Error -Msg "Error Checking Service Login for service '$serviceName'. Error: $(Join-ExceptionMessage $_.Exception)"
 		}
-		try{
+		try
+		{
 			$myRef = ""
-			If($(Test-LocalUser -userName $userName))
+			If ($(Test-LocalUser -userName $userName))
 			{
 				Write-LogMessage -Type Debug -Msg "Checking if $userName has 'Login as Service' rights"
 				$isLogonService = Compare-UserRight -userName $username -userRight "SeServiceLogonRight" -outStatus ([ref]$myRef)
@@ -995,11 +1095,14 @@ Function Test-ServiceRunWithLocalUser
 				[ref]$outStatus.Value = "The user $userName does not exist on the machine"
 				return "Bad"
 			}
-		}Catch{
+		}
+		Catch
+		{
 			Write-LogMessage -Type Error -Msg "Error Checking user $userName 'Login as Service' rights. Error: $(Join-ExceptionMessage $_.Exception)"
 		}
-		try{
-			if(($userName.Replace(".\","") -match $serviceLogin.Replace(".\","")) -and $isLogonService)
+		try
+		{
+			if (($userName.Replace(".\", "") -match $serviceLogin.Replace(".\", "")) -and $isLogonService)
 			{
 				[ref]$outStatus.Value = "Service '$serviceName' is running correctly with $serviceLogin.<BR>The user $userName has the 'Login as Service' rights"
 				return "Good"
@@ -1009,12 +1112,15 @@ Function Test-ServiceRunWithLocalUser
 				[ref]$outStatus.Value = "Service '$serviceName' is running with a different user ($serviceLogin) or the user $userName has not been granted the 'Login as Service' rights"
 				return "Warning"
 			}
-		} catch {
+		}
+		catch
+		{
 			Write-LogMessage -Type Error -Msg "Error matching user '$userName' to '$serviceLogin'. Error: $(Join-ExceptionMessage $_.Exception)"
 		}
 	}
-	End{
-   }
+	End
+	{
+	}
 }
 Export-ModuleMember -Function Test-ServiceRunWithLocalUser
 
@@ -1026,7 +1132,7 @@ Export-ModuleMember -Function Test-ServiceRunWithLocalUser
 # =================================================================================================================================
 Function Test-CurrentUserLocalAdmin
 {
-<#
+	<#
 .SYNOPSIS
 	Method to check a service login options and verify that the running user has 'Login as service' rights
 .DESCRIPTION
@@ -1036,8 +1142,8 @@ Function Test-CurrentUserLocalAdmin
 .PARAMETER UserName
 	The User Name to Check 'Login as a Service' for
 #>
-    $user = [Security.Principal.WindowsIdentity]::GetCurrent();
-    return (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.SecurityIdentifier] "S-1-5-32-544")  # Local Administrators group SID
+	$user = [Security.Principal.WindowsIdentity]::GetCurrent();
+	return (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.SecurityIdentifier] "S-1-5-32-544")  # Local Administrators group SID
 }
 Export-ModuleMember -Function Test-CurrentUserLocalAdmin
 
@@ -1047,7 +1153,8 @@ Export-ModuleMember -Function Test-CurrentUserLocalAdmin
 # Parameters.....: Class, RemoteComputer (Default - local computer), Item, Query(Default empty WMI SQL Query), Filter (Default empty Filter is Entered)
 # Return Values..: WMI Item Value
 # =================================================================================================================================
-Function Get-WMIItem {
+Function Get-WMIItem
+{
 	<#
 	.SYNOPSIS
 		Method Retrieves a specific Item from a remote computer's WMI
@@ -1066,46 +1173,51 @@ Function Get-WMIItem {
 	.PARAMETER RemoteComputer
 		The Computer Name that we want to Query (Default Value is Local Computer)
 	#>
-		param(
-			[Parameter(Mandatory=$true)]
-			[String]$Class,
-			[Parameter(Mandatory=$false)]
-			[String]$RemoteComputer=".", # If not entered Local Computer is Selected
-			[Parameter(Mandatory=$true)]
-			[String]$Item,
-			[Parameter(Mandatory=$false)]
-			[String]$Query="", # If not entered an empty WMI SQL Query is Entered
-			[Parameter(Mandatory=$false)]
-			[String]$Filter="" # If not entered an empty Filter is Entered
-		)
+	param(
+		[Parameter(Mandatory = $true)]
+		[String]$Class,
+		[Parameter(Mandatory = $false)]
+		[String]$RemoteComputer = ".", # If not entered Local Computer is Selected
+		[Parameter(Mandatory = $true)]
+		[String]$Item,
+		[Parameter(Mandatory = $false)]
+		[String]$Query = "", # If not entered an empty WMI SQL Query is Entered
+		[Parameter(Mandatory = $false)]
+		[String]$Filter = "" # If not entered an empty Filter is Entered
+	)
 	
-		Begin {
+	Begin
+ {
 	
-		}
-		Process {
-			$retValue = ""
-			try{
-				if ($Query -eq "") # No Specific WMI SQL Query
-				{
-					# Execute WMI Query, Return only the Requested Items
-					$retValue = (Get-WmiObject -Class $Class -ComputerName $RemoteComputer -Filter $Filter -Property $Item | Select-Object $Item)
-				}
-				else # User Entered a WMI SQL Query
-				{
-					$retValue = (Get-WmiObject -ComputerName $RemoteComputer -Query $Query | Select-Object $Item)
-				}
-			}
-			catch{
-				Throw $(New-Object System.Exception ("WMI Error",$_.Exception))
-			}
-	
-			return $retValue
-		}
-		End {
-	
-		}
 	}
-	Export-ModuleMember -Function Get-WMIItem
+	Process
+	{
+		$retValue = ""
+		try
+		{
+			if ($Query -eq "") # No Specific WMI SQL Query
+			{
+				# Execute WMI Query, Return only the Requested Items
+				$retValue = (Get-WmiObject -Class $Class -ComputerName $RemoteComputer -Filter $Filter -Property $Item | Select-Object $Item)
+			}
+			else # User Entered a WMI SQL Query
+			{
+				$retValue = (Get-WmiObject -ComputerName $RemoteComputer -Query $Query | Select-Object $Item)
+			}
+		}
+		catch
+		{
+			Throw $(New-Object System.Exception ("WMI Error", $_.Exception))
+		}
+	
+		return $retValue
+	}
+	End
+	{
+	
+	}
+}
+Export-ModuleMember -Function Get-WMIItem
 	
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Get-DnsHost
@@ -1115,7 +1227,7 @@ Function Get-WMIItem {
 # =================================================================================================================================
 Function Get-DnsHost
 {
-<#
+	<#
 .SYNOPSIS
 	Method to get the DNS Host name of the machine
 .DESCRIPTION
@@ -1124,11 +1236,14 @@ Function Get-DnsHost
 	Param(
 	)
 	Begin {}
-	Process{
-		try{
-			return [system.net.dns]::GetHostByName($env:ComputerName) | Format-List hostname | Out-String | ForEach-Object{ "{0}" -f $_.Split(':')[1].Trim()};
+	Process
+	{
+		try
+		{
+			return [system.net.dns]::GetHostByName($env:ComputerName) | Format-List hostname | Out-String | ForEach-Object { "{0}" -f $_.Split(':')[1].Trim() };
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type Error -Msg "Failed to retrieve DNS Host name. Error: $(Join-ExceptionMessage $_.Exception)"
 			return $env:ComputerName
 		}
@@ -1145,7 +1260,7 @@ Export-ModuleMember -Function Get-DnsHost
 # =================================================================================================================================
 Function Get-LocalAdministrators
 {
-<#
+	<#
 .SYNOPSIS
 	Method to get the Local Administrators Group Name of the local Machine
 .DESCRIPTION
@@ -1154,12 +1269,15 @@ Function Get-LocalAdministrators
 	Param(
 	)
 	Begin {}
-	Process{
-		try{
+	Process
+	{
+		try
+		{
 			# "S-1-5-32-544" is constant value representing Administrators group
 			return $(Convert-SIDToName "S-1-5-32-544")
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type Error -Msg "Failed to retrieve local Administrators group name. Error: $(Join-ExceptionMessage $_.Exception)"
 			return $null
 		}
@@ -1176,7 +1294,7 @@ Export-ModuleMember -Function Get-LocalAdministrators
 # =================================================================================================================================
 Function Get-LocalSystem
 {
-<#
+	<#
 .SYNOPSIS
 	Method to get the local SYSTEM account Name of the local Machine
 .DESCRIPTION
@@ -1185,12 +1303,15 @@ Function Get-LocalSystem
 	Param(
 	)
 	Begin {}
-	Process{
-		try{
+	Process
+	{
+		try
+		{
 			# "S-1-5-18" is constant value representing NT-Authority/SYSTEM name
 			return $(Convert-SIDToName "S-1-5-18")
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type Error -Msg "Failed to retrieve local SYSTEM account name. Error: $(Join-ExceptionMessage $_.Exception)"
 			return $null
 		}
@@ -1210,7 +1331,7 @@ Export-ModuleMember -Function Get-LocalSystem
 $m_ServiceList = $null
 Function Get-ServiceInstallPath
 {
-<#
+	<#
   .SYNOPSIS
   Get the installation path of a service
   .DESCRIPTION
@@ -1221,26 +1342,29 @@ Function Get-ServiceInstallPath
   The service name to query. Just one.
  #>
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[String]$ServiceName
 	)
-	Begin {
+	Begin
+	{
 
 	}
-	Process {
+	Process
+	{
 		$retInstallPath = $Null
-		try{
+		try
+		{
 			# Search only if user is an admin (will always fail otherwise)
-			if(Test-CurrentUserLocalAdmin)
+			if (Test-CurrentUserLocalAdmin)
 			{
 				if ($null -eq $m_ServiceList)
 				{
 					Set-Variable -Name m_ServiceList -Value $(Get-ChildItem "HKLM:\System\CurrentControlSet\Services" | ForEach-Object { Get-ItemProperty $_.PSPath }) -Scope Script
 				}
-				$regPath =  $m_ServiceList | Where-Object {$_.PSChildName -eq $ServiceName}
+				$regPath = $m_ServiceList | Where-Object { $_.PSChildName -eq $ServiceName }
 				If ($Null -ne $regPath)
 				{
-					$retInstallPath = $regPath.ImagePath.Substring($regPath.ImagePath.IndexOf('"'),$regPath.ImagePath.LastIndexOf('"')+1)
+					$retInstallPath = $regPath.ImagePath.Substring($regPath.ImagePath.IndexOf('"'), $regPath.ImagePath.LastIndexOf('"') + 1)
 				}
 			}
 			else 
@@ -1248,13 +1372,15 @@ Function Get-ServiceInstallPath
 				Write-LogMessage -Type "Warning" -Msg "Skipping Service install path check as user is not a local admin"
 			}
 		}
-		catch{
-			Throw $(New-Object System.Exception ("Cannot get Service Install path for $ServiceName",$_.Exception))
+		catch
+		{
+			Throw $(New-Object System.Exception ("Cannot get Service Install path for $ServiceName", $_.Exception))
 		}
 
 		return $retInstallPath
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -1268,7 +1394,7 @@ Export-ModuleMember -Function Get-ServiceInstallPath
 # =================================================================================================================================
 Function Get-SeceditAnalysisResults
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Parse Secedit Analyze log
 .DESCRIPTION
@@ -1277,34 +1403,37 @@ Function Get-SeceditAnalysisResults
 	The Service Name to Check Status for
 #>
 	param(
-	   [ValidateNotNullOrEmpty()]$path,
-	   [Parameter(Mandatory=$true)]
-	   [ref]$outStatus
+		[ValidateNotNullOrEmpty()]$path,
+		[Parameter(Mandatory = $true)]
+		[ref]$outStatus
 	)
 
-	Begin {
+	Begin
+	{
 		$statusChanged = $false
 		$res = "Good"
 		$tmpStatus = ""
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			# Find 'mismatch' OR 'Not configured' in the file
 			$MismatchMatches = Select-String -Path $path -Pattern "(mismatch)"
 			$NotConfiguredMatches = Select-String -Path $path -Pattern "(not configured)"
-			If($MismatchMatches.Count -gt 0)
+			If ($MismatchMatches.Count -gt 0)
 			{
 				$tmpStatus += "There are $($MismatchMatches.Count) Mismatched configurations see secedit log ($path) for more details.<BR>"
 				Write-LogMessage -Type Debug -Msg $($MismatchMatches -join "`n")
 				$statusChanged = $true
 			}
-			If($NotConfiguredMatches.Count -gt 0)
+			If ($NotConfiguredMatches.Count -gt 0)
 			{
 				$tmpStatus += "There are $($NotConfiguredMatches.Count) 'Not configured' configurations see secedit log ($path) for more details."
 				Write-LogMessage -Type Debug -Msg $($NotConfiguredMatches -join "`n")
 				$statusChanged = $true
 			}
-			if($statusChanged)
+			if ($statusChanged)
 			{
 				[ref]$outStatus.Value = $tmpStatus
 				$res = "Warning"
@@ -1312,17 +1441,48 @@ Function Get-SeceditAnalysisResults
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type Error -Msg "Failed to Analyse secedit log. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$outStatus.Value = "Failed to Analyse secedit log. Error: $($_.Exception.Message)"
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
 Export-ModuleMember -Function Get-SeceditAnalysisResults
+
+# @FUNCTION@ ======================================================================================================================
+# Name...........: Get-OSVersion
+# Description....: Return OS Version
+# Parameters.....: NONE
+# Return Values..: The OS Version
+# =================================================================================================================================
+Function Get-OSVersion
+{
+<#
+.SYNOPSIS
+	Return the OS Version
+.DESCRIPTION
+	Return the OS version
+#>
+	param()
+	try
+	{
+		$osCaption = (Get-WMIItem -Class Win32_OperatingSystem -Item Caption).Caption
+		$osCaption -match "(Windows)\s{0,}\w{0,}\s{0,}(\d{1,4})" | Out-Null
+		$osVer = $Matches[2]
+		return $osVer
+	}
+	catch
+ 	{
+		Throw "Not able to get OS version. Error: $($_.Exception.Message)"
+	}
+}
+Export-ModuleMember -Function Get-OSVersion
 
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Get-ParsedFileNameByOS
@@ -1332,7 +1492,7 @@ Export-ModuleMember -Function Get-SeceditAnalysisResults
 # =================================================================================================================================
 Function Get-ParsedFileNameByOS
 {
-<#
+	<#
 .SYNOPSIS
 	Return the file name parsed by OS
 .DESCRIPTION
@@ -1341,22 +1501,22 @@ Function Get-ParsedFileNameByOS
 	The File Name to parse
 #>
 	param(
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$fileName
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$fileName
 	)
 
-	Begin {
-		if($fileName -NotMatch "@OS@")
+	Begin
+	{
+		if ($fileName -NotMatch "@OS@")
 		{
 			return $fileName
 		}
 	}
-	Process {
-		if($fileName -match "@OS@")
+	Process
+	{
+		if ($fileName -match "@OS@")
 		{
-			$osCaption = (Get-WMIItem -Class Win32_OperatingSystem -Item Caption).Caption
-			$osCaption -match "(Windows)\s{0,}\w{0,}\s{0,}(\d{1,4})" | Out-Null
-			$osVer = $Matches[2]
+			$osVer = Get-OSVersion
 			return ($fileName -Replace "@OS@", $osVer)
 		}
 		else
@@ -1364,7 +1524,8 @@ Function Get-ParsedFileNameByOS
 			return $fileName
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -1378,7 +1539,7 @@ Export-ModuleMember -Function Get-ParsedFileNameByOS
 # =================================================================================================================================
 Function Get-ParsedFileNameByComponent
 {
-<#
+	<#
 .SYNOPSIS
 	Return the file name parsed by installed components
 .DESCRIPTION
@@ -1387,18 +1548,20 @@ Function Get-ParsedFileNameByComponent
 	The File Name to parse
 #>
 	param(
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$fileName
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$fileName
 	)
 
-	Begin {
-		if($fileName -NotMatch "@Component@")
+	Begin
+	{
+		if ($fileName -NotMatch "@Component@")
 		{
 			return $fileName
 		}
 	}
-	Process {
-		if($fileName -match "@Component@")
+	Process
+	{
+		if ($fileName -match "@Component@")
 		{
 			# Exclude Non-supported components
 			$componentsList = $((Get-DetectedComponents).Name | Where-Object { $_ -NotIn $UnsupportedHardeningComponents })
@@ -1409,7 +1572,8 @@ Function Get-ParsedFileNameByComponent
 			return $fileName
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -1423,7 +1587,7 @@ Export-ModuleMember -Function Get-ParsedFileNameByComponent
 # =================================================================================================================================
 Function Get-DetectedComponents
 {
-<#
+	<#
 .SYNOPSIS
 	Gets the Detected Components in a Script scope
 .DESCRIPTION
@@ -1431,25 +1595,26 @@ Function Get-DetectedComponents
 #>
 	param(
 		# Component name
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ValidateScript({   
-			if($_ -in (@("All")+$DetectionSupportedComponents)) { return $true }
-			else{ throw "Use one of these components: $($DetectionSupportedComponents -join ', ')" }
-		})]
+				if ($_ -in (@("All") + $DetectionSupportedComponents)) { return $true }
+				else { throw "Use one of these components: $($DetectionSupportedComponents -join ', ')" }
+			})]
 		[string]$Component = "All"
 	)
 	$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script -ErrorAction Ignore)
-	If($null -eq $retComponents)
+	If ($null -eq $retComponents)
 	{
 		Set-DetectedComponents
 		$retComponents = $(Get-Variable -Name DetectedComponents -ValueOnly -Scope Script)
 	}
 	# Check if we need to return a specific component
-	If($Component -ne "All")
+	If ($Component -ne "All")
 	{
 		return ($retComponents | Where-Object { $_.Name -eq $Component })
 	}
-	else {
+	else
+	{
 		return $retComponents
 	}
 }
@@ -1463,14 +1628,14 @@ Export-ModuleMember -Function Get-DetectedComponents
 # =================================================================================================================================
 Function Set-CurrentComponentFolderPath
 {
-<#
+	<#
 .SYNOPSIS
 	Sets the current component folder path
 .DESCRIPTION
 	Sets the current component folder path
 #>
 	param(
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		$ComponentPath
 	)
 	Write-LogMessage -Type Verbose -MSG "Setting current component path: $ComponentPath" -LogFile $LOG_FILE_PATH
@@ -1486,18 +1651,18 @@ Export-ModuleMember -Function Set-CurrentComponentFolderPath
 # =================================================================================================================================
 Function Get-CurrentComponentFolderPath
 {
-<#
+	<#
 .SYNOPSIS
 	Returns the parsed current component folder path for a relative file
 .DESCRIPTION
 	Returns the parsed current component folder path for a relative file
 #>
 	param(
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		$FileName
 	)
 	$componentPath = $(Get-Variable -Name CurrentComponentPath -Scope Script -ValueOnly)
-	If([string]::IsNullOrEmpty($componentPath))
+	If ([string]::IsNullOrEmpty($componentPath))
 	{
 		Throw "Component Path is empty"
 	}
@@ -1514,7 +1679,7 @@ Export-ModuleMember -Function Get-CurrentComponentFolderPath
 # =================================================================================================================================
 Function Compare-ServiceStatus
 {
-<#
+	<#
 .SYNOPSIS
 	Returns if the Service status is like to required status
 .DESCRIPTION
@@ -1525,40 +1690,43 @@ Function Compare-ServiceStatus
 	The Service Status to Check
 #>
 	param(
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		$ServiceName,
-		[Parameter(Mandatory=$false)]
-		[ValidateSet("Running","Stopped","Paused")]
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("Running", "Stopped", "Paused")]
 		$ServiceStatus,
-		[Parameter(Mandatory=$false)]
-		[ValidateSet("Auto","Manual","Disabled")]
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("Auto", "Manual", "Disabled")]
 		$ServiceStartMode,
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[ref]$outStatus
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$retValue = ""
 	}
-	Process {
+	Process
+	{
 		Write-LogMessage -Type Debug -Msg "Checking service '$ServiceName' statuses"
-		Try{
+		Try
+		{
 			If (![string]::IsNullOrEmpty($ServiceStatus))
 			{
 				$svcStatus = (Get-Service -ServiceName $ServiceName).Status
 				Write-LogMessage -Type Debug -Msg "Current Status for service '$ServiceName': $svcStatus"
-				If($svcStatus.ToString().ToLower() -ne $ServiceStatus.ToLower())
+				If ($svcStatus.ToString().ToLower() -ne $ServiceStatus.ToLower())
 				{
 					$retValue = "Service status for '$ServiceName' is $svcStatus and not $ServiceStatus"
 					$res = "Warning"
 				}
 			}
-			elseif(![string]::IsNullOrEmpty($ServiceStartMode))
+			elseif (![string]::IsNullOrEmpty($ServiceStartMode))
 			{
 				$svcStartMode = (Get-WMIItem -class Win32_Service -Item StartMode -Filter "Name='$ServiceName' or DisplayName='$ServiceName'").StartMode
 				Write-LogMessage -Type Debug -Msg "Current StartMode for service '$ServiceName': $svcStartMode"
-				If($svcStartMode.ToString().ToLower() -ne $ServiceStartMode.ToLower())
+				If ($svcStartMode.ToString().ToLower() -ne $ServiceStartMode.ToLower())
 				{
 					$retValue = "Service start mode for '$ServiceName' is $svcStartMode and not $ServiceStartMode"
 					$res = "Warning"
@@ -1580,7 +1748,8 @@ Function Compare-ServiceStatus
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -1596,7 +1765,7 @@ Export-ModuleMember -Function Compare-ServiceStatus
 # =================================================================================================================================
 Function Compare-AuditRulesFromPath
 {
-<#
+	<#
 .SYNOPSIS
 	Compare audit access rules from the input path
 .DESCRIPTION
@@ -1606,43 +1775,46 @@ Function Compare-AuditRulesFromPath
 .PARAMETER AccessRules
 	The Best practice Access Rules to compare to
 #>
-    param
-    (
-        [Parameter(Mandatory=$true)]
-        [string]$path,
+	param
+	(
+		[Parameter(Mandatory = $true)]
+		[string]$path,
 
-		[Parameter(Mandatory=$true)]
-        $accessRules,
+		[Parameter(Mandatory = $true)]
+		$accessRules,
 
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[ref]$outStatus
-    )
-	Begin {
+	)
+	Begin
+	{
 		$retValue = "Good"
 		$retStatus = ""
 		$AuditString = @()
 		$MissingAuditRules = @()
 	}
-	Process {
-		Try {
+	Process
+	{
+		Try
+		{
 			Write-LogMessage -Type "Debug" -Msg "Comparing audit rules for: $path"
 
 			$pathAudit = Get-Acl $path -Audit
-			$auditRules = $pathAudit.GetAuditRules($true,$true,[System.Security.Principal.NTAccount])
-			If($auditRules.Count -gt 0)
+			$auditRules = $pathAudit.GetAuditRules($true, $true, [System.Security.Principal.NTAccount])
+			If ($auditRules.Count -gt 0)
 			{
-				ForEach($rule in $auditRules.GetEnumerator())
+				ForEach ($rule in $auditRules.GetEnumerator())
 				{
 					$AuditString += "{0}: {1}" -f $rule.IdentityReference, $rule.FileSystemRights
 					# Compare ACL Rules
-					If(!$accessRules -contains $rule)
+					If (!$accessRules -contains $rule)
 					{
 						$MissingAuditRules += "{0}: {1}" -f $rule.IdentityReference, $rule.FileSystemRights
 					}
 				}
 				Write-LogMessage -Type "Debug" -Msg "Current rules Audit: $($AuditString -join '`n')"
 				
-				If($MissingAuditRules.Count -eq 0)
+				If ($MissingAuditRules.Count -eq 0)
 				{
 					$retStatus = $AuditString
 					$retValue = "Good"
@@ -1669,7 +1841,8 @@ Function Compare-AuditRulesFromPath
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -1684,7 +1857,7 @@ Export-ModuleMember -Function Compare-AuditRulesFromPath
 # =================================================================================================================================
 Function Compare-RegistryValue
 {
-<#
+	<#
 .SYNOPSIS
 	Method to query a service status
 .DESCRIPTION
@@ -1697,40 +1870,43 @@ Function Compare-RegistryValue
 	The Registry Value Data to compare to
 #>
 	param(
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[String]$Path,
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[String]$ValueName,
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		$ValueData,
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[ref]$outStatus
 	)
 
-	Begin {
+	Begin
+	{
 
 	}
-	Process {
+	Process
+	{
 		If (Test-Path $Path)
 		{
-			try{
-				if(Test-Path -Path $Path)
+			try
+   {
+				if (Test-Path -Path $Path)
 				{
 					$_hive = Split-Path -Path $Path -Qualifier
 					$_key = Split-Path -Path $Path -NoQualifier
 					$retValue = Get-Reg -Hive $_hive -Key $_key -Value $ValueName
-					If($null -ne $retValue)
+					If ($null -ne $retValue)
 					{
 						# Handle a scenario where the Value is not a string (most likely an String Array)
-						If($retValue.GetType().Name -eq "String[]")
+						If ($retValue.GetType().Name -eq "String[]")
 						{
 							$retValue = $retValue -join ','
 						}
-						If($ValueData.GetType().Name -eq "String[]")
+						If ($ValueData.GetType().Name -eq "String[]")
 						{
 							$ValueData = $ValueData -join ','
 						}
-						If($ValueData -eq $retValue)
+						If ($ValueData -eq $retValue)
 						{
 							[ref]$outStatus.Value = "Registry Key: $Path<BR>$ValueName=$ValueData"
 							return "Good"
@@ -1753,7 +1929,8 @@ Function Compare-RegistryValue
 					return "Bad"
 				}
 			}
-			catch{
+			catch
+			{
 				Write-LogMessage -Type Error -Msg "Error comparing Registry Value. Error: $(Join-ExceptionMessage $_.Exception)"
 				[ref]$outStatus.Value = "Error comparing Registry Value. Error: $($_.Exception.Message)"
 				return "Bad"
@@ -1766,7 +1943,8 @@ Function Compare-RegistryValue
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -1781,7 +1959,7 @@ Export-ModuleMember -Function Compare-RegistryValue
 # =================================================================================================================================
 Function Compare-UserRight
 {
-<#
+	<#
 .SYNOPSIS
 	Method to compare user right of a specific user
 .DESCRIPTION
@@ -1792,39 +1970,45 @@ Function Compare-UserRight
 	The User right to compare
 #>
 	param(
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$userName,
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$userRight,
-	   [Parameter(Mandatory=$true)]
-	   [ref]$outStatus
-    )
-		Begin{
-			$retValue = ""
-		}
-    	Process {
-		Try{
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$userName,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$userRight,
+		[Parameter(Mandatory = $true)]
+		[ref]$outStatus
+	)
+	Begin
+	{
+		$retValue = ""
+	}
+	Process
+	{
+		Try
+		{
 			Write-LogMessage -Type "Debug" -Msg "Checking ""$userRight"" user rights to user $userName"
 			# Get User SID
 			$userSIDStr = (Convert-NameToSID -userName $userName)
-			if($null -eq $userSIDStr) { throw "User $userName could not be found" }
+			if ($null -eq $userSIDStr) { throw "User $userName could not be found" }
 			# Setting temp file paths
 			$tempPath = [System.IO.Path]::GetTempPath()
 			$exportPath = Join-Path -Path $tempPath -ChildPath "export.inf"
-			if(Test-Path $exportPath) { Remove-Item -Path $exportPath -Force }
+			if (Test-Path $exportPath) { Remove-Item -Path $exportPath -Force }
 
 			Write-LogMessage -Type Debug -Msg "Export current Local Security Policy to file $exportPath"
 			secedit.exe /export /areas SECURITYPOLICY USER_RIGHTS REGKEYS /cfg "$exportPath" | Out-Null
 
 			$currentRightKeyValue = (Select-String $exportPath -Pattern "$userRight").Line
-			$currentSidsValue = $currentRightKeyValue.split("=",[System.StringSplitOptions]::RemoveEmptyEntries)[1].Trim()
+			$currentSidsValue = $currentRightKeyValue.split("=", [System.StringSplitOptions]::RemoveEmptyEntries)[1].Trim()
 
-			if( ($currentSidsValue -NotLike "*$($userSIDStr)*") -and ($currentSidsValue -NotLike "*$($userName)*")) {
+			if ( ($currentSidsValue -NotLike "*$($userSIDStr)*") -and ($currentSidsValue -NotLike "*$($userName)*"))
+			{
 				$msg = "User $userName does not have the correct ""$userRight"" user right settings"
 				Write-LogMessage -Type "Warning" -Msg $msg
 				$retValue = "Warning"
 				[ref]$outStatus.Value = $msg
-			} else {
+			}
+			else
+			{
 				$msg = "User $userName has the correct ""$userRight"" user right settings"
 				Write-LogMessage -Type "Info" -Msg $msg
 				$retValue = "Good"
@@ -1835,15 +2019,18 @@ Function Compare-UserRight
 
 			return $retValue
 
-		}catch{
+		}
+		catch
+		{
 			Write-LogMessage -Type Error -Msg "Error comparing user rights ""$userRight"" for user $userName. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$outStatus.Value = "Error comparing user rights ""$userRight"" for user $userName. Error: $($_.Exception.Message)"
 			return "Bad"
 		}
 	}
-	End{
+	End
+	{
 
-   }
+	}
 }
 Export-ModuleMember -Function Compare-UserRight
 
@@ -1859,7 +2046,7 @@ Export-ModuleMember -Function Compare-UserRight
 # =================================================================================================================================
 Function Compare-PolicyEntry
 {
-<#
+	<#
 .SYNOPSIS
 	Method to compare local group policy to input GPO data
 .DESCRIPTION
@@ -1876,25 +2063,28 @@ Function Compare-PolicyEntry
 	Local GPO entry value
 #>
 	param(
-		[parameter(Mandatory=$true)]
-	    [ValidateNotNullOrEmpty()]$EntryTitle,
-		[parameter(Mandatory=$true)]
-	    [ValidateNotNullOrEmpty()]$UserDir,
-		[parameter(Mandatory=$true)]
-	    [ValidateNotNullOrEmpty()]$RegPath,
-		[parameter(Mandatory=$true)]
-	    [ValidateNotNullOrEmpty()]$RegName,
-		[parameter(Mandatory=$true)]
-	    [ValidateNotNullOrEmpty()]$RegData,
-		[Parameter(Mandatory=$true)]
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$EntryTitle,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$UserDir,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$RegPath,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$RegName,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$RegData,
+		[Parameter(Mandatory = $true)]
 		[ref]$outStatus
 	)
 
-	Begin{
+	Begin
+	{
 
 	}
-	Process{
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type "Verbose" -Msg "Starting Compare-PolicyEntry ($EntryTitle,$UserDir,$RegPath,$RegName,$RegData)"
 			$retValue = Get-Reg -Hive "LocalMachine" -Key $RegPath -Value $RegName
 			if ($RegData -eq $retValue)
@@ -1909,13 +2099,16 @@ Function Compare-PolicyEntry
 				[ref]$outStatus.Value = "Local Group Policy Entry $EntryTitle status does not match $RegData"
 				return "Warning"
 			}
-		}catch{
+		}
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Error comparing local group policy '$EntryTitle'. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$outStatus.Value = "Error comparing local group policy '$EntryTitle'. Error: $($_.Exception.Message)"
 			return "Bad"
 		}
 	}
-	End{
+	End
+	{
 
 	}
 }
@@ -1932,7 +2125,7 @@ Export-ModuleMember -Function Compare-PolicyEntry
 # =================================================================================================================================
 Function Compare-UserPermissions
 {
-<#
+	<#
 .SYNOPSIS
 	Method to compare User permissions on a path
 .DESCRIPTION
@@ -1946,60 +2139,69 @@ Function Compare-UserPermissions
 	Please Notice this needs to be string indicate enum name from System.Security.AccessControl.RegistryRights or System.Security.AccessControl.FileSystemRights enums.
 #>
 	param(
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$path,
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$identity,
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$rights,
-	   [parameter(Mandatory=$false)]
-	   [ValidateSet("Allow","Deny")]$ACLType = "Allow",
-	   [Parameter(Mandatory=$true)]
-	   [ref]$outStatus
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$path,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$identity,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$rights,
+		[parameter(Mandatory = $false)]
+		[ValidateSet("Allow", "Deny")]$ACLType = "Allow",
+		[Parameter(Mandatory = $true)]
+		[ref]$outStatus
 	)
-	Begin{
+	Begin
+	{
 		$retValue = "Good"
 	}
-	Process{
-		try{
+	Process
+	{
+		try
+		{
 
 			Write-LogMessage -Type Debug -Msg "Check user permissions: '$rights' on path: '$path' to user\group: '$identity'"
-			If(Test-Path $Path)
+			If (Test-Path $Path)
 			{
-				$acl = Get-ACL -Path $path
+				$acl = Get-Acl -Path $path
 				$aclLog = $acl | Format-List | Out-String
 				Write-LogMessage -Type Verbose -MSG "Current permissions on path: '$path': $aclLog"
-				if($identity.Contains('\')) { $parsedIdentity = $identity.Split('\')[1] }
+				if ($identity.Contains('\')) { $parsedIdentity = $identity.Split('\')[1] }
 				else { $parsedIdentity = $identity }
-				$permissions = $acl.Access | Where-Object{$_.IdentityReference -match $parsedIdentity} | Select-Object IdentityReference,FileSystemRights,AccessControlType
-                if (($null -ne $permissions) -and ($permissions.FileSystemRights -like "*$rights*") -and ($permissions.AccessControlType -eq $ACLType))
+				$permissions = $acl.Access | Where-Object { $_.IdentityReference -match $parsedIdentity } | Select-Object IdentityReference, FileSystemRights, AccessControlType
+				if (($null -ne $permissions) -and ($permissions.FileSystemRights -like "*$rights*") -and ($permissions.AccessControlType -eq $ACLType))
 
-					{
-				    Write-LogMessage -Type Debug -Msg "User $identity has the required rights ($rights) to $path"
-			        [ref]$outStatus.Value = "$identity has the required rights ($rights) to $path"
-				    }
+				{
+					Write-LogMessage -Type Debug -Msg "User $identity has the required rights ($rights) to $path"
+					[ref]$outStatus.Value = "$identity has the required rights ($rights) to $path"
+				}
 
-                else{
-                     [ref]$outStatus.Value = "$identity does not have required rights ($rights) to $path"
-                     $retValue = "Warning"
-                    }
+				else
+				{
+					[ref]$outStatus.Value = "$identity does not have required rights ($rights) to $path"
+					$retValue = "Warning"
+				}
 
-             } Else {
+			}
+			Else
+			{
 				$msg = "The path '$path' does not exist"
 				Write-LogMessage -Type Warning -Msg $msg
 				[ref]$outStatus.Value = $msg
 				$retValue = "Warning"
 			}
-		} Catch {
+		}
+		Catch
+		{
 			Write-LogMessage -Type Error -Msg "Failed to get user permissions: '$rights' on path: '$path' to user\group: '$identity'. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$outStatus.Value = "Failed to get user permissions: '$rights' on path: '$path' to user\group: '$identity'. Error: $($_.Exception.Message)"
 			$retValue = "Bad"
 		}
 		return $retValue
 	}
-	End{
+	End
+	{
 
-   }
+	}
 }
 Export-ModuleMember -Function Compare-UserPermissions
 
@@ -2013,7 +2215,7 @@ Export-ModuleMember -Function Compare-UserPermissions
 # =================================================================================================================================
 Function Compare-UserFlags
 {
-<#
+	<#
 .SYNOPSIS
 	Method to compare User object flag to a specific value
 .DESCRIPTION
@@ -2026,116 +2228,140 @@ Function Compare-UserFlags
 	The flag value we want to compare to.
 #>
 	param(
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$userName,
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$flagName,
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$flagValue,
-	   [parameter(Mandatory=$false)]
-	   [ValidateSet("SCRIPT","ACCOUNTDISABLE","HOMEDIR_REQUIRED","LOCKOUT","PASSWD_NOTREQD",`
-	   "PASSWD_CANT_CHANGE","ENCRYPTED_TEXT_PASSWORD_ALLOWED","TEMP_DUPLICATE_ACCOUNT","NORMAL_ACCOUNT",`
-	   "INTERDOMAIN_TRUST_ACCOUNT","WORKSTATION_TRUST_ACCOUNT","SERVER_TRUST_ACCOUNT","DONT_EXPIRE_PASSWD","MNS_LOGON_ACCOUNT",`
-	   "SMARTCARD_REQUIRED","TRUSTED_FOR_DELEGATION","NOT_DELEGATED","USE_DES_KEY_ONLY","DONT_REQUIRE_PREAUTH","PASSWORD_EXPIRED","TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION")]
-	   $userFlagValue = $null,
-	   [Parameter(Mandatory=$true)]
-	   [ref]$outStatus
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$userName,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$flagName,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$flagValue,
+		[parameter(Mandatory = $false)]
+		[ValidateSet("SCRIPT", "ACCOUNTDISABLE", "HOMEDIR_REQUIRED", "LOCKOUT", "PASSWD_NOTREQD", `
+	   "PASSWD_CANT_CHANGE", "ENCRYPTED_TEXT_PASSWORD_ALLOWED", "TEMP_DUPLICATE_ACCOUNT", "NORMAL_ACCOUNT", `
+	   "INTERDOMAIN_TRUST_ACCOUNT", "WORKSTATION_TRUST_ACCOUNT", "SERVER_TRUST_ACCOUNT", "DONT_EXPIRE_PASSWD", "MNS_LOGON_ACCOUNT", `
+	   "SMARTCARD_REQUIRED", "TRUSTED_FOR_DELEGATION", "NOT_DELEGATED", "USE_DES_KEY_ONLY", "DONT_REQUIRE_PREAUTH", "PASSWORD_EXPIRED", "TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION")]
+		$userFlagValue = $null,
+		[Parameter(Mandatory = $true)]
+		[ref]$outStatus
 	)
-	Begin{
+	Begin
+	{
 		$retValue = "Good"
-		Switch($userFlagValue)
+		Switch ($userFlagValue)
 		{
-			"SCRIPT" {
+			"SCRIPT"
+   {
 				$bUserFlag = "1";
 				break
 			}
-			"ACCOUNTDISABLE"  {
+			"ACCOUNTDISABLE"
+			{
 				$bUserFlag = "2";
 				break
 			}
-			"HOMEDIR_REQUIRED" {
+			"HOMEDIR_REQUIRED"
+			{
 				$bUserFlag = "8";
 				break
 			}
-			"LOCKOUT" {
+			"LOCKOUT"
+			{
 				$bUserFlag = "16";
 				break
 			}
-			"PASSWD_NOTREQD" {
+			"PASSWD_NOTREQD"
+			{
 				$bUserFlag = "32";
 				break
 			}
-			"PASSWD_CANT_CHANGE" {
+			"PASSWD_CANT_CHANGE"
+			{
 				$bUserFlag = "64";
 				break
 			}
-			"ENCRYPTED_TEXT_PASSWORD_ALLOWED" {
+			"ENCRYPTED_TEXT_PASSWORD_ALLOWED"
+			{
 				$bUserFlag = "128";
 				break
 			}
-			"TEMP_DUPLICATE_ACCOUNT" {
+			"TEMP_DUPLICATE_ACCOUNT"
+			{
 				$bUserFlag = "256";
 				break
 			}
-			"NORMAL_ACCOUNT" {
+			"NORMAL_ACCOUNT"
+			{
 				$bUserFlag = "512";
 				break
 			}
-			"INTERDOMAIN_TRUST_ACCOUNT" {
+			"INTERDOMAIN_TRUST_ACCOUNT"
+			{
 				$bUserFlag = "2048";
 				break
 			}
-			"WORKSTATION_TRUST_ACCOUNT" {
+			"WORKSTATION_TRUST_ACCOUNT"
+			{
 				$bUserFlag = "4096";
 				break
 			}
-			"SERVER_TRUST_ACCOUNT" {
+			"SERVER_TRUST_ACCOUNT"
+			{
 				$bUserFlag = "8192";
 				break
 			}
-			"DONT_EXPIRE_PASSWD" {
+			"DONT_EXPIRE_PASSWD"
+			{
 				$bUserFlag = "65536";
 				break
 			}
-			"MNS_LOGON_ACCOUNT" {
+			"MNS_LOGON_ACCOUNT"
+			{
 				$bUserFlag = "131072";
 				break
 			}
-			"SMARTCARD_REQUIRED" {
+			"SMARTCARD_REQUIRED"
+			{
 				$bUserFlag = "262144";
 				break
 			}
-			"TRUSTED_FOR_DELEGATION" {
+			"TRUSTED_FOR_DELEGATION"
+			{
 				$bUserFlag = "524288";
 				break
 			}
-			"NOT_DELEGATED" {
+			"NOT_DELEGATED"
+			{
 				$bUserFlag = "1048576";
 				break
 			}
-			"USE_DES_KEY_ONLY" {
+			"USE_DES_KEY_ONLY"
+			{
 				$bUserFlag = "2097152";
 				break
 			}
-			"DONT_REQUIRE_PREAUTH" {
+			"DONT_REQUIRE_PREAUTH"
+			{
 				$bUserFlag = "4194304";
 				break
 			}
-			"PASSWORD_EXPIRED" {
+			"PASSWORD_EXPIRED"
+			{
 				$bUserFlag = "8388608";
 				break
 			}
-			"TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION" {
+			"TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION"
+			{
 				$bUserFlag = "16777216";
 				break
 			}
 		}
 	}
-	Process{
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Debug -Msg "Check user flag: '$flagName' on user: '$userName' to value: '$flagValue'"
-			$user=[ADSI]"WinNT://$ENV:ComputerName/$userName,user"
-			if($null -ne $userFlagValue)
+			$user = [ADSI]"WinNT://$ENV:ComputerName/$userName,user"
+			if ($null -ne $userFlagValue)
 			{
 				$val = $user.InvokeGet($flagName) -band $bUserFlag
 			}
@@ -2144,7 +2370,7 @@ Function Compare-UserFlags
 				$val = $user.InvokeGet($flagName)
 			}
 			Write-LogMessage -Type Debug -Msg "User $userName flags value for flag '$flagName' is $val - needs to be $flagValue"
-			if($val -eq $flagValue)
+			if ($val -eq $flagValue)
 			{
 				[ref]$outStatus.Value = "$userName has the required configuration for '$flagName'"
 				$retValue = "Good"
@@ -2156,16 +2382,19 @@ Function Compare-UserFlags
 				[ref]$outStatus.Value = $msg
 				$retValue = "Warning"
 			}
-		} Catch {
+		}
+		Catch
+		{
 			Write-LogMessage -Type Error -Msg "Failed to get user permissions: '$rights' on path: '$path' to user\group: '$identity'. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$outStatus.Value = "Failed to get user permissions: '$rights' on path: '$path' to user\group: '$identity'. Error: $($_.Exception.Message)"
 			$retValue = "Bad"
 		}
 		return $retValue
 	}
-	End{
+	End
+	{
 
-   }
+	}
 }
 Export-ModuleMember -Function Compare-UserFlags
 
@@ -2178,7 +2407,7 @@ Export-ModuleMember -Function Compare-UserFlags
 # =================================================================================================================================
 Function Compare-AmountOfUserPermissions
 {
-<#
+	<#
 .SYNOPSIS
 	Method to compare User permissions on a path
 .DESCRIPTION
@@ -2189,46 +2418,54 @@ Function Compare-AmountOfUserPermissions
 	The amount of users that needs to have permissions on the path.
 #>
 	param(
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$path,
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$amount,
-	   [Parameter(Mandatory=$true)]
-	   [ref]$outStatus
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$path,
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$amount,
+		[Parameter(Mandatory = $true)]
+		[ref]$outStatus
 	)
-	Begin{
+	Begin
+	{
 		$retValue = "Good"
 	}
-	Process{
-		try{
-			If(Test-Path $path)
+	Process
+	{
+		try
+		{
+			If (Test-Path $path)
 			{
-				$aclCount = (Get-ACL -Path $path).Access.Count
+				$aclCount = (Get-Acl -Path $path).Access.Count
 				Write-LogMessage -Type Debug -Msg "Path '$path' has $aclCount user/group permissions"
 
-				If($aclCount -ne $amount)
+				If ($aclCount -ne $amount)
 				{
 					$msg = "The path '$path' does not have the required amount of permissions (Required: $amount, Current: $aclCount)"
 					Write-LogMessage -Type Warning -Msg $msg
 					[ref]$outStatus.Value = $msg
 					$retValue = "Warning"
 				}
-			} Else {
+			}
+			Else
+			{
 				$msg = "The path '$path' does not exist"
 				Write-LogMessage -Type Warning -Msg $msg
 				[ref]$outStatus.Value = $msg
 				$retValue = "Warning"
 			}
-		} Catch {
+		}
+		Catch
+		{
 			Write-LogMessage -Type Error -Msg "Failed to get user permissions count on path '$path'. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$outStatus.Value = "Failed to get user permissions count on path '$path'. Error: $($_.Exception.Message)"
 			$retValue = "Bad"
 		}
 		return $retValue
 	}
-	End{
+	End
+	{
 
-   }
+	}
 }
 Export-ModuleMember -Function Compare-AmountOfUserPermissions
 
@@ -2242,7 +2479,7 @@ Export-ModuleMember -Function Compare-AmountOfUserPermissions
 # =================================================================================================================================
 Function Compare-AdvancedAuditPolicySubCategory
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Compare Advanced Audit Policy security settings
 .DESCRIPTION
@@ -2255,48 +2492,51 @@ Function Compare-AdvancedAuditPolicySubCategory
 	failure enabled/disabled
 #>
 	param(
-		[parameter(Mandatory=$true)]
+		[parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]$subcategory,
-		[ValidateSet("enable","disable")]
-		[ValidateNotNullOrEmpty()]$success="enable",
-		[ValidateSet("enable","disable")]
-		[ValidateNotNullOrEmpty()]$failure="enable",
-		[Parameter(Mandatory=$true)]
+		[ValidateSet("enable", "disable")]
+		[ValidateNotNullOrEmpty()]$success = "enable",
+		[ValidateSet("enable", "disable")]
+		[ValidateNotNullOrEmpty()]$failure = "enable",
+		[Parameter(Mandatory = $true)]
 		[ref]$outStatus
 	)
-	Begin{
+	Begin
+	{
 		$returnVal = "Good"
 	}
-	Process {
-		try {
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type "Info" -Msg "Checking Advance Audit Policy Sub Category for '$subcategory'"
 
 			$verifySuccess = $false
 			$verifyFailure = $false
 			$auditLineOutput = ""
 			$_subCategory = $subcategory
-			# Avoid "Error 0x00000057 occurred"
-			If($subcategory -match "(?:^Audit\s)(.*)")
+			# # Avoid "Error 0x00000057 occurred"
+			# If($subcategory -match "(?:^Audit\s)(.*)")
+			# {
+			# 	# Add an exception for "Audit Policy Change"
+			# 	If($subcategory -ne "Audit Policy Change")
+			# 	{
+			# 		# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
+			# 		$_subCategory = $Matches[1]
+			# 	}
+			# }
+			$auditCommandOutput = auditpol /get /subCategory:"$_subCategory" | Where-Object { $_ -match $_subCategory }
+			if ($null -ne $auditCommandOutput)
 			{
-				# Add an exception for "Audit Policy Change"
-				If($subcategory -ne "Audit Policy Change")
+				ForEach ($item in $auditCommandOutput)
 				{
-					# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
-					$_subCategory = $Matches[1]
-				}
-			}
-			$auditCommandOutput = auditpol /get /subCategory:"$_subCategory" | Where-Object {$_ -match $_subCategory}
-			if($null -ne $auditCommandOutput)
-			{
-				ForEach($item in $auditCommandOutput)
-				{
-					if($item -ne "")
+					if ($item -ne "")
 					{
 						$auditLineOutput = $item.Trim()
 						Write-LogMessage -Type Debug -Msg "Found Audit Policy: $auditLineOutput"
 						$auditPolicy = $item.Trim() -split "($_subCategory\s+)"
 						# Assuming $auditPolicy[0] is empty
-						if($auditPolicy[1] -eq $_subCategory)
+						if ($auditPolicy[1] -eq $_subCategory)
 						{
 							# $auditPolicy[2] is where the Success, Failure data will be
 							$verifySuccess = Test-EnabledPolicySetting -PolicyStatus $success -MatchValue $auditPolicy[2] -NotMatchCriteria "Success"
@@ -2306,27 +2546,31 @@ Function Compare-AdvancedAuditPolicySubCategory
 					}
 				}
 			}
-			else {
+			else
+			{
 				Write-LogMessage -Type Error -Msg "There was a problem verifying Advance Audit Policy Sub Category for '$_subCategory'"
 				$returnVal = "Warning"
 				[ref]$outStatus.Value = "There was a problem verifying Advance Audit Policy Sub Category for '$_subCategory'"
 			}
-			if($verifySuccess -and $verifyFailure)
+			if ($verifySuccess -and $verifyFailure)
 			{
 				Write-LogMessage -Type Debug -Msg "Advance Audit Policy Sub Category for '$_subCategory' has the correct settings for Success and Failure"
 				$returnVal = "Good"
 				[ref]$outStatus.Value = "Advance Audit Policy Sub Category for '$_subCategory' has the correct settings for Success and Failure<BR>$auditLineOutput"
 			}
-		} Catch {
+		}
+		Catch
+		{
 			Write-LogMessage -Type Error -Msg "Could not get Advance Audit Policy Sub Category for '$_subCategory'. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$outStatus.Value = "Could not get Advance Audit Policy Sub Category for '$_subCategory'. Error: $($_.Exception.Message)"
 			$returnVal = "Bad"
 		}
 		return $returnVal
 	}
-	End{
+	End
+	{
 
-   }
+	}
 }
 Export-ModuleMember -Function Compare-AdvancedAuditPolicySubCategory
 
@@ -2338,7 +2582,7 @@ Export-ModuleMember -Function Compare-AdvancedAuditPolicySubCategory
 # =================================================================================================================================
 Function Compare-EventLogSizeAndRetentionSettings
 {
-<#
+	<#
 .SYNOPSIS
 	Method to check the Event log Size and Retention
 .DESCRIPTION
@@ -2351,39 +2595,42 @@ Function Compare-EventLogSizeAndRetentionSettings
 	The Event Log retention setting value to Check
 #>
 	param(
-	   [ValidateNotNullOrEmpty()]$LogName,
-	   [ValidateNotNullOrEmpty()]$Size,
-	   [ValidateNotNullOrEmpty()]$SaveRetention,
-	   [Parameter(Mandatory=$true)]
-	   [ref]$outStatus
+		[ValidateNotNullOrEmpty()]$LogName,
+		[ValidateNotNullOrEmpty()]$Size,
+		[ValidateNotNullOrEmpty()]$SaveRetention,
+		[Parameter(Mandatory = $true)]
+		[ref]$outStatus
 	)
 
-	Begin {
+	Begin
+	{
 
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type "Info" -Msg "Checking Event Log Size and retention settings for '$LogName'"
 			$output = ""
 			$EntitySettings = wevtutil gl $LogName | Where-Object { $_ -match "(retention|maxSize)" }
 			# Check Retention
-			if($EntitySettings[0].Split(":")[1].Trim() -ne $SaveRetention)
+			if ($EntitySettings[0].Split(":")[1].Trim() -ne $SaveRetention)
 			{
 				Write-LogMessage -Type "Info" -Msg "Log retention should be set to $SaveRetention"
 				$output = "Log retention should be set to $SaveRetention"
 			}
 			# Check Max Size
-			if(([int]($EntitySettings[1].Split(":")[1].Trim())) -lt $Size)
+			if (([int]($EntitySettings[1].Split(":")[1].Trim())) -lt $Size)
 			{
 				Write-LogMessage -Type "Info" -Msg "Log Size should be set to $Size"
-				if($output -ne "")
+				if ($output -ne "")
 				{
-					$output+= "<BR>"
+					$output += "<BR>"
 				}
-				$output+= "Log Size should be set to $Size"
+				$output += "Log Size should be set to $Size"
 			}
 
-			if($output -ne "")
+			if ($output -ne "")
 			{
 				[ref]$outStatus.Value = "Size and Retention settings for Log '$LogName' are not correct.<BR>$output"
 				return "Warning"
@@ -2393,13 +2640,16 @@ Function Compare-EventLogSizeAndRetentionSettings
 				[ref]$outStatus.Value = "Size and Retention settings for Log '$LogName' are good"
 				return "Good"
 			}
-		}catch{
+		}
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Error comparing Size and Retention settings for Log '$LogName'. Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$outStatus.Value = "Error comparing Size and Retention settings for Log '$LogName'. Error: $($_.Exception.Message)"
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -2411,8 +2661,9 @@ Export-ModuleMember -Function Compare-EventLogSizeAndRetentionSettings
 # Parameters.....: $userName - The user name we want his SID value.
 # Return Values..: SID string value
 # =================================================================================================================================
-Function Convert-NameToSID {
-<#
+Function Convert-NameToSID
+{
+	<#
 .SYNOPSIS
 	Method to convert user name to SID
 .DESCRIPTION
@@ -2421,30 +2672,36 @@ Function Convert-NameToSID {
 	The User Name to convert to SID
 #>
 	param(
-	   [parameter(Mandatory=$true)]
-	   [ValidateNotNullOrEmpty()]$userName
-    )
-	Begin {
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$userName
+	)
+	Begin
+	{
 
 	}
-   	Process {
+	Process
+	{
 		Write-LogMessage -Type Debug -Msg "Get SID value for user: $userName"
 		$userSIDStr = $null
-		Try {
-			$NTPrincipal = new-object System.Security.Principal.NTAccount "$userName"
+		Try
+		{
+			$NTPrincipal = New-Object System.Security.Principal.NTAccount "$userName"
 			$userSid = $NTPrincipal.Translate([System.Security.Principal.SecurityIdentifier])
 			$userSIDStr = $userSid.Value.ToString()
 			Write-LogMessage -Type Debug -Msg "User SID: $userSIDStr"
-		} Catch {
+		}
+		Catch
+		{
 			$userSIDStr = $null
-			Throw $(New-Object System.Exception ("Failed to get SID for user: $userName",$_.Exception))
+			Throw $(New-Object System.Exception ("Failed to get SID for user: $userName", $_.Exception))
 		}
 
 		return $userSIDStr
 	}
-	End{
+	End
+	{
 
-   }
+	}
 }
 Export-ModuleMember -Function Convert-NameToSID
 
@@ -2454,8 +2711,9 @@ Export-ModuleMember -Function Convert-NameToSID
 # Parameters.....: $sidID - A string indicate the SID id.
 # Return Values..: If found we the value name, otherwise $NULL
 # =================================================================================================================================
-Function Convert-SIDToName{
-<#
+Function Convert-SIDToName
+{
+	<#
 .SYNOPSIS
 	Method to convert SID to Name
 .DESCRIPTION
@@ -2463,30 +2721,36 @@ Function Convert-SIDToName{
 .PARAMETER sidID
 	The User/Group SID to convert to Name
 #>
-   param(
-   [parameter(Mandatory=$true)]
-   [ValidateNotNullOrEmpty()]$sidID
-   )
-	Begin {
+	param(
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$sidID
+	)
+	Begin
+	{
 
 	}
-	Process {
+	Process
+	{
 		Write-LogMessage -Type Verbose -Msg "Get Name value for SID: $sidID"
 		$returnVal = $NULL
-		try {
+		try
+		{
 			# Use this SID to take the name of built-in operating system identifiers.
 			$objSID = New-Object System.Security.Principal.SecurityIdentifier ($sidID)
 			$objGroup = $objSID.Translate([System.Security.Principal.NTAccount])
 			$returnVal = $objGroup.value
 			Write-LogMessage -Type Verbose -Msg "SID name is: $returnVal"
-		} Catch {
-			Throw $(New-Object System.Exception ("Failed to get Name from SID: $sidID",$_.Exception))
+		}
+		Catch
+		{
+			Throw $(New-Object System.Exception ("Failed to get Name from SID: $sidID", $_.Exception))
 		}
 		return $returnVal
 	}
-	End{
+	End
+	{
 
-   }
+	}
 }
 Export-ModuleMember -Function Convert-SIDToName
 
@@ -2498,7 +2762,7 @@ Export-ModuleMember -Function Convert-SIDToName
 # =================================================================================================================================
 Function ConvertTo-Bool
 {
-<#
+	<#
 .SYNOPSIS
 	Method to convert common boolean expressions to real boolean
 .DESCRIPTION
@@ -2507,20 +2771,27 @@ Function ConvertTo-Bool
 	The text to convert to boolean
 #>
 	param (
-		[parameter(Mandatory=$true)]
- 	    [ValidateNotNullOrEmpty()]
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
 		[string]$txt
 	)
 	$retBool = $false
 
-if ([bool]::TryParse($txt, [ref]$retBool)) {
-    # parsed to a boolean
-    return $retBool
-	} elseif ($txt -match "^yes$|^y$") {
+	if ([bool]::TryParse($txt, [ref]$retBool))
+	{
+		# parsed to a boolean
+		return $retBool
+	}
+ elseif ($txt -match "^yes$|^y$")
+	{
 		return $true
-	} elseif ($txt -match "^no$|^n$") {
+	}
+ elseif ($txt -match "^no$|^n$")
+	{
 		return $false
-	} else {
+	}
+ else
+	{
 		Write-LogMessage -Type Error -Msg "The input ""$txt"" is not in the correct format (true/false), defaulting to False"
 		return $false
 	}
@@ -2536,7 +2807,7 @@ Export-ModuleMember -Function ConvertTo-Bool
 # =================================================================================================================================
 Function Start-HardeningSteps
 {
-<#
+	<#
 .SYNOPSIS
 	Method to parse the hardening steps configuration file
 .DESCRIPTION
@@ -2544,16 +2815,19 @@ Function Start-HardeningSteps
 .PARAMETER configStepsPath
 	The full path of the steps config file
 #>
-   param(
-   [parameter(Mandatory=$true)]
-   [ValidateNotNullOrEmpty()]$configStepsPath
+	param(
+		[parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]$configStepsPath
 	)
-	Begin{
+	Begin
+	{
 		$AllStepsArray = @()
 		$AllHardeningStepsStatus = @()
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			$StepsToRun = Read-ConfigurationFile $configStepsPath
 
 			ForEach ($step in $StepsToRun)
@@ -2567,7 +2841,7 @@ Function Start-HardeningSteps
 					Write-LogMessage -Type Debug -Msg "Step $($step.Name) is disabled"
 					$refHardeningStepStatus.Status = "Ignore"
 					$refHardeningStepStatus.Output = "Step is disabled, verification was not performed"
-					$AllStepsArray += New-Object PSObject -Property @{Name=$step.Name;CompletedSuccessfully=$true}
+					$AllStepsArray += New-Object PSObject -Property @{Name = $step.Name; CompletedSuccessfully = $true }
 				}
 				else
 				{
@@ -2578,19 +2852,19 @@ Function Start-HardeningSteps
 						$isSuccess = $true
 						$refHardeningStepStatus.Status = . $($step.ScriptName) -Parameters $($step.Parameters) -refOutput ([ref]$refOutput)
 						$refHardeningStepStatus.Output = $refOutput.Value
-						If($refHardeningStepStatus.Status -ne "Good")
+						If ($refHardeningStepStatus.Status -ne "Good")
 						{
 							$isSuccess = $false
 						}
 						$refHardeningStepStatus.Output = $refOutput.Value
-						$AllStepsArray += New-Object PSObject -Property @{Name=$step.Name;CompletedSuccessfully=$isSuccess}
+						$AllStepsArray += New-Object PSObject -Property @{Name = $step.Name; CompletedSuccessfully = $isSuccess }
 					}
 					catch
 					{
 						Write-LogMessage -Type Error -Msg "Error running step $($step.Name).  Error: $(Join-ExceptionMessage $_.Exception)"
 						$refHardeningStepStatus.Status = "Bad"
 						$refHardeningStepStatus.Output = "Error running step.  Error: $(Join-ExceptionMessage $_.Exception)"
-						$AllStepsArray += New-Object PSObject -Property @{Name=$step.Name;CompletedSuccessfully=$false}
+						$AllStepsArray += New-Object PSObject -Property @{Name = $step.Name; CompletedSuccessfully = $false }
 					}
 
 					Write-LogMessage -Type Info -Msg "Finished Step $($step.DisplayName)"
@@ -2608,13 +2882,15 @@ Function Start-HardeningSteps
 			}
 			Write-LogMessage -Type Info -Msg "" -Footer
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type Error -Msg "Error running Hardening Steps. Error: $(Join-ExceptionMessage $_.Exception)"
 		}
 		return $AllHardeningStepsStatus
 	}
-	End{
-   }
+	End
+	{
+	}
 }
 Export-ModuleMember -Function Start-HardeningSteps
 
@@ -2627,72 +2903,81 @@ Export-ModuleMember -Function Start-HardeningSteps
 Function Test-CredFileVerificationType
 {
 
-<#
+	<#
 .SYNOPSIS
 	Check what restrictions have been placed on the component credential files
 .DESCRIPTION
 	This check what (if any) restrictions have been put on to the credential file when it was created, this credential file is utilized by the components to communicate back to the vault
 #>
 
-    param (
-   		[Parameter(Mandatory=$true)]
-        [String] $CredentialFilePath,
-		[Parameter(Mandatory=$true)]
+	param (
+		[Parameter(Mandatory = $true)]
+		[String] $CredentialFilePath,
+		[Parameter(Mandatory = $true)]
 		[ref]$outStatus
-    )
+	)
 
-	Begin {
-            $retValue = "Good"
-            $typeOfVerification = ""
-            $verificationsFlag = ""
-            $vaultUser = ""
+	Begin
+	{
+		$retValue = "Good"
+		$typeOfVerification = ""
+		$verificationsFlag = ""
+		$vaultUser = ""
 	}
-	Process {
-        if(Test-Path $CredentialFilePath)
-        {
-            try{
-                $verificationsFlag = $(get-content $CredentialFilePath | Select-String 'VerificationsFlag') -replace 'VerificationsFlag=',''
-                $vaultUser = $(get-content $CredentialFilePath | Select-String 'Username') -replace 'Username=',''
-                $credFileType = $(get-content $CredentialFilePath | Select-String 'CredFileType') -replace 'CredFileType=',''
+	Process
+	{
+		if (Test-Path $CredentialFilePath)
+		{
+			try
+			{
+				$verificationsFlag = $(Get-Content $CredentialFilePath | Select-String 'VerificationsFlag') -replace 'VerificationsFlag=', ''
+				$vaultUser = $(Get-Content $CredentialFilePath | Select-String 'Username') -replace 'Username=', ''
+				$credFileType = $(Get-Content $CredentialFilePath | Select-String 'CredFileType') -replace 'CredFileType=', ''
 				
 				# Check Credential File Type
-				$typeOfCredFile = @{"Password" = "No"; "EnhancedPasswordMachine" = "Machine"; "EnhancedPasswordUser" = "User"}
+				$typeOfCredFile = @{"Password" = "No"; "EnhancedPasswordMachine" = "Machine"; "EnhancedPasswordUser" = "User" }
 				$credTypeMsg = "Using {0} OS Protected Storage" -f $typeOfCredFile.Get_Item($CredFileType)
 				
 				# Check Cred File Verifications
-				$typeOfVerification = @{0 = "No" ; 1 = "Client Type" ; 2 = "Execution Path" ; 4 = "IP" ; 8 = "OS User" ; 32 = "Hostname"}
-				If($verificationsFlag -gt 16)
+				$typeOfVerification = @{0 = "No" ; 1 = "Client Type" ; 2 = "Execution Path" ; 4 = "IP" ; 8 = "OS User" ; 32 = "Hostname" }
+				If ($verificationsFlag -gt 16)
 				{
 					$verificationMsg = $($typeOfVerification.Keys | Where-Object { $_ -band $verificationsFlag } | ForEach-Object { $typeOfVerification.Get_Item($_) }) -join ', '
-					If($verificationMsg.Contains(','))
+					If ($verificationMsg.Contains(','))
 					{
 						# Organize the text a bit in case of list
-						$verificationMsg = $verificationMsg.Remove($verificationMsg.LastIndexOf(','),$verificationMsg.Length-$verificationMsg.LastIndexOf(','))+$verificationMsg.Substring($verificationMsg.LastIndexOf(',')).Replace(','," and")
+						$verificationMsg = $verificationMsg.Remove($verificationMsg.LastIndexOf(','), $verificationMsg.Length - $verificationMsg.LastIndexOf(',')) + $verificationMsg.Substring($verificationMsg.LastIndexOf(',')).Replace(',', " and")
 					}
 					$retValue = "Good"
-				} Else {
-				   $verificationMsg = $typeOfVerification.Get_Item(0)
-				   $retValue = "Warning"
+				}
+				Else
+				{
+					$verificationMsg = $typeOfVerification.Get_Item(0)
+					$retValue = "Warning"
 				}
 				
-				$retMsg = "$verificationMsg restriction(s) set on the '$(Split-path $CredentialFilePath -leaf)' credential file for the vault user '$vaultUser'."
+				$retMsg = "$verificationMsg restriction(s) set on the '$(Split-Path $CredentialFilePath -Leaf)' credential file for the vault user '$vaultUser'."
 				$retMsg += $credTypeMsg
 
 				[ref]$outStatus.Value = $retMsg
-            } catch {
+			}
+			catch
+			{
 				Write-LogMessage -Type Error -Msg "Error comparing Registry Value. Error: $(Join-ExceptionMessage $_.Exception)"
 				[ref]$outStatus.Value = "Error comparing Registry Value. Error: $($_.Exception.Message)"
 				$retValue = "Bad"
 			}
 		}
-        Else {
+		Else
+		{
 			[ref]$outStatus.Value = "Credential file not found"
 			$retValue = "Warning"
 		}
 
 		return $retValue
-   } End {
-   }
+	} End
+	{
+	}
 }
 Export-ModuleMember -Function Test-CredFileVerificationType
 #endregion

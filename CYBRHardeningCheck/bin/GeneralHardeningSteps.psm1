@@ -320,10 +320,11 @@ Function AdvancedAuditPolicyConfiguration
 
 			ForEach ($audit in $(Import-Csv $AuditConfigFilePath))
 			{
+				# Avoid "Error 0x00000057 occurred" by using SubCategory GUID and not SubCategory name
 				switch($audit.'Setting Value')
 				{
 					0 {
-						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "disable" -failure "disable" -outStatus ([ref]$myRef)) -ne "Good")
+						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.'Subcategory GUID' -success "disable" -failure "disable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
 							$statusChanged = $true
@@ -331,7 +332,7 @@ Function AdvancedAuditPolicyConfiguration
 						break
 					}
 					1 {
-						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "enable" -failure "disable" -outStatus ([ref]$myRef)) -ne "Good")
+						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.'Subcategory GUID' -success "enable" -failure "disable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
 							$statusChanged = $true
@@ -339,7 +340,7 @@ Function AdvancedAuditPolicyConfiguration
 						break
 					}
 					2 {
-						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "disable" -failure "enable" -outStatus ([ref]$myRef)) -ne "Good")
+						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.'Subcategory GUID' -success "disable" -failure "enable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
 							$statusChanged = $true
@@ -347,7 +348,7 @@ Function AdvancedAuditPolicyConfiguration
 						break
 					}
 					3 {
-						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.Subcategory -success "enable" -failure "enable" -outStatus ([ref]$myRef)) -ne "Good")
+						if((Compare-AdvancedAuditPolicySubCategory -subcategory $audit.'Subcategory GUID' -success "enable" -failure "enable" -outStatus ([ref]$myRef)) -ne "Good")
 						{
 							$tmpStatus += $myRef.Value + "<BR>"
 							$statusChanged = $true
