@@ -68,7 +68,7 @@ Function Write-LogMessage
 		$msgToWrite = ""
 		
 		# Mask Passwords
-		if($Msg -match '((?:password|credentials|secret)\s{0,}["\:=|\s]{1,}\s{0,}["]{0,})(?=([\w`~!@#$%^&*()-_\=\+\\\/|;:\.,\[\]{}]+))')
+		if($Msg -match '((?:password|credentials|secret)\s{0,}["\:=]{1,}\s{0,}["]{0,})(?=([\w`~!@#$%^&*()-_\=\+\\\/|;:\.,\[\]{}]+))')
 		{
 			$Msg = $Msg.Replace($Matches[2],"****")
 		}
