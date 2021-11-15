@@ -15,6 +15,7 @@
 [CmdletBinding()]
 param
 (
+    [switch]$ReturnReportPath
 )
 
 # Get Script Location
@@ -24,16 +25,24 @@ $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 
 # Script Version
-$ScriptVersion = "3.1"
-
-# Set Log file path
-$global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
-
-# Set Bin Folder
-$global:MODULE_BIN_PATH = "$ScriptLocation\bin"
+$ScriptVersion = "3.1.1"
 
 # Set Date Time Pattern
 [string]$global:g_DateTimePattern = "$([System.Globalization.CultureInfo]::CurrentCulture.DateTimeFormat.ShortDatePattern) $([System.Globalization.CultureInfo]::CurrentCulture.DateTimeFormat.LongTimePattern)"
+
+# Set the script time stamp
+$reportDateTime = $(Get-Date -Format $g_DateTimePattern)
+# $reportDateTime = (Get-Date).toString("yyyy-MM-dd_HH_mm_ss")
+
+# Set output files paths
+# $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
+# Time stamp added to the log name (emilg@segmentech.com)
+$global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck_$($reportDateTime.Replace("/","-").Replace(":","-").Replace(" ","_")).log"
+
+$exportFileName = "Hardening_HealthCheck_Report_$($reportDateTime.Replace("/","-").Replace(":","-").Replace(" ","_")).html"
+
+# Set Bin Folder
+$global:MODULE_BIN_PATH = "$ScriptLocation\bin"
 
 # Set Hardening Configuration Steps XML
 $CPM_HARDENING_CONFIG = "$ScriptLocation\CPM\CPM_Hardening_Config.xml"
@@ -187,13 +196,21 @@ Function EndScript
 	End the Script with a Footer line and Remove all used modules
 #>
 	param(
-		$moduleInfos
+		$moduleInfos,
+        [switch]$ReturnData,
+        [string]$HardeningReportPath
 	)
 
 	Write-LogMessage -Type Info -MSG "Script ended" -Footer -LogFile $LOG_FILE_PATH
 
 	# UnLoad loaded modules
-	Remove-ScriptModule $moduleInfos	
+	Remove-ScriptModule $moduleInfos
+
+    # Return the Report Path if ReturnData switch is selected	
+    if($ReturnData.IsPresent)
+    {
+        return $HardeningReportPath
+    }
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -346,9 +363,14 @@ Function New-HTMLReportOutput
 	)
 
 	Begin {
-		$reportDateTime = $(Get-Date -Format $g_DateTimePattern)
+		# Parameter moved to main init
+        # $reportDateTime = $(Get-Date -Format $g_DateTimePattern)
+
 		$htmlFileContent = Get-Content $REPORT_TEMPLATE_PATH
-		$exportFileName = "Hardening_HealthCheck_Report_$($reportDateTime.Replace("/","-").Replace(":","-").Replace(" ","_")).html"
+		
+        # Moved to main init
+        # $exportFileName = "Hardening_HealthCheck_Report_$($reportDateTime.Replace("/","-").Replace(":","-").Replace(" ","_")).html"
+
 		$exportFilePath = Join-Path -Path $(Split-Path $REPORT_TEMPLATE_PATH -Parent) -ChildPath $exportFileName
 	}
 	Process {
@@ -542,6 +564,17 @@ $outputFile = New-HTMLReportOutput -machineName $machineName -components $(Get-D
 Out-HardeningFolderPath -Path $outputFile -TotalComponentsFound $(Get-DetectedComponents).Name.Count
 
 Write-LogMessage -Type Info -MSG "Hardening Health Check Report located in: $outputFile" -LogFile $LOG_FILE_PATH
-. $outputFile
+# . $outputFile
 
-EndScript
+    if($ReturnReportPath.IsPresent)
+    {
+        # return the report path and skip opening the file interactively
+        EndScript -ReturnData -HardeningReportPath $outputFile
+    }
+    else
+    {
+        # Pop-Up the report
+        . $outputFile
+        EndScript
+    }
+

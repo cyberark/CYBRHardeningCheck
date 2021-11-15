@@ -35,30 +35,38 @@ Function Vault_NICHardening
 		try
 		{
 			Write-LogMessage -Type Info -Msg "Start verify Vault NIC is Hardened"
-			# Get all Network Bindings that are not TCP/IPv4
-			$netBindings = Get-NetAdapterBinding | Where-Object { $_.ComponentID -ne "ms_tcpip" }
-			If ($netBindings.Count -gt 0)
+			if(Get-OSVersion -eq "2019")
 			{
-				ForEach ($net in $netBindings)
+				Write-LogMessage -Type Info -Msg "Skipping NIC hardening verification - not relevant for Win219"
+				Write-LogMessage -Type LogOnly -Msg "For more info see: https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/Before-CyberArk-Vault-Installation.htm?tocpath=Installation%7CInstall%20PAS%7CCyberArk%20Digital%20Vault%20installation%7CInstall%20a%20Primary-DR%20Environment%7C_____2#PreparetheCyberArkVaultserver"
+			}
+			else 
+			{
+				# Get all Network Bindings that are not TCP/IPv4
+				$netBindings = Get-NetAdapterBinding | Where-Object { $_.ComponentID -ne "ms_tcpip" }
+				If ($netBindings.Count -gt 0)
 				{
-					If (($net.ComponentID -eq "ms_tcpip6") -and ($net.Enabled -eq $True))
+					ForEach ($net in $netBindings)
 					{
-						$myRef += "TCP/IPv6 needs to be Disabled<BR>"
+						If (($net.ComponentID -eq "ms_tcpip6") -and ($net.Enabled -eq $True))
+						{
+							$myRef += "TCP/IPv6 needs to be Disabled<BR>"
+						}
+						elseif ($net.DisplayName -match "Microsoft Network Adapter Multiplexor Protocol")
+						{
+							# If the Vault has NIC Teaming, then this is OK - just report it
+							$nicTeam = Get-NetLbfoTeam | Where-Object { $_.Status -eq "Up" }
+							$script:NICTeamingName = $nicTeam.Name
+							$myRef += "NIC Teaming is enabled.<BR>Team Name: {0}<BR>Team NIC Members: {1}" -f $nicTeam.Name, $($nicTeam.Members -join ", ")
+						}
+						else
+						{
+							$myRef += "{0} needs to be Uninstalled<BR>" -f $net.DisplayName
+						}
 					}
-					elseif ($net.DisplayName -match "Microsoft Network Adapter Multiplexor Protocol")
-					{
-						# If the Vault has NIC Teaming, then this is OK - just report it
-						$nicTeam = Get-NetLbfoTeam | Where-Object { $_.Status -eq "Up" }
-						$script:NICTeamingName = $nicTeam.Name
-						$myRef += "NIC Teaming is enabled.<BR>Team Name: {0}<BR>Team NIC Members: {1}" -f $nicTeam.Name, $($nicTeam.Members -join ", ")
-					}
-					else
-					{
-						$myRef += "{0} needs to be Uninstalled<BR>" -f $net.DisplayName
-					}
+					[ref]$refOutput.Value = $myRef
+					$res = "Warning"
 				}
-				[ref]$refOutput.Value = $myRef
-				$res = "Warning"
 			}
 
 			Write-LogMessage -Type Info -Msg "Finish verify Vault NIC is Hardened"
@@ -86,7 +94,7 @@ Function Vault_NICHardening
 # =================================================================================================================================
 Function Vault_StaticIP
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Check that the Vault has Static IP
 .DESCRIPTION
@@ -153,7 +161,7 @@ Function Vault_StaticIP
 # =================================================================================================================================
 Function Vault_WindowsFirewall
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Check that the Vault has the Firewall active
 .DESCRIPTION
@@ -209,7 +217,7 @@ Function Vault_WindowsFirewall
 # =================================================================================================================================
 Function Vault_DomainJoined
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Check that the Vault was not joined to a domain
 .DESCRIPTION
@@ -428,7 +436,7 @@ Function Vault_FirewallNonStandardRules
 						Switch ($fwRule.Direction)
 						{
 							"inbound"
-       {
+							{
 								$fwRule.LocalPort = $Matches[1]
 								$fwRule.RemotePort = "Any"
 								break
@@ -511,10 +519,13 @@ Function Vault_FirewallNonStandardRules
 				$tmpStatus += "<li>There are $(($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }).count) Firewall rules that were not created by CyberArk Vault currently configured </li>"
 			}
 			
-			ForEach ($rule in $($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }))
+			# FW query fixed to catch all the exceptional FW rules (Emilg@segmentech.com)
+            # ForEach ($rule in $($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }))
+            ForEach ($rule in $($FWRules | Where-Object { ($_.DisplayGroup -match "NON_STD") -or ($_.DisplayGroup -NotMatch "CYBERARK_") }))
+
 			{
 				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
-				If ($dbParmFWRules.FWRuleLine -NotContains $rule.FWRuleLine)
+				If (($dbParmFWRules.count -eq 0) -or ($dbParmFWRules.FWRuleLine -NotContains $rule.FWRuleLine))
 				{
 					$res = "Warning"
 					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is applied but not configured in DBParm.ini </li>"
@@ -683,44 +694,69 @@ Function Vault_KeysProtection
 			else
 			{
 				Write-LogMessage -Type Verbose -Msg "RecoveryKey is not accessible on machine"
+                
+                # Checking if any files found in the Recovery Key folder
+                $RecoveryKeyParrentPath = Split-Path -Parent -Path $RecoveryKey
+                $RecoveryKeyParrentPathFilesCount = ((Get-ChildItem -Path $RecoveryKeyParrentPath -Recurse).FullName).count
+
+                # Drop a warning files found in the Recovery Key Parrent Path folder
+                if ($RecoveryKeyParrentPathFilesCount -gt 0)
+                {
+                    $res = "Warning"
+                    $tmpStatus += "<li>Recovery path is not empty. It's recomended to review there is no master key backup stored locally. Files found:</li>"
+                    Write-LogMessage -Type Verbose -Msg "Recovery path is not empty. Its' recomended to review there is no master key backup stored locally. Files found:"
+
+                    # Display the list of the files found in Recovery key path
+                    foreach ($fileFound in $((Get-ChildItem -Path $RecoveryKeyParrentPath -Recurse).FullName))
+                    {
+                        $tmpStatus += "<li>" + $fileFound + "</li>"
+                        Write-LogMessage -Type Verbose -Msg "$fileFound"
+                    }
+                } # end if ($RecoveryKeyParrentPathFilesCount -gt 0)
 			}
 
 			# Check that all paths have the right permissions
 			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
 			foreach ($path in $KeysLocations)
 			{
-				$path = '"'+$path+'"'
-				Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
-				if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
-				{
+                # Test the path before checking permissions
+                If (Test-Path $Path)
+                {
+                    # Parameter commented out as it breaks the Keys folder test-path check
+				    # $path = '"' + $path + '"'
+
+				    Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
+				    if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+				                {
 					$KeysFolderLocalAdmins = $false
 					$res = "Warning"
 				}
-				$tmpStatus += "<li>" + $myRef.Value + "</li>"
+				    $tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-				if ((Compare-UserPermissions -path $path -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
-				{
+				    if ((Compare-UserPermissions -path $path -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+				                {
 					$KeysFolderLocalSystem = $false
 					$res = "Warning"
 				}
-				$tmpStatus += "<li>" + $myRef.Value + "</li>"
+				    $tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-				# Verify if Administrators, System and the CPM User are the only ones that has permissions
-				if (($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
-				{
-					If ((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
-					{
-						$tmpStatus += "<li>" + $myRef.Value + "</li>"
-						$res = "Warning"
-					}
-					Else { $tmpStatus += "<li> Permissions are set correctly on the path: " + $path + "</li>" }
-				}
-				Else
-				{
-					$tmpStatus += "<li>" + "The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user" + "</li>"
-					$res = "Warning"
-				}
-			}
+				    # Verify if Administrators and System  are the only ones that have permissions on the keys folders
+				    if (($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
+				    {
+                        If ((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
+					    {
+						    $tmpStatus += "<li>" + $myRef.Value + "</li>"
+						    $res = "Warning"
+					    }
+					    Else { $tmpStatus += "<li> Permissions are set correctly on the path: " + $path + "</li>" }
+				    }
+				    Else
+				    {
+					    $tmpStatus += "<li>" + "The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user" + "</li>"
+					    $res = "Warning"
+				    }
+                } # End If (Test-Path $Path)
+			} # end foreach ($path in $KeysLocations)
 
 			[ref]$refOutput.Value = "<ul>" + $tmpStatus + "</ul>"
 			
