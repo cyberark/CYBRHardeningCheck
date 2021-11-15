@@ -700,7 +700,7 @@ Function Vault_KeysProtection
 			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
 			foreach ($path in $KeysLocations)
 			{
-				$path = '"' + $path + '"'
+				$path = (Resolve-Path -Path $path)
 				Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
 				if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 				{
@@ -716,7 +716,7 @@ Function Vault_KeysProtection
 				}
 				$tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-				# Verify if Administrators, System and the CPM User are the only ones that has permissions
+				# Verify if Administrators and System are the only ones that has permissions
 				if (($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
 				{
 					If ((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")

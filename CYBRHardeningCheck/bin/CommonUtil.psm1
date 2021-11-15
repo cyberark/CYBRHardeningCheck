@@ -2515,16 +2515,16 @@ Function Compare-AdvancedAuditPolicySubCategory
 			$verifyFailure = $false
 			$auditLineOutput = ""
 			$_subCategory = $subcategory
-			# # Avoid "Error 0x00000057 occurred"
-			# If($subcategory -match "(?:^Audit\s)(.*)")
-			# {
-			# 	# Add an exception for "Audit Policy Change"
-			# 	If($subcategory -ne "Audit Policy Change")
-			# 	{
-			# 		# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
-			# 		$_subCategory = $Matches[1]
-			# 	}
-			# }
+			# Avoid "Error 0x00000057 occurred"
+			If($subcategory -match "(?:^Audit\s)(.*)")
+			{
+				# Add an exception for "Audit Policy Change"
+				If($subcategory -ne "Audit Policy Change")
+				{
+					# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
+					$_subCategory = $Matches[1]
+				}
+			}
 			$auditCommandOutput = auditpol /get /subCategory:"$_subCategory" | Where-Object { $_ -match $_subCategory }
 			if ($null -ne $auditCommandOutput)
 			{
