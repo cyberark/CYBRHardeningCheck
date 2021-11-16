@@ -35,7 +35,7 @@ Function Vault_NICHardening
 		try
 		{
 			Write-LogMessage -Type Info -Msg "Start verify Vault NIC is Hardened"
-			if(Get-OSVersion -eq "2019")
+			if (Get-OSVersion -eq "2019")
 			{
 				Write-LogMessage -Type Info -Msg "Skipping NIC hardening verification - not relevant for Win219"
 				Write-LogMessage -Type LogOnly -Msg "For more info see: https://docs.cyberark.com/Product-Doc/OnlineHelp/PAS/Latest/en/Content/PAS%20INST/Before-CyberArk-Vault-Installation.htm?tocpath=Installation%7CInstall%20PAS%7CCyberArk%20Digital%20Vault%20installation%7CInstall%20a%20Primary-DR%20Environment%7C_____2#PreparetheCyberArkVaultserver"
@@ -414,42 +414,45 @@ Function Vault_FirewallNonStandardRules
 			$dbParmFWRules = @()
 			ForEach ($rule in $(Get-Content -Path $DBParmFile | Select-String "AllowNonStandardFWAddresses=").Line)
 			{
-				# Rule Parts: [0] - Address; [1] - Enabled; [2-3] - <Port>:<Direction>/<Protocol>
-				$ruleParts = $rule.Replace("AllowNonStandardFWAddresses=", "").Split(',')
-				Foreach ($direction in $ruleParts[2..5])
+				# Rule Groups: [1] - Address block; [2] - Enabled; [3] - <Port>:<Direction>/<Protocol> array
+				If ($rule -Match "^AllowNonStandardFWAddresses=\[([0-9\.\,\-]{4,})\],(Yes|No),(.*)$")
 				{
-					If ($direction -Match "(\d{1,}):(\w{1,})/(\w{1,})")
+					$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort	
+					$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
+						"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress, $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
+					}
+					$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
+					If ($Matches[2].ToLower() -eq "yes")
 					{
-						$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort	
-						$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
-							"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress, $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
-						}
-						$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
-						If ($ruleParts[1] -eq "Yes")
+						$fwRule.Enabled = "True"
+					}
+					$fwRule.LocalAddress = "Any"
+					$fwRule.RemoteAddress = $Matches[1]
+					$directions = $Matches[3] | Select-String -AllMatches "(\d{1,}):(\w{1,})/(\w{1,})"
+					If ($directions.Matches.Count -gt 0)
+					{
+						Foreach ($direction in $directions)
 						{
-							$fwRule.Enabled = "True"
-						}
-						$fwRule.Direction = $Matches[2]
-						$fwRule.LocalAddress = "Any"
-						$fwRule.RemoteAddress = $ruleParts[0].Replace("[", "").Replace("]", "")
-						$fwRule.Protocol = $Matches[3]
-						Switch ($fwRule.Direction)
-						{
-							"inbound"
+							$fwRule.Direction = $direction.Matches.Groups[2].Value
+							$fwRule.Protocol = $direction.Matches.Groups[3].Value
+							Switch ($fwRule.Direction)
 							{
-								$fwRule.LocalPort = $Matches[1]
-								$fwRule.RemotePort = "Any"
-								break
+								"inbound"
+								{
+									$fwRule.LocalPort = $direction.Matches.Groups[1].Value
+									$fwRule.RemotePort = "Any"
+									break
+								}
+								"outbound"
+								{
+									$fwRule.LocalPort = "Any"
+									$fwRule.RemotePort = $direction.Matches.Groups[1].Value
+									break
+								}
 							}
-							"outbound"
-							{
-								$fwRule.LocalPort = "Any"
-								$fwRule.RemotePort = $Matches[1]
-								break
-							}
+							Write-LogMessage -Type Verbose -Msg "Added DBParm.ini rule: $($fwRule.FWRuleLine)"
+							$dbParmFWRules += $fwRule
 						}
-						Write-LogMessage -Type Verbose -Msg "Added DBParm.ini rule: $($fwRule.FWRuleLine)"
-						$dbParmFWRules += $fwRule
 					}
 					Else
 					{
@@ -719,15 +722,10 @@ Function Vault_KeysProtection
 			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
 			foreach ($path in $KeysLocations)
 			{
-                # Test the path before checking permissions
-                If (Test-Path $Path)
-                {
-                    # Parameter commented out as it breaks the Keys folder test-path check
-				    # $path = '"' + $path + '"'
-
-				    Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
-				    if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
-				                {
+				$path = (Resolve-Path -Path $path)
+				Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
+				if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+				{
 					$KeysFolderLocalAdmins = $false
 					$res = "Warning"
 				}
@@ -738,25 +736,24 @@ Function Vault_KeysProtection
 					$KeysFolderLocalSystem = $false
 					$res = "Warning"
 				}
-				    $tmpStatus += "<li>" + $myRef.Value + "</li>"
+				$tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-				    # Verify if Administrators and System  are the only ones that have permissions on the keys folders
-				    if (($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
-				    {
-                        If ((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
-					    {
-						    $tmpStatus += "<li>" + $myRef.Value + "</li>"
-						    $res = "Warning"
-					    }
-					    Else { $tmpStatus += "<li> Permissions are set correctly on the path: " + $path + "</li>" }
-				    }
-				    Else
-				    {
-					    $tmpStatus += "<li>" + "The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user" + "</li>"
-					    $res = "Warning"
-				    }
-                } # End If (Test-Path $Path)
-			} # end foreach ($path in $KeysLocations)
+				# Verify if Administrators and System are the only ones that has permissions
+				if (($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
+				{
+					If ((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
+					{
+						$tmpStatus += "<li>" + $myRef.Value + "</li>"
+						$res = "Warning"
+					}
+					Else { $tmpStatus += "<li> Permissions are set correctly on the path: " + $path + "</li>" }
+				}
+				Else
+				{
+					$tmpStatus += "<li>" + "The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user" + "</li>"
+					$res = "Warning"
+				}
+			}
 
 			[ref]$refOutput.Value = "<ul>" + $tmpStatus + "</ul>"
 			
