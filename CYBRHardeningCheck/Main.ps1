@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param
 (
-    [switch]$ReturnReportPath
+	[switch]$DisableAutoReportOpening
 )
 
 # Get Script Location
@@ -25,21 +25,14 @@ $global:InDebug = $PSBoundParameters.Debug.IsPresent
 $global:InVerbose = $PSBoundParameters.Verbose.IsPresent
 
 # Script Version
-$ScriptVersion = "3.1.1"
+$ScriptVersion = "3.2"
 
 # Set Date Time Pattern
 [string]$global:g_DateTimePattern = "$([System.Globalization.CultureInfo]::CurrentCulture.DateTimeFormat.ShortDatePattern) $([System.Globalization.CultureInfo]::CurrentCulture.DateTimeFormat.LongTimePattern)"
+[string]$global:g_FileDateTime = $(Get-Date -Format $g_DateTimePattern).Replace("/","-").Replace(":","-").Replace(" ","_")
 
-# Set the script time stamp
-$reportDateTime = $(Get-Date -Format $g_DateTimePattern)
-# $reportDateTime = (Get-Date).toString("yyyy-MM-dd_HH_mm_ss")
-
-# Set output files paths
-# $global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck.log"
-# Time stamp added to the log name (emilg@segmentech.com)
-$global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck_$($reportDateTime.Replace("/","-").Replace(":","-").Replace(" ","_")).log"
-
-$exportFileName = "Hardening_HealthCheck_Report_$($reportDateTime.Replace("/","-").Replace(":","-").Replace(" ","_")).html"
+# Set Log file path
+$global:LOG_FILE_PATH = "$ScriptLocation\Hardening_HealthCheck_$g_FileDateTime.log"
 
 # Set Bin Folder
 $global:MODULE_BIN_PATH = "$ScriptLocation\bin"
@@ -196,21 +189,13 @@ Function EndScript
 	End the Script with a Footer line and Remove all used modules
 #>
 	param(
-		$moduleInfos,
-        [switch]$ReturnData,
-        [string]$HardeningReportPath
+		$moduleInfos
 	)
 
 	Write-LogMessage -Type Info -MSG "Script ended" -Footer -LogFile $LOG_FILE_PATH
 
 	# UnLoad loaded modules
-	Remove-ScriptModule $moduleInfos
-
-    # Return the Report Path if ReturnData switch is selected	
-    if($ReturnData.IsPresent)
-    {
-        return $HardeningReportPath
-    }
+	Remove-ScriptModule $moduleInfos	
 }
 
 # @FUNCTION@ ======================================================================================================================
@@ -363,14 +348,9 @@ Function New-HTMLReportOutput
 	)
 
 	Begin {
-		# Parameter moved to main init
-        # $reportDateTime = $(Get-Date -Format $g_DateTimePattern)
-
+		$reportDateTime = $(Get-Date -Format $g_DateTimePattern)
 		$htmlFileContent = Get-Content $REPORT_TEMPLATE_PATH
-		
-        # Moved to main init
-        # $exportFileName = "Hardening_HealthCheck_Report_$($reportDateTime.Replace("/","-").Replace(":","-").Replace(" ","_")).html"
-
+		$exportFileName = "Hardening_HealthCheck_Report_$g_FileDateTime.html"
 		$exportFilePath = Join-Path -Path $(Split-Path $REPORT_TEMPLATE_PATH -Parent) -ChildPath $exportFileName
 	}
 	Process {
@@ -563,18 +543,18 @@ $outputFile = New-HTMLReportOutput -machineName $machineName -components $(Get-D
 # Add the Hardening Scripts folder to the report
 Out-HardeningFolderPath -Path $outputFile -TotalComponentsFound $(Get-DetectedComponents).Name.Count
 
+# End Script
 Write-LogMessage -Type Info -MSG "Hardening Health Check Report located in: $outputFile" -LogFile $LOG_FILE_PATH
-# . $outputFile
+EndScript
 
-    if($ReturnReportPath.IsPresent)
-    {
-        # return the report path and skip opening the file interactively
-        EndScript -ReturnData -HardeningReportPath $outputFile
-    }
-    else
-    {
-        # Pop-Up the report
-        . $outputFile
-        EndScript
-    }
+If($DisableAutoReportOpening -eq $false)
+{
+	# Meaning the user wants to automatically open the report
+	. $outputFile
+}
+else 
+{
+	# The user just wants the report file path
+	return $outputFile	
+}
 
