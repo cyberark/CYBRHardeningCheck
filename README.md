@@ -51,6 +51,30 @@ PS> .\Main.ps1 -Debug -Verbose
 The tool creates a log file by default that contains all steps taken by the script (when using Verbose logging you will get a lot more info in the log file)
 Other relevant information will be referenced in the log and the report.
 
+### Use case examples
+
+#### Run the tool to get the report on local machine
+```powershell
+PS> .\Main.ps1
+```
+<B>Result</B>: The HTML report will open and show hardening results
+
+#### Run the tool on remote machine
+```powershell
+# region -------- EXAMPLE: remote execution script block to get the report path --------
+$RunRemoteHardeningReport = {
+    $ReportPath = .\CYBRHardeningCheck\Main.ps1 -Verbose -Debug -DisableAutoReportOpening
+    return $ReportPath
+}
+
+# Execute remote script block and return the report file path
+$RemoteReportPath = Invoke-Command -Session $mysession -ScriptBlock $RunRemoteHardeningReport
+
+# Copy remote report file to the network path
+Copy-Item -Path $RemoteReportPath -Destination $NetworkHardeningReportPath -Force -FromSession $mysession -Verbose
+```
+<B>Result</B>: The HTML report will be copied from remote machine to network path
+
 ## Available Hardening tests
 ### Cross-Component hardening checks
 |Hardening check      				| Description               
@@ -133,6 +157,6 @@ Please see our [`CONTRIBUTING`](CONTRIBUTING.md) for more details.
 
 ## Licensing
 
-Copyright (c) 2020 CyberArk Software Ltd. All rights reserverd
+Copyright (c) 2020 CyberArk Software Ltd. All rights reserved
 
 This repository is licensed under GNU GENERAL PUBLIC LICENSE Version 3 - see [`LICENSE`](LICENSE) for more details.
