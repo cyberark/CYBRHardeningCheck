@@ -427,8 +427,8 @@ Function Vault_FirewallNonStandardRules
 						$fwRule.Enabled = "True"
 					}
 					$fwRule.LocalAddress = "Any"
-					$fwRule.RemoteAddress = $Matches[1]
-					$directions = $Matches[3] | Select-String -AllMatches "(\d{1,}):(\w{1,})/(\w{1,})"
+					$fwRule.RemoteAddress = $Matches[1].Split(",")
+					$directions = $Matches[3] | Select-String -AllMatches "([\d-]{1,}):(\w{1,})/(\w{1,})"
 					If ($directions.Matches.Count -gt 0)
 					{
 						Foreach ($direction in $directions)
@@ -456,7 +456,7 @@ Function Vault_FirewallNonStandardRules
 					}
 					Else
 					{
-						Write-Host "Non valid rule line ($rule)"
+						Write-LogMessage -Type Warning -Msg "Non valid rule line ($rule)"
 					}
 				}
 			}
@@ -680,7 +680,8 @@ Function Vault_KeysProtection
 			$keysList = $(Get-Content -Path $DBParmFile | Select-String -List "RecoveryPubKey", "ServerKey", "ServerPrivateKey", "RecoveryPrvKey", "BackupKey").Line
 			Write-LogMessage -Type Verbose -Msg "Found the following Keys paths: $($KeysList -join '; ')"
 			$KeysLocations = @()
-			$KeysLocations += $($keysList | ForEach-Object { Split-Path -Parent -Path $($_.Split("=")[1]) } ) | Select-Object -Unique
+			# Get the Operator CD relevant keys and files path
+			$KeysLocations += $($keysList | Where-Object { $_ -NotMatch "RecoveryPrvKey=" } | ForEach-Object { Split-Path -Parent -Path $($_.Split("=")[1]) } ) | Select-Object -Unique
 			
 			# Check if the Recovery key exists on the server
 			$RecoveryKey = ($keysList | Where-Object { $_ -match "RecoveryPrvKey=" }).Split("=")[1]
@@ -690,6 +691,8 @@ Function Vault_KeysProtection
 			{
 				$res = "Warning"
 				$tmpStatus += "<li>It is not recommended to have the Recovery Key on the Vault server.</li>"
+				# Adding the Master recovery key to the permissions check
+				$KeysLocations += Split-Path -Parent -Path $RecoveryKey
 			}
 			else
 			{
@@ -700,7 +703,6 @@ Function Vault_KeysProtection
 			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
 			foreach ($path in $KeysLocations)
 			{
-				$path = (Resolve-Path -Path $path)
 				Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
 				if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
 				{
@@ -728,7 +730,7 @@ Function Vault_KeysProtection
 				}
 				Else
 				{
-					$tmpStatus += "<li>" + "The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user" + "</li>"
+					$tmpStatus += "<li>The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user</li>"
 					$res = "Warning"
 				}
 			}
