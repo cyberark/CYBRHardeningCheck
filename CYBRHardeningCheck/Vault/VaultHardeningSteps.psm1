@@ -522,7 +522,7 @@ Function Vault_FirewallNonStandardRules
 				$tmpStatus += "<li>There are $(($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }).count) Firewall rules that were not created by CyberArk Vault currently configured </li>"
 			}
 			
-			ForEach ($rule in $($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }))
+			ForEach ($rule in $($FWRules | Where-Object { ($_.DisplayGroup -match "NON_STD") -or ($_.DisplayGroup -NotMatch "CYBERARK_") }))
 			{
 				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
 				If (($dbParmFWRules.count -eq 0) -or ($dbParmFWRules.FWRuleLine -NotContains $rule.FWRuleLine))
