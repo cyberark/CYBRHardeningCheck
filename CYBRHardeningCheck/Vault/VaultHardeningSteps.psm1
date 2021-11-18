@@ -477,7 +477,7 @@ Function Vault_FirewallNonStandardRules
 					{
 						$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort	
 						$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
-							"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress, $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
+							"[{0}],{1},{2}:{3}/{4}" -f $($this.RemoteAddress -join " "), $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
 						}
 						$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
 						$fwRule.Protocol = "ICMPv4"
@@ -500,7 +500,7 @@ Function Vault_FirewallNonStandardRules
 				$portFilter = $($rule | Get-NetFirewallPortFilter)
 				$fwRule = "" | Select-Object DisplayName, DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort
 				$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
-					"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress, $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
+					"[{0}],{1},{2}:{3}/{4}" -f $($this.RemoteAddress -join " "), $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
 				}
 				$fwRule.DisplayName = $rule.DisplayName
 				$fwRule.DisplayGroup = $rule.DisplayGroup
