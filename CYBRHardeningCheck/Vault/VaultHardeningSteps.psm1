@@ -94,7 +94,7 @@ Function Vault_NICHardening
 # =================================================================================================================================
 Function Vault_StaticIP
 {
-	<#
+<#
 .SYNOPSIS
 	Method to Check that the Vault has Static IP
 .DESCRIPTION
@@ -161,7 +161,7 @@ Function Vault_StaticIP
 # =================================================================================================================================
 Function Vault_WindowsFirewall
 {
-	<#
+<#
 .SYNOPSIS
 	Method to Check that the Vault has the Firewall active
 .DESCRIPTION
@@ -217,7 +217,7 @@ Function Vault_WindowsFirewall
 # =================================================================================================================================
 Function Vault_DomainJoined
 {
-	<#
+<#
 .SYNOPSIS
 	Method to Check that the Vault was not joined to a domain
 .DESCRIPTION
@@ -414,8 +414,9 @@ Function Vault_FirewallNonStandardRules
 			$dbParmFWRules = @()
 			ForEach ($rule in $(Get-Content -Path $DBParmFile | Select-String "AllowNonStandardFWAddresses=").Line)
 			{
-				# Rule Groups: [1] - Address block; [2] - Enabled; [3] - <Port>:<Direction>/<Protocol> array
-				If ($rule -Match "^AllowNonStandardFWAddresses=\[([0-9\.\,\-]{4,})\],(Yes|No),(.*)$")
+				# Rule Parts: [0] - Address; [1] - Enabled; [2-3] - <Port>:<Direction>/<Protocol>
+				$ruleParts = $rule.Replace("AllowNonStandardFWAddresses=", "").Split(',')
+				Foreach ($direction in $ruleParts[2..5])
 				{
 					$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort	
 					$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
@@ -431,28 +432,36 @@ Function Vault_FirewallNonStandardRules
 					$directions = $Matches[3] | Select-String -AllMatches "([\d-]{1,}):(\w{1,})/(\w{1,})"
 					If ($directions.Matches.Count -gt 0)
 					{
-						Foreach ($direction in $directions)
-						{
-							$fwRule.Direction = $direction.Matches.Groups[2].Value
-							$fwRule.Protocol = $direction.Matches.Groups[3].Value
-							Switch ($fwRule.Direction)
-							{
-								"inbound"
-								{
-									$fwRule.LocalPort = $direction.Matches.Groups[1].Value
-									$fwRule.RemotePort = "Any"
-									break
-								}
-								"outbound"
-								{
-									$fwRule.LocalPort = "Any"
-									$fwRule.RemotePort = $direction.Matches.Groups[1].Value
-									break
-								}
-							}
-							Write-LogMessage -Type Verbose -Msg "Added DBParm.ini rule: $($fwRule.FWRuleLine)"
-							$dbParmFWRules += $fwRule
+						$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort	
+						$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
+							"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress, $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
 						}
+						$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
+						If ($ruleParts[1] -eq "Yes")
+						{
+							$fwRule.Enabled = "True"
+						}
+						$fwRule.Direction = $Matches[2]
+						$fwRule.LocalAddress = "Any"
+						$fwRule.RemoteAddress = $ruleParts[0].Replace("[", "").Replace("]", "")
+						$fwRule.Protocol = $Matches[3]
+						Switch ($fwRule.Direction)
+						{
+							"inbound"
+       {
+								$fwRule.LocalPort = $Matches[1]
+								$fwRule.RemotePort = "Any"
+								break
+							}
+							"outbound"
+							{
+								$fwRule.LocalPort = "Any"
+								$fwRule.RemotePort = $Matches[1]
+								break
+							}
+						}
+						Write-LogMessage -Type Verbose -Msg "Added DBParm.ini rule: $($fwRule.FWRuleLine)"
+						$dbParmFWRules += $fwRule
 					}
 					Else
 					{
@@ -535,7 +544,7 @@ Function Vault_FirewallNonStandardRules
 
 			ForEach ($rule in $dbParmFWRules)
 			{
-				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini also configured in Windows FireWall
+				# Checking that all Non-Standard rules currently configured in the DBParm.ini also configured in Windows FireWall
 				If ($FWRules.FWRuleLine -NotContains $rule.FWRuleLine)
 				{
 					$res = "Warning"
@@ -698,43 +707,66 @@ Function Vault_KeysProtection
 			else
 			{
 				Write-LogMessage -Type Verbose -Msg "RecoveryKey is not accessible on machine"
-			}
+                # Checking if any files found in the Recovery Key folder
+                $RecoveryKeyParrentPath = Split-Path -Parent -Path $RecoveryKey
+                $RecoveryKeyParrentPathFilesCount = ((Get-ChildItem -Path $RecoveryKeyParrentPath -Recurse).FullName).count
+                # Drop a warning files found in the Recovery Key Parrent Path folder
+                if ($RecoveryKeyParrentPathFilesCount -gt 0)
+                {
+                    $res = "Warning"
+                    $tmpStatus += "<li>Recovery path is not empty. It's recomended to review there is no master key backup stored locally. Files found:</li>"
+                    Write-LogMessage -Type Verbose -Msg "Recovery path is not empty. Its' recomended to review there is no master key backup stored locally. Files found:"
+
+                    # Display the list of the files found in Recovery key path
+                    foreach ($fileFound in $((Get-ChildItem -Path $RecoveryKeyParrentPath -Recurse).FullName))
+                    {
+                        $tmpStatus += "<li>" + $fileFound + "</li>"
+                        Write-LogMessage -Type Verbose -Msg "$fileFound"
+                    }
+                } # end if ($RecoveryKeyParrentPathFilesCount -gt 0)
+			} # end else
 
 			# Check that all paths have the right permissions
 			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
 			foreach ($path in $KeysLocations)
 			{
-				Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
-				if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
-				{
-					$KeysFolderLocalAdmins = $false
-					$res = "Warning"
-				}
-				$tmpStatus += "<li>" + $myRef.Value + "</li>"
+				# $path = (Resolve-Path -Path $path)
 
-				if ((Compare-UserPermissions -path $path -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
-				{
-					$KeysFolderLocalSystem = $false
-					$res = "Warning"
-				}
-				$tmpStatus += "<li>" + $myRef.Value + "</li>"
+                # Test the path before checking permissions
+                If (Test-Path $Path)
+			    {
+				    Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
+				    if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+				    {
+					    $KeysFolderLocalAdmins = $false
+					    $res = "Warning"
+				    }
+				    $tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-				# Verify if Administrators and System are the only ones that has permissions
-				if (($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
-				{
-					If ((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
-					{
-						$tmpStatus += "<li>" + $myRef.Value + "</li>"
-						$res = "Warning"
-					}
-					Else { $tmpStatus += "<li> Permissions are set correctly on the path: " + $path + "</li>" }
-				}
-				Else
-				{
-					$tmpStatus += "<li>The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user</li>"
-					$res = "Warning"
-				}
-			}
+				    if ((Compare-UserPermissions -path $path -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+				    {
+					    $KeysFolderLocalSystem = $false
+					    $res = "Warning"
+				    }
+				    $tmpStatus += "<li>" + $myRef.Value + "</li>"
+
+				        # Verify if Administrators and System  are the only ones that have permissions on the keys folders
+				    if (($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
+				    {
+					    If ((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
+					    {
+						    $tmpStatus += "<li>" + $myRef.Value + "</li>"
+						    $res = "Warning"
+					    }
+					    Else { $tmpStatus += "<li> Permissions are set correctly on the path: " + $path + "</li>" }
+				    }
+				    Else
+				    {
+					    $tmpStatus += "<li>" + "The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user" + "</li>"
+					    $res = "Warning"
+				    }
+                } # end If (Test-Path $Path)
+			} # end foreach ($path in $KeysLocations)
 
 			[ref]$refOutput.Value = "<ul>" + $tmpStatus + "</ul>"
 			
