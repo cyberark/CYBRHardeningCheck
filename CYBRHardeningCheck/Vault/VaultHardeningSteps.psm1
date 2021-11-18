@@ -418,7 +418,19 @@ Function Vault_FirewallNonStandardRules
 				$ruleParts = $rule.Replace("AllowNonStandardFWAddresses=", "").Split(',')
 				Foreach ($direction in $ruleParts[2..5])
 				{
-					If ($direction -Match "(\d{1,}):(\w{1,})/(\w{1,})")
+					$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort	
+					$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
+						"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress, $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
+					}
+					$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
+					If ($Matches[2].ToLower() -eq "yes")
+					{
+						$fwRule.Enabled = "True"
+					}
+					$fwRule.LocalAddress = "Any"
+					$fwRule.RemoteAddress = $Matches[1].Split(",")
+					$directions = $Matches[3] | Select-String -AllMatches "([\d-]{1,}):(\w{1,})/(\w{1,})"
+					If ($directions.Matches.Count -gt 0)
 					{
 						$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort	
 						$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
@@ -453,7 +465,7 @@ Function Vault_FirewallNonStandardRules
 					}
 					Else
 					{
-						Write-Host "Non valid rule line ($rule)"
+						Write-LogMessage -Type Warning -Msg "Non valid rule line ($rule)"
 					}
 				}
 			}
@@ -500,7 +512,7 @@ Function Vault_FirewallNonStandardRules
 					"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress, $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
 				}
 				$fwRule.DisplayName = $rule.DisplayName
-                $fwRule.DisplayGroup = $rule.DisplayGroup
+				$fwRule.DisplayGroup = $rule.DisplayGroup
 				$fwRule.Enabled = $rule.Enabled.ToString()
 				$fwRule.Direction = $rule.Direction.ToString()
 				$fwRule.LocalAddress = $addressFilter.LocalAddress
@@ -520,10 +532,7 @@ Function Vault_FirewallNonStandardRules
 				$tmpStatus += "<li>There are $(($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }).count) Firewall rules that were not created by CyberArk Vault currently configured </li>"
 			}
 			
-			# FW query fixed to catch all the exceptional FW rules (Emilg@segmentech.com)
-            # ForEach ($rule in $($FWRules | Where-Object { $_.DisplayGroup -match "NON_STD" }))
-            # ForEach ($rule in $($FWRules | Where-Object { ($_.DisplayGroup -match "NON_STD") -or ($_.DisplayGroup -NotMatch "CYBERARK_") }))
-            ForEach ($rule in $($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }))
+			ForEach ($rule in $($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }))
 			{
 				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
 				If (($dbParmFWRules.count -eq 0) -or ($dbParmFWRules.FWRuleLine -NotContains $rule.FWRuleLine))
@@ -681,7 +690,8 @@ Function Vault_KeysProtection
 			$keysList = $(Get-Content -Path $DBParmFile | Select-String -List "RecoveryPubKey", "ServerKey", "ServerPrivateKey", "RecoveryPrvKey", "BackupKey").Line
 			Write-LogMessage -Type Verbose -Msg "Found the following Keys paths: $($KeysList -join '; ')"
 			$KeysLocations = @()
-			$KeysLocations += $($keysList | ForEach-Object { Split-Path -Parent -Path $($_.Split("=")[1]) } ) | Select-Object -Unique
+			# Get the Operator CD relevant keys and files path
+			$KeysLocations += $($keysList | Where-Object { $_ -NotMatch "RecoveryPrvKey=" } | ForEach-Object { Split-Path -Parent -Path $($_.Split("=")[1]) } ) | Select-Object -Unique
 			
 			# Check if the Recovery key exists on the server
 			$RecoveryKey = ($keysList | Where-Object { $_ -match "RecoveryPrvKey=" }).Split("=")[1]
@@ -691,6 +701,8 @@ Function Vault_KeysProtection
 			{
 				$res = "Warning"
 				$tmpStatus += "<li>It is not recommended to have the Recovery Key on the Vault server.</li>"
+				# Adding the Master recovery key to the permissions check
+				$KeysLocations += Split-Path -Parent -Path $RecoveryKey
 			}
 			else
 			{
