@@ -498,10 +498,11 @@ Function Vault_FirewallNonStandardRules
 			{
 				$addressFilter = $($rule | Get-NetFirewallAddressFilter)
 				$portFilter = $($rule | Get-NetFirewallPortFilter)
-				$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort
+				$fwRule = "" | Select-Object DisplayName, DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort
 				$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
 					"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress, $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
 				}
+				$fwRule.DisplayName = $rule.DisplayName
 				$fwRule.DisplayGroup = $rule.DisplayGroup
 				$fwRule.Enabled = $rule.Enabled.ToString()
 				$fwRule.Direction = $rule.Direction.ToString()
@@ -522,23 +523,23 @@ Function Vault_FirewallNonStandardRules
 				$tmpStatus += "<li>There are $(($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }).count) Firewall rules that were not created by CyberArk Vault currently configured </li>"
 			}
 			
-			ForEach ($rule in $($FWRules | Where-Object { ($_.DisplayGroup -match "NON_STD") -or ($_.DisplayGroup -NotMatch "CYBERARK_") }))
+			ForEach ($rule in $($FWRules | Where-Object { $_.DisplayGroup -NotMatch "CYBERARK_" }))
 			{
 				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
 				If (($dbParmFWRules.count -eq 0) -or ($dbParmFWRules.FWRuleLine -NotContains $rule.FWRuleLine))
 				{
 					$res = "Warning"
-					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is applied but not configured in DBParm.ini </li>"
+					$tmpStatus += "<li>Windows Firewall rule ($($rule.DisplayName)) is applied but not configured in DBParm.ini. Details: ($($rule.FWRuleLine))</li>"
 				}
 			}
 
 			ForEach ($rule in $dbParmFWRules)
 			{
-				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini
+				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini also configured in Windows FireWall
 				If ($FWRules.FWRuleLine -NotContains $rule.FWRuleLine)
 				{
 					$res = "Warning"
-					$tmpStatus += "<li>Non-Standard Firewall rule ($($rule.FWRuleLine)) is configured in DBParm.ini but does not exist in the Vault Firewall policy </li>"
+					$tmpStatus += "<li>Non-Standard Firewall rule is configured in DBParm.ini but does not exist in the Vault Firewall policy. Details: ($($rule.FWRuleLine))</li>"
 				}
 			}
 
