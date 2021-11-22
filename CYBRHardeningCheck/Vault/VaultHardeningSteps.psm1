@@ -448,7 +448,7 @@ Function Vault_FirewallNonStandardRules
 						Switch ($fwRule.Direction)
 						{
 							"inbound"
-       {
+       						{
 								$fwRule.LocalPort = $Matches[1]
 								$fwRule.RemotePort = "Any"
 								break
@@ -708,22 +708,22 @@ Function Vault_KeysProtection
 			{
 				Write-LogMessage -Type Verbose -Msg "RecoveryKey is not accessible on machine"
                 # Checking if any files found in the Recovery Key folder
-                $RecoveryKeyParrentPath = Split-Path -Parent -Path $RecoveryKey
-                $RecoveryKeyParrentPathFilesCount = ((Get-ChildItem -Path $RecoveryKeyParrentPath -Recurse).FullName).count
-                # Drop a warning files found in the Recovery Key Parrent Path folder
-                if ($RecoveryKeyParrentPathFilesCount -gt 0)
+                $RecoveryKeyParentPath = Split-Path -Parent -Path $RecoveryKey
+                $RecoveryKeyParentPathFilesCount = ((Get-ChildItem -Path $RecoveryKeyParentPath -Recurse).FullName).count
+                # Drop a warning files found in the Recovery Key Parent Path folder
+                if ($RecoveryKeyParentPathFilesCount -gt 0)
                 {
                     $res = "Warning"
-                    $tmpStatus += "<li>Recovery path is not empty. It's recomended to review there is no master key backup stored locally. Files found:</li>"
-                    Write-LogMessage -Type Verbose -Msg "Recovery path is not empty. Its' recomended to review there is no master key backup stored locally. Files found:"
+                    $tmpStatus += "<li>Recovery path is not empty. It's recommended to review there is no master key backup stored locally. Files found:</li>"
+                    Write-LogMessage -Type Verbose -Msg "Recovery path is not empty. Its' recommended to review there is no master key backup stored locally. Files found:"
 
                     # Display the list of the files found in Recovery key path
-                    foreach ($fileFound in $((Get-ChildItem -Path $RecoveryKeyParrentPath -Recurse).FullName))
+                    foreach ($fileFound in $((Get-ChildItem -Path $RecoveryKeyParentPath -Recurse).FullName))
                     {
                         $tmpStatus += "<li>" + $fileFound + "</li>"
                         Write-LogMessage -Type Verbose -Msg "$fileFound"
                     }
-                } # end if ($RecoveryKeyParrentPathFilesCount -gt 0)
+                } # end if ($RecoveryKeyParentPathFilesCount -gt 0)
 			} # end else
 
 			# Check that all paths have the right permissions
