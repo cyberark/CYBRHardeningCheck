@@ -95,95 +95,6 @@ Function ConfigureUsersForPSMSessions
 }
 
 # @FUNCTION@ ======================================================================================================================
-# Name...........: PSMForWebApplications
-# Description....:
-# Parameters.....:
-# Return Values..:
-# =================================================================================================================================
-Function PSMForWebApplications
-{
-	<#
-.SYNOPSIS
-
-.DESCRIPTION
-
-.PARAMETER Parameters
-	(Optional) Parameters from the Configuration
-.PARAMETER Reference Status
-	Reference to the Step Status
-#>
-	param(
-		[Parameter(Mandatory = $false)]
-		[array]$Parameters = $null,
-		[Parameter(Mandatory = $false)]
-		[ref]$refOutput
-	)
-
-	Begin
-	{
-		$res = "Good"
-		$tmpStatus = ""
-		$statusChanged = $false
-		$myRef = ""
-	}
-	Process
-	{
-		try
-		{
-			Write-LogMessage -Type Info -Msg "Start verify PSMForWebApplications"
-
-			# Check Disable Internet Explorer Enhanced Security Configuration
-			$regESC = @{
-				"Path"      = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
-				"ValueName" = "IsInstalled";
-				"ValueData" = 0;
-				"outStatus" = ([ref]$myRef);
-			}
-
-			if ((Compare-RegistryValue @regESC) -ne "Good")
-			{
-				$tmpStatus += $myRef.Value + "<BR>"
-				$statusChanged = $true
-			}
-
-			# Check Prevent-RunningFirstRunWizard
-			$regFRW = @{
-				"Path"      = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main";
-				"ValueName" = "DisableFirstRunCustomize";
-				"ValueData" = 2;
-				"outStatus" = ([ref]$myRef);
-			}
-
-			if ((Compare-RegistryValue @regFRW) -ne "Good")
-			{
-				$tmpStatus += $myRef.Value + "<BR>"
-				$statusChanged = $true
-			}
-
-			If ($statusChanged)
-			{
-				$res = "Warning"
-				[ref]$refOutput.Value = $tmpStatus
-			}
-
-			Write-LogMessage -Type Info -Msg "Finish verify PSMForWebApplications"
-
-			return $res
-		}
-		catch
-		{
-			Write-LogMessage -Type "Error" -Msg "Could not verify PSMForWebApplications.  Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$refOutput.Value = "Could not verify PSMForWebApplications."
-			return "Bad"
-		}
-	}
-	End
-	{
-		# Write output to HTML
-	}
-}
-
-# @FUNCTION@ ======================================================================================================================
 # Name...........: EnableUsersToPrintPSMSessions
 # Description....:
 # Parameters.....:
@@ -330,7 +241,36 @@ Function SupportWebApplications
 				}
 			}
 			
-			If ($changeStatus)
+			# IE Specific hardening settings check
+			# Check Disable Internet Explorer Enhanced Security Configuration
+			$regESC = @{
+				"Path" = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
+				"ValueName" = "IsInstalled";
+				"ValueData" = 0;
+				"outStatus" = ([ref]$myRef);
+			}
+
+			if((Compare-RegistryValue @regESC) -ne "Good")
+			{
+				$tmpStatus += $myRef.Value + "<BR>"
+				$changeStatus = $true
+			}
+
+			# Check Prevent-RunningFirstRunWizard
+			$regFRW = @{
+				"Path" = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main";
+				"ValueName" = "DisableFirstRunCustomize";
+				"ValueData" = 2;
+				"outStatus" = ([ref]$myRef);
+			}
+
+			if((Compare-RegistryValue @regFRW) -ne "Good")
+			{
+				$tmpStatus += $myRef.Value + "<BR>"
+				$changeStatus = $true
+			}
+
+			If($changeStatus)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -396,9 +336,9 @@ Function ClearRemoteDesktopUsers
 			If ($null -ne $MembersOfRDusersGroup)
 			{
 				# Check if the PSMConnect and PSMAdminConnect have permissions
-				$psmAccess = $($MembersOfRDusersGroup | Where-Object { $_.Name -like "*$PSM_CONNECT*" } ) -and $($MembersOfRDusersGroup | Where-Object { $_.Name -like "*$PSM_ADMIN_CONNECT*" })
+				$psmAccess = $($MembersOfRDUsersGroup | Where-Object { $_.Name -like "*$PSM_CONNECT*" } ) -and $($MembersOfRDUsersGroup | Where-Object { $_.Name -like "*$PSM_ADMIN_CONNECT*" })
 				# Check other Domain users and groups access
-				ForEach ($item in $($MembersOfRDusersGroup | Where-Object { $_.PrincipalSource -eq "ActiveDirectory" -and $_.ObjectClass -eq "Group" }))
+				ForEach ($item in $($MembersOfRDUsersGroup | Where-Object { $_.PrincipalSource -eq "ActiveDirectory" -and $_.ObjectClass -eq "Group" }))
 				{
 					if ($null -ne $item)
 					{
@@ -510,7 +450,6 @@ Function RunAppLocker
 			Write-LogMessage -Type Info -Msg "Start verify RunAppLocker"
 			If (Test-Path $PSM_AppLockerConfiguration)
 			{
-
 				# Get current AppLocker configuration (incase it wasn't configured, an empty policy will be returned)
 				$xmlAppLockerConfiguration = [xml](Get-AppLockerPolicy -Effective -Xml)
 				# Load the current PSM AppLocker Configuration
@@ -716,7 +655,7 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 		$myRef = ""
 		$user_names = ($PSM_CONNECT, $PSM_ADMIN_CONNECT)
 		$RegPath = "Software\Policies\Microsoft\Windows\Control Panel\Desktop"
-		$UserDir = "$($ENV:WINDIR)\system32\GroupPolicyUsers\{0}\User\registry.pol"
+		$UserDir = "$($ENV:WinDir)\system32\GroupPolicyUsers\{0}\User\registry.pol"
 	}
 	Process
 	{
@@ -1107,7 +1046,7 @@ Function HardenPSMUsersAccess
 			Write-LogMessage -Type Info -Msg "Start verify HardenPSMUsersAccess"
 			# Set a list of paths of paths to get access to
 			# OS Paths
-			$accessPaths = @("$($env:systemroot)\explorer.exe", "$($env:systemroot)\SysWOW64\explorer.exe", "$($env:systemroot)\System32\taskmgr.exe", "$($env:systemroot)\SysWOW64\taskmgr.exe")
+			$accessPaths = @("$($env:SystemRoot)\explorer.exe", "$($env:SystemRoot)\SysWOW64\explorer.exe", "$($env:SystemRoot)\System32\taskmgr.exe", "$($env:SystemRoot)\SysWOW64\taskmgr.exe")
 			# PSM paths
 			$accessPaths += @($PSM_PATH, $PSM_VAULT_FILE_PATH)
 			# PVWA paths (if installed on the same server)
@@ -1331,7 +1270,7 @@ Function PSM_CredFileHardening
 {
 	<#
 .SYNOPSIS
-	Return verficiation type on credential file
+	Return verification type on credential file
 .DESCRIPTION
 	Return the verification type on the credential file used by the components to log back in to the vault
 .PARAMETER parameters
