@@ -1956,12 +1956,13 @@ Function Compare-UserPermissions
                 if (($null -ne $permissions) -and ($permissions.FileSystemRights -like "*$rights*") -and ($permissions.AccessControlType -eq $ACLType))
 
 					{
-				    Write-LogMessage -Type Debug -Msg "User $identity has the required rights ($rights) to $path"
-			        [ref]$outStatus.Value = "$identity has the required rights ($rights) to $path"
+						$msg = "User $identity has the required rights ($ACLType - $rights) to $path"
+						Write-LogMessage -Type Debug -Msg $msg
+						[ref]$outStatus.Value = $msg
 				    }
 
                 else{
-                     [ref]$outStatus.Value = "$identity does not have required rights ($rights) to $path"
+                     [ref]$outStatus.Value = "$identity does not have required rights ($ACLType - $rights) to $path"
                      $retValue = "Warning"
                     }
 
