@@ -1,7 +1,7 @@
 ﻿# Const
-Set-Variable PSM_CONNECT -value "PSMConnect"
-Set-Variable PSM_ADMIN_CONNECT -value "PSMAdminConnect"
-Set-Variable PSM_SHADOW_USERS -value "PSMShadowUsers"
+Set-Variable PSM_CONNECT -Value "PSMConnect"
+Set-Variable PSM_ADMIN_CONNECT -Value "PSMAdminConnect"
+Set-Variable PSM_SHADOW_USERS -Value "PSMShadowUsers"
 
 # @FUNCTION@ ======================================================================================================================
 # Name...........: ConfigureUsersForPSMSessions
@@ -11,7 +11,7 @@ Set-Variable PSM_SHADOW_USERS -value "PSMShadowUsers"
 # =================================================================================================================================
 Function ConfigureUsersForPSMSessions
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -22,13 +22,14 @@ Function ConfigureUsersForPSMSessions
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$statusChanged = $false
@@ -36,39 +37,41 @@ Function ConfigureUsersForPSMSessions
 		$user_names = ($PSM_CONNECT, $PSM_ADMIN_CONNECT)
 		$DONT_EXPIRE_PASSWD = "65536"
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify ConfigureUsersForPSMSessions"
 			ForEach ($user in $user_names)
 			{
-				if((Compare-UserFlags -userName $user -flagName "UserFlags" -userFlagValue "DONT_EXPIRE_PASSWD" -flagValue $DONT_EXPIRE_PASSWD -outStatus ([ref]$myRef)) -ne "Good")
+				if ((Compare-UserFlags -userName $user -flagName "UserFlags" -userflagValue "DONT_EXPIRE_PASSWD" -flagValue $DONT_EXPIRE_PASSWD -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
-				if((Compare-UserFlags -userName $user -flagName "MaxDisconnectionTime" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
+				if ((Compare-UserFlags -userName $user -flagName "MaxDisconnectionTime" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
-				if((Compare-UserFlags -userName $user -flagName "MaxConnectionTime" -flagValue 0 -outStatus ([ref]$myRef)) -ne "Good")
+				if ((Compare-UserFlags -userName $user -flagName "MaxConnectionTime" -flagValue 0 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
-				if((Compare-UserFlags -userName $user -flagName "ReconnectionAction" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
+				if ((Compare-UserFlags -userName $user -flagName "ReconnectionAction" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
-				if((Compare-UserFlags -userName $user -flagName "BrokenConnectionAction" -flagValue 0 -outStatus ([ref]$myRef)) -ne "Good")
+				if ((Compare-UserFlags -userName $user -flagName "BrokenConnectionAction" -flagValue 0 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
 			}
 
-			If($statusChanged)
+			If ($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -78,13 +81,15 @@ Function ConfigureUsersForPSMSessions
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify ConfigureUsersForPSMSessions.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify ConfigureUsersForPSMSessions."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 		# Write output to HTML
 	}
 }
@@ -97,7 +102,7 @@ Function ConfigureUsersForPSMSessions
 # =================================================================================================================================
 Function EnableUsersToPrintPSMSessions
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -108,38 +113,41 @@ Function EnableUsersToPrintPSMSessions
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$statusChanged = $false
 		$myRef = ""
 		$user_names = ($PSM_CONNECT, $PSM_ADMIN_CONNECT)
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify EnableUsersToPrintPSMSessions"
 
 			ForEach ($user in $user_names)
 			{
-				if((Compare-UserFlags -userName $user -flagName "ConnectClientPrintersAtLogon" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
+				if ((Compare-UserFlags -userName $user -flagName "ConnectClientPrintersAtLogon" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
-				if((Compare-UserFlags -userName $user -flagName "DefaultToMainPrinter" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
+				if ((Compare-UserFlags -userName $user -flagName "DefaultToMainPrinter" -flagValue 1 -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
 			}
 
-			If($statusChanged)
+			If ($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -149,13 +157,15 @@ Function EnableUsersToPrintPSMSessions
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify EnableUsersToPrintPSMSessions.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify EnableUsersToPrintPSMSessions."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 		# Write output to HTML
 	}
 }
@@ -169,7 +179,7 @@ Function EnableUsersToPrintPSMSessions
 # =================================================================================================================================
 Function SupportWebApplications
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -180,13 +190,14 @@ Function SupportWebApplications
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$myRef = ""
 		$tmpStatus = ""
@@ -194,34 +205,36 @@ Function SupportWebApplications
 		$PSM_IE_Hardening = Resolve-Path -Path $(Get-CurrentComponentFolderPath -FileName "PSMIEHardening.csv")
 		$PSM_Chrome_Hardening = Resolve-Path -Path $(Get-CurrentComponentFolderPath -FileName "PSMChromeHardening.csv")
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify SupportWebApplications"
 			# Check the hardening of the Installed browsers
 			Write-LogMessage -Type Debug -Msg "Checking IE hardening"
 			$hardeningData = @()
-			If(Test-Path $PSM_IE_Hardening)
+			If (Test-Path $PSM_IE_Hardening)
 			{
-				$hardeningData += Import-Csv $PSM_IE_Hardening -Header Path,ValueName,ValueType,ValueData
+				$hardeningData += Import-Csv $PSM_IE_Hardening -Header Path, ValueName, ValueType, ValueData
 			}
 			# Check if Chrome is installed
-			If(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe")
+			If (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe")
 			{
-				If(Test-Path $PSM_Chrome_Hardening)
+				If (Test-Path $PSM_Chrome_Hardening)
 				{
-					$hardeningData += Import-Csv $PSM_Chrome_Hardening -Header Path,ValueName,ValueType,ValueData
+					$hardeningData += Import-Csv $PSM_Chrome_Hardening -Header Path, ValueName, ValueType, ValueData
 				}	
 			}
-			ForEach($line in $hardeningData)
+			ForEach ($line in $hardeningData)
 			{
 				$regHardening = @{
-					"Path" = "HKLM:\"+$line.Path;
+					"Path"      = "HKLM:\" + $line.Path;
 					"ValueName" = $line.ValueName;
 					"ValueData" = $line.ValueData;
 					"outStatus" = ([ref]$myRef);
 				}
 		
-				if((Compare-RegistryValue @regHardening) -ne "Good")
+				if ((Compare-RegistryValue @regHardening) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$changeStatus = $true
@@ -267,13 +280,15 @@ Function SupportWebApplications
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify SupportWebApplications.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify SupportWebApplications."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 		# Write output to HTML
 	}
 }
@@ -286,7 +301,7 @@ Function SupportWebApplications
 # =================================================================================================================================
 Function ClearRemoteDesktopUsers
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -297,59 +312,65 @@ Function ClearRemoteDesktopUsers
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$REMOTE_DESKTOP_USERS_GROUP_SID = "S-1-5-32-555"
-		[Array]$MembersOfRDUsersGroup =$null
+		[Array]$MembersOfRDusersGroup = $null
 		[Array]$MembersOfADGroups = $null
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify ClearRemoteDesktopUsers"
 			# Get the Remote Desktop USers group members
-			$MembersOfRDUsersGroup = Get-LocalGroupMember -SID $REMOTE_DESKTOP_USERS_GROUP_SID
-            If ($null -ne $MembersOfRDUsersGroup)
-            {
+			$MembersOfRDusersGroup = Get-LocalGroupMember -SID $REMOTE_DESKTOP_USERS_GROUP_SID
+			If ($null -ne $MembersOfRDusersGroup)
+			{
 				# Check if the PSMConnect and PSMAdminConnect have permissions
 				$psmAccess = $($MembersOfRDUsersGroup | Where-Object { $_.Name -like "*$PSM_CONNECT*" } ) -and $($MembersOfRDUsersGroup | Where-Object { $_.Name -like "*$PSM_ADMIN_CONNECT*" })
 				# Check other Domain users and groups access
 				ForEach ($item in $($MembersOfRDUsersGroup | Where-Object { $_.PrincipalSource -eq "ActiveDirectory" -and $_.ObjectClass -eq "Group" }))
 				{
-					if($null -ne $item)
+					if ($null -ne $item)
 					{
-						try{
+						try
+      {
 							$Search = New-Object DirectoryServices.DirectorySearcher("(objectSID=$($item.SID))")
 							$Search.PropertiesToLoad.Add("member") | Out-Null
 							$Results = $Search.FindOne()
 							$MembersOfADGroups += $Results.Properties["Member"]
-						} catch {
-							Throw $(New-Object System.Exception ("ClearRemoteDesktopUsers: Active Directory Cannot be contacted. Check that you are logged in with a domain user"),$_.Exception)
+						}
+						catch
+						{
+							Throw $(New-Object System.Exception ("ClearRemoteDesktopUsers: Active Directory Cannot be contacted. Check that you are logged in with a domain user"), $_.Exception)
 						}
 					}
 				}
 
-				If($psmAccess)
+				If ($psmAccess)
 				{
-					If($MembersOfRDUsersGroup.count -gt 2)
+					If ($MembersOfRDusersGroup.count -gt 2)
 					{
 						$res = "Warning"
 						$tmpStatus += "<B>Too many users/groups in Remote Desktop Users group</B><BR>"
 						$tmpStatus += "Current direct members of the 'Remote Desktop Users' group are:<BR>"
-						$tmpStatus += ("<ul><li>" + $($MembersOfRDUsersGroup.Name -join "<li>") + "</ul>")
-						if($null -ne $MembersOfADGroups)
+						$tmpStatus += ("<ul><li>" + $($MembersOfRDusersGroup.Name -join "<li>") + "</ul>")
+						if ($null -ne $MembersOfADGroups)
 						{
 							$tmpStatus += "<b>Members of the AD groups that are members of the 'Remote Desktop Users' Group are: </b><br>"
 							$tmpStatus += "<ul>"
-							forEach($item in $MembersOfADGroups)
+							forEach ($item in $MembersOfADGroups)
 							{
-								If($item -match "^CN=([\w\s]{1,}),(?:CN|OU|DC)")
+								If ($item -match "^CN=([\w\s]{1,}),(?:CN|OU|DC)")
 								{
 									$tmpStatus += ("<li>" + ($Matches[1].Trim()) + "</li>")
 								}
@@ -364,23 +385,27 @@ Function ClearRemoteDesktopUsers
 					$tmpStatus += "PSMConnect and PSMAdminConnect should have access to 'Remote Desktop Users' group"
 				}
 			}
-            Else {
-                Write-LogMessage -Type "Error" -Msg "The local Remote Desktop User groups contains no members.  Error: $(Join-ExceptionMessage $_.Exception)"
-			    $tmpStatus += "The local Remote Desktop User groups contains no members"
-			    $res = "Bad"
-            }
+			Else
+			{
+				Write-LogMessage -Type "Error" -Msg "The local Remote Desktop User groups contains no members.  Error: $(Join-ExceptionMessage $_.Exception)"
+				$tmpStatus += "The local Remote Desktop User groups contains no members"
+				$res = "Bad"
+			}
 
-		    Write-LogMessage -Type Info -Msg "Finish verify ClearRemoteDesktopUsers"
+			Write-LogMessage -Type Info -Msg "Finish verify ClearRemoteDesktopUsers"
 
 			[ref]$refOutput.Value = $tmpStatus
 			return $res
-		} catch {
+		}
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify ClearRemoteDesktopUsers.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify ClearRemoteDesktopUsers."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 		# Write output to HTML
 	}
 }
@@ -393,7 +418,7 @@ Function ClearRemoteDesktopUsers
 # =================================================================================================================================
 Function RunAppLocker
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -404,60 +429,64 @@ Function RunAppLocker
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$changeStatus = $false
 		$PSM_AppLockerConfiguration = Join-Path -Path $(Get-DetectedComponents -Component "PSM").Path -ChildPath "Hardening\PSMConfigureAppLocker.xml"
-		$ruleTypesList = @("Exe","Script","Msi","Dll")
+		$ruleTypesList = @("Exe", "Script", "Msi", "Dll")
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify RunAppLocker"
-			If(Test-Path $PSM_AppLockerConfiguration)
+			If (Test-Path $PSM_AppLockerConfiguration)
 			{
-
 				# Get current AppLocker configuration (incase it wasn't configured, an empty policy will be returned)
-				$xmlAppLockerConfiguration = [xml](get-AppLockerPolicy -effective -xml)
+				$xmlAppLockerConfiguration = [xml](Get-AppLockerPolicy -Effective -Xml)
 				# Load the current PSM AppLocker Configuration
 				$xmlPSM_AppLockerConfig = [xml](Get-Content $PSM_AppLockerConfiguration)
-				If(($null -ne $xmlAppLockerConfiguration) -and ($null -ne $xmlPSM_AppLockerConfig))
+				If (($null -ne $xmlAppLockerConfiguration) -and ($null -ne $xmlPSM_AppLockerConfig))
 				{
 					# For each type check that all rules exist
-					ForEach($type in $ruleTypesList)
+					ForEach ($type in $ruleTypesList)
 					{
 						Write-LogMessage -type Verbose "Checking rules for '$type'..."
 						$psmAppLockerConfig = $xmlPSM_AppLockerConfig.PSMAppLockerConfiguration.SelectNodes("//Application[@Type='$type']")
 						$currentAppLockerConfig = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='$type']")
 						$compareResult = Compare-Object -ReferenceObject $currentAppLockerConfig.Conditions.FilePathCondition.Path -DifferenceObject $psmAppLockerConfig.Path
-						If($compareResult.Count -gt 0)
+						If ($compareResult.Count -gt 0)
 						{
 							$tmpStatus += "The following '$type' rules are different between the current AppLocker configuration and the PSM AppLocker configuration file<BR><ul>"
 							# Get the rules missing from the PSM AppLocker config
-							$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "<="}) -join "<li>(Effective)"
+							$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "<=" }) -join "<li>(Effective)"
 							# Get the rules missing in the effective AppLocker config
-							$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "=>"}) -join "<li>(PSM Config)"
+							$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "=>" }) -join "<li>(PSM Config)"
 							$tmpStatus += "</ul>"
 							$changeStatus = $true
 						}
 					}
 				}
-				else {
+				else
+				{
 					Write-LogMessage -Type Warning -Msg "AppLocker configuration files are empty"
 				}
-				If($changeStatus)
+				If ($changeStatus)
 				{
 					$res = "Warning"
 					[ref]$refOutput.Value = $tmpStatus
 				}
 			}
-			else {
+			else
+			{
 				Write-LogMessage -Type Warning -Msg "PSM AppLocker configuration file does not exist in $PSM_AppLockerConfiguration. Skipping AppLocker check"
 				$res = "Warning"
 				[ref]$refOutput.Value = "PSM AppLocker configuration file does not exist in $PSM_AppLockerConfiguration"
@@ -467,13 +496,15 @@ Function RunAppLocker
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify RunAppLocker.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify RunAppLocker."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 		# Write output to HTML
 	}
 }
@@ -486,7 +517,7 @@ Function RunAppLocker
 # =================================================================================================================================
 Function ConfigureOutOfDomainPSMServer
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -497,24 +528,25 @@ Function ConfigureOutOfDomainPSMServer
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$statusChanged = $false
 		$myRef = ""
 		$user_names = ($PSM_CONNECT, $PSM_ADMIN_CONNECT)
 		# Check which path to use
-		If(Test-Path -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services")
+		If (Test-Path -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services")
 		{
 			$regTSPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
 		}
-		ElseIf(Test-Path -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Services")
+		ElseIf (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Services")
 		{
 			$regTSPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Services"
 		}
@@ -524,48 +556,50 @@ Function ConfigureOutOfDomainPSMServer
 			$regTSPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
 		}
 		$regTimeLimitForIdleSessions = @{
-				"Path" = $regTSPath
-				"ValueName" = "MaxIdleTime";
-				"ValueData" = 172800000;
-				"outStatus" = ([ref]$myRef);
-			}
+			"Path"      = $regTSPath
+			"ValueName" = "MaxIdleTime";
+			"ValueData" = 172800000;
+			"outStatus" = ([ref]$myRef);
+		}
 
 		$regRemoteSessionControl = @{
-				"Path" = $regTSPath
-				"ValueName" = "Shadow";
-				"ValueData" = 2;
-				"outStatus" = ([ref]$myRef);
-			}
+			"Path"      = $regTSPath
+			"ValueName" = "Shadow";
+			"ValueData" = 2;
+			"outStatus" = ([ref]$myRef);
+		}
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify ConfigureOutOfDomainPSMServer"
 
-			if((Compare-UserRight -userName $PSM_SHADOW_USERS -userRight "SeInteractiveLogonRight" -outStatus ([ref]$myRef)) -ne "Good")
+			if ((Compare-UserRight -userName $PSM_SHADOW_USERS -userRight "SeInteractiveLogonRight" -outStatus ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
 			}
-			ForEach($user in $user_names)
+			ForEach ($user in $user_names)
 			{
-				if((Compare-UserRight -userName $user -userRight "SeRemoteInteractiveLogonRight" -outStatus ([ref]$myRef)) -ne "Good")
+				if ((Compare-UserRight -userName $user -userRight "SeRemoteInteractiveLogonRight" -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
 			}
-			if((Compare-RegistryValue @regTimeLimitForIdleSessions) -ne "Good")
+			if ((Compare-RegistryValue @regTimeLimitForIdleSessions) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
 			}
-			if((Compare-RegistryValue @regRemoteSessionControl) -ne "Good")
+			if ((Compare-RegistryValue @regRemoteSessionControl) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
 			}
 
-			If($statusChanged)
+			If ($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -575,13 +609,15 @@ Function ConfigureOutOfDomainPSMServer
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify ConfigureOutOfDomainPSMServer.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify ConfigureOutOfDomainPSMServer."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 		# Write output to HTML
 	}
 }
@@ -594,7 +630,7 @@ Function ConfigureOutOfDomainPSMServer
 # =================================================================================================================================
 Function DisableTheScreenSaverForThePSMLocalUsers
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -605,13 +641,14 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$statusChanged = $false
@@ -620,10 +657,12 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 		$RegPath = "Software\Policies\Microsoft\Windows\Control Panel\Desktop"
 		$UserDir = "$($ENV:WinDir)\system32\GroupPolicyUsers\{0}\User\registry.pol"
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			# Disable Screen Saver on server
-			If((EnableScreenSaver -refOutput ([ref]$myRef)) -ne "Good")
+			If ((DisableScreenSaver -refOutput ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value
 			}
@@ -633,17 +672,19 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 			ForEach ($user in $user_names)
 			{
 				$usrSID = $null
-				try{
+				try
+				{
 					$usrSID = Convert-NameToSID $user
 				}
-				catch{
+				catch
+				{
 					$tmpStatus += $($_.Exception.Message) + "<BR>"
 					$statusChanged = $true
 				}
-				if($null -ne $usrSID)
+				if ($null -ne $usrSID)
 				{
 					$currUserDir = $UserDir -f $usrSID
-					if((Compare-PolicyEntry -EntryTitle "Disable screen saver" -UserDir $currUserDir -RegPath $RegPath -RegName 'ScreenSaveActive' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
+					if ((Compare-PolicyEntry -EntryTitle "Disable screen saver" -UserDir $currUserDir -RegPath $RegPath -RegName 'ScreenSaveActive' -RegData '1' -outStatus ([ref]$myRef)) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
 						$statusChanged = $true
@@ -651,7 +692,7 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 				}
 			}
 
-			If($statusChanged)
+			If ($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -661,13 +702,15 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify DisableTheScreenSaverForThePSMLocalUsers.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify DisableTheScreenSaverForThePSMLocalUsers."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -680,7 +723,7 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 # =================================================================================================================================
 Function HidePSMDrives
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -691,45 +734,48 @@ Function HidePSMDrives
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$statusChanged = $false
 		$myRef = ""
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify HidePSMDrives"
 			# Define the HKEY_USERS root as a new drive
-			New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS -Scope Global | out-Null
+			New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS -Scope Global | Out-Null
 			# Get a list of all User SID to check
 			$arrRegUsers = Get-ChildItem -Path HKU:\ -ErrorAction Ignore | Select-Object Name -ErrorAction Ignore
 
-			ForEach($user in $arrRegUsers)
+			ForEach ($user in $arrRegUsers)
 			{
-				$userSID = $user.Name.Replace("HKEY_USERS\","")
+				$userSID = $user.Name.Replace("HKEY_USERS\", "")
 				Write-LogMessage -Type Debug -Msg "Checking NoDrives for user $userSID..."
 				# Check PSM Local drives configuration
 				$regNoDrives = @{
-					"Path" = "HKU:\{0}\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -f $userSID
+					"Path"      = "HKU:\{0}\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -f $userSID
 					"ValueName" = "NoDrives";
 					"ValueData" = 12;
 					"outStatus" = ([ref]$myRef);
 				}
 
-				if((Compare-RegistryValue @regNoDrives) -ne "Good")
+				if ((Compare-RegistryValue @regNoDrives) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
 			}
-			If($statusChanged)
+			If ($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -739,14 +785,16 @@ Function HidePSMDrives
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify HidePSMDrives.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify HidePSMDrives."
 			return "Bad"
 		}
 	}
-	End {
-		Remove-PSDrive -Name HKU | out-null
+	End
+	{
+		Remove-PSDrive -Name HKU | Out-Null
 	}
 }
 
@@ -758,7 +806,7 @@ Function HidePSMDrives
 # =================================================================================================================================
 Function BlockIETools
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -769,31 +817,34 @@ Function BlockIETools
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$statusChanged = $false
 		$myRef = ""
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify BlockIETools"
 
 			# Check that IE developer tools are blocked
 			$regIEDevTools = @{
-				"Path" = "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\IEDevTools"
+				"Path"      = "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\IEDevTools"
 				"ValueName" = "Disabled";
 				"ValueData" = 1;
 				"outStatus" = ([ref]$myRef);
 			}
 
-			if((Compare-RegistryValue @regIEDevTools) -ne "Good")
+			if ((Compare-RegistryValue @regIEDevTools) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
@@ -801,19 +852,19 @@ Function BlockIETools
 
 			# Check that IE context menu is blocked
 			$regIEContext = @{
-				"Path" = "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Restrictions"
+				"Path"      = "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Restrictions"
 				"ValueName" = "NoBrowserContextMenu";
 				"ValueData" = 1;
 				"outStatus" = ([ref]$myRef);
 			}
 
-			if((Compare-RegistryValue @regIEContext) -ne "Good")
+			if ((Compare-RegistryValue @regIEContext) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
 			}
 
-			If($statusChanged)
+			If ($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -823,13 +874,15 @@ Function BlockIETools
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify BlockIETools.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify BlockIETools."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -842,7 +895,7 @@ Function BlockIETools
 # =================================================================================================================================
 Function HardenRDS
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -853,32 +906,35 @@ Function HardenRDS
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$statusChanged = $false
 		$myRef = ""
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify HardenRDS"
 
 			# Check that IE developer tools are blocked
 			$regRDPPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp"
 			$regMinEncrypt = @{
-				"Path" = $regRDPPath;
+				"Path"      = $regRDPPath;
 				"ValueName" = "MinEncryptionLevel";
 				"ValueData" = 3;
 				"outStatus" = ([ref]$myRef);
 			}
 
-			if((Compare-RegistryValue @regMinEncrypt) -ne "Good")
+			if ((Compare-RegistryValue @regMinEncrypt) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
@@ -886,19 +942,19 @@ Function HardenRDS
 
 			# Check that IE context menu is blocked
 			$regSecurityLayer = @{
-				"Path" = $regRDPPath;
+				"Path"      = $regRDPPath;
 				"ValueName" = "SecurityLayer";
 				"ValueData" = 1;
 				"outStatus" = ([ref]$myRef);
 			}
 
-			if((Compare-RegistryValue @regSecurityLayer) -ne "Good")
+			if ((Compare-RegistryValue @regSecurityLayer) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
 			}
 
-			If($statusChanged)
+			If ($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -908,13 +964,15 @@ Function HardenRDS
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify HardenRDS.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify HardenRDS."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -927,7 +985,7 @@ Function HardenRDS
 # =================================================================================================================================
 Function HardenPSMUsersAccess
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -938,32 +996,33 @@ Function HardenPSMUsersAccess
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$statusChanged = $false
 		$myRef = ""
 
-        $PSM_PATH = (Get-DetectedComponents -Component "PSM").Path
+		$PSM_PATH = (Get-DetectedComponents -Component "PSM").Path
 		$PSM_VAULT_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "Vault"
 		$PSM_PVCONF_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "temp\PVConfiguration.xml"
 		$PSM_BASICPSM_FILE_PATH = Join-Path -Path $PSM_PATH -ChildPath "basic_psm.ini"
 
-        [XML]$xmlPSMConfig = Get-Content -Path $PSM_PVCONF_FILE_PATH
-        $PSM_RECORDING_PATH = ($xmlPSMConfig | Select-XML -XPath "//RecorderSettings" | Select-Object -ExpandProperty Node).LocalRecordingsFolder
+		[XML]$xmlPSMconfig = Get-Content -Path $PSM_PVCONF_FILE_PATH
+		$PSM_RECORDING_PATH = ($xmlPSMconfig | Select-Xml -XPath "//RecorderSettings" | Select-Object -ExpandProperty Node).LocalRecordingsFolder
 
-        $PSM_BasicPSM = get-content -Path $PSM_BASICPSM_FILE_PATH | Select-String 'LogsFolder'
-        $PSM_LOGS_PATH = $PSM_BasicPSM -Replace "LogsFolder=", '' -Replace '"', ''
-        $PSM_LOGS_OLD_PATH = (Join-Path -Path $PSM_LOGS_PATH -ChildPath 'old')
+		$PSM_BasicPSM = Get-Content -Path $PSM_BASICPSM_FILE_PATH | Select-String 'LogsFolder'
+		$PSM_LOGS_PATH = $PSM_BasicPSM -Replace "LogsFolder=", '' -Replace '"', ''
+		$PSM_LOGS_OLD_PATH = (Join-Path -Path $PSM_LOGS_PATH -ChildPath 'old')
 
 		$PVWAInstallationPath = (Get-DetectedComponents -Component "PVWA").Path
-		If($null -ne $PVWAInstallationPath)
+		If ($null -ne $PVWAInstallationPath)
 		{
 			$PVWAWebSitePath = Join-Path -Path (Get-ItemProperty HKLM:\Software\Microsoft\INetStp -Name "PathWWWRoot").PathWWWRoot -ChildPath "PasswordVault"
 		}
@@ -973,15 +1032,17 @@ Function HardenPSMUsersAccess
 		$AZURE_PACKAGES_FOLDER_PATH = "C:\Packages"
 
 		$userPermissions = @{
-			"Path"="";
-			"Identity"="";
-			"Rights"="FullControl";
-			"ACLType"="Deny";
-			"outStatus"=([ref]$myRef);
+			"Path"      = "";
+			"Identity"  = "";
+			"Rights"    = "FullControl";
+			"ACLType"   = "Deny";
+			"outStatus" = ([ref]$myRef);
 		}
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify HardenPSMUsersAccess"
 			# Set a list of paths of paths to get access to
 			# OS Paths
@@ -989,36 +1050,36 @@ Function HardenPSMUsersAccess
 			# PSM paths
 			$accessPaths += @($PSM_PATH, $PSM_VAULT_FILE_PATH)
 			# PVWA paths (if installed on the same server)
-			if(($null -ne $PVWAInstallationPath) -and (Test-Path $PVWAWebSitePath))
+			if (($null -ne $PVWAInstallationPath) -and (Test-Path $PVWAWebSitePath))
 			{
 				$accessPaths += @($PVWAInstallationPath, $PVWAWebSitePath)
 			}
 			# CPM paths (if installed on the same server)
-			if(($null -ne $CPMPath) -and (Test-Path $CPMPath))
+			if (($null -ne $CPMPath) -and (Test-Path $CPMPath))
 			{
 				$accessPaths += @($CPMPath)
 			}
 			# Azure paths (if installed on the same server)
-			If(($null -ne $AZURE_FOLDER_PATH) -and (Test-Path $AZURE_FOLDER_PATH))
+			If (($null -ne $AZURE_FOLDER_PATH) -and (Test-Path $AZURE_FOLDER_PATH))
 			{
 				$accessPaths += @($AZURE_FOLDER_PATH, $AZURE_PACKAGES_FOLDER_PATH)
 			}
 			# AWS paths (if installed on the same server)
-			if(($null -ne $AWS_FOLDER_PATH) -and (Test-Path $AWS_FOLDER_PATH))
+			if (($null -ne $AWS_FOLDER_PATH) -and (Test-Path $AWS_FOLDER_PATH))
 			{
 				$accessPaths += @($AWS_FOLDER_PATH)
 			}
 
-			$IEPaths = @("$($env:ProgramFiles)\Internet Explorer\iexplore.exe","$(${env:ProgramFiles(x86)})\Internet Explorer\iexplore.exe")
+			$IEPaths = @("$($env:ProgramFiles)\Internet Explorer\iexplore.exe", "$(${env:ProgramFiles(x86)})\Internet Explorer\iexplore.exe")
 
 			# Check Deny Full Control to PSMConnect, PSMAdminConnect, PSMShadowUsers
-			ForEach($path in $accessPaths)
+			ForEach ($path in $accessPaths)
 			{
 				$userPermissions["Path"] = $path
-				ForEach($user in @($PSM_CONNECT, $PSM_ADMIN_CONNECT, $PSM_SHADOW_USERS))
+				ForEach ($user in @($PSM_CONNECT, $PSM_ADMIN_CONNECT, $PSM_SHADOW_USERS))
 				{
 					$userPermissions["Identity"] = $user
-					If((Compare-UserPermissions @userPermissions) -ne "Good")
+					If ((Compare-UserPermissions @userPermissions) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
 						$statusChanged = $true
@@ -1027,13 +1088,13 @@ Function HardenPSMUsersAccess
 			}
 
 			# Check deny access for IE folders for the PSM Connect and Admin Connect users
-			ForEach($path in $IEPaths)
+			ForEach ($path in $IEPaths)
 			{
 				$userPermissions["Path"] = $path
-				ForEach($user in @($PSM_CONNECT, $PSM_ADMIN_CONNECT))
+				ForEach ($user in @($PSM_CONNECT, $PSM_ADMIN_CONNECT))
 				{
 					$userPermissions["Identity"] = $user
-					If((Compare-UserPermissions @userPermissions) -ne "Good")
+					If ((Compare-UserPermissions @userPermissions) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
 						$statusChanged = $true
@@ -1043,13 +1104,13 @@ Function HardenPSMUsersAccess
 
 			# Check that System and Administrators group have Full control over PSM Folders
 			$userPermissions["ACLType"] = "Allow"
-			ForEach($path in @($PSM_VAULT_FILE_PATH, $PSM_RECORDING_PATH, $PSM_LOGS_PATH, $PSM_LOGS_OLD_PATH, $(Join-Path -Path $PSM_LOGS_PATH -ChildPath "Components"), $(Join-Path -Path $PSM_PATH -ChildPath "Components")))
+			ForEach ($path in @($PSM_VAULT_FILE_PATH, $PSM_RECORDING_PATH, $PSM_LOGS_PATH, $PSM_LOGS_OLD_PATH, $(Join-Path -Path $PSM_LOGS_PATH -ChildPath "Components"), $(Join-Path -Path $PSM_PATH -ChildPath "Components")))
 			{
 				$userPermissions["Path"] = $path
-				ForEach($user in @($(Get-LocalAdministrators), $(Get-LocalSystem)))
+				ForEach ($user in @($(Get-LocalAdministrators), $(Get-LocalSystem)))
 				{
 					$userPermissions["Identity"] = $user
-					If((Compare-UserPermissions @userPermissions) -ne "Good")
+					If ((Compare-UserPermissions @userPermissions) -ne "Good")
 					{
 						$tmpStatus += $myRef.Value + "<BR>"
 						$statusChanged = $true
@@ -1057,7 +1118,7 @@ Function HardenPSMUsersAccess
 				}
 			}
 
-			If($statusChanged)
+			If ($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -1067,13 +1128,15 @@ Function HardenPSMUsersAccess
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify HardenPSMUsersAccess.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify HardenPSMUsersAccess."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -1086,7 +1149,7 @@ Function HardenPSMUsersAccess
 # =================================================================================================================================
 Function HardenSMBServices
 {
-<#
+	<#
 .SYNOPSIS
 
 .DESCRIPTION
@@ -1097,31 +1160,34 @@ Function HardenSMBServices
 	Reference to the Step Status
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
+	Begin
+	{
 		$res = "Good"
 		$tmpStatus = ""
 		$statusChanged = $false
 		$myRef = ""
 	}
-	Process {
-		try{
+	Process
+	{
+		try
+		{
 			Write-LogMessage -Type Info -Msg "Start verify HardenSMBServices"
 
 			# Verify SMB Server is Disabled
 			$regSMB1 = @{
-				"Path" = "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters";
+				"Path"      = "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters";
 				"ValueName" = "SMB1";
 				"ValueData" = 0;
 				"outStatus" = ([ref]$myRef);
 			}
 
-			if((Compare-RegistryValue @regSMB1) -ne "Good")
+			if ((Compare-RegistryValue @regSMB1) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
@@ -1129,13 +1195,13 @@ Function HardenSMBServices
 
 			# Verify MRXSMB10 client service is Disabled
 			$regSMB10 = @{
-				"Path" = "HKLM:\SYSTEM\CurrentControlSet\Services\mrxsmb10"
+				"Path"      = "HKLM:\SYSTEM\CurrentControlSet\Services\mrxsmb10"
 				"ValueName" = "Start";
 				"ValueData" = 4;
 				"outStatus" = ([ref]$myRef);
 			}
 
-			if((Compare-RegistryValue @regSMB10) -ne "Good")
+			if ((Compare-RegistryValue @regSMB10) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value + "<BR>"
 				$statusChanged = $true
@@ -1145,33 +1211,33 @@ Function HardenSMBServices
 			$regXblGameSavePath = "HKLM:\SYSTEM\CurrentControlSet\Services\XblGameSave"
 			$regXblAuthManagerPath = "HKLM:\SYSTEM\CurrentControlSet\Services\XblAuthManager "
 			$regXbl = @{
-				"Path" = ""
+				"Path"      = ""
 				"ValueName" = "Start";
 				"ValueData" = 4;
 				"outStatus" = ([ref]$myRef);
 			}
 
-			If(Test-Path $regXblGameSavePath)
+			If (Test-Path $regXblGameSavePath)
 			{
 				$regXbl["Path"] = $regXblGameSavePath
-				if((Compare-RegistryValue @regXbl) -ne "Good")
+				if ((Compare-RegistryValue @regXbl) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
 			}
 
-			If(Test-Path $regXblAuthManagerPath)
+			If (Test-Path $regXblAuthManagerPath)
 			{
 				$regXbl["Path"] = $regXblAuthManagerPath
-				if((Compare-RegistryValue @regXbl) -ne "Good")
+				if ((Compare-RegistryValue @regXbl) -ne "Good")
 				{
 					$tmpStatus += $myRef.Value + "<BR>"
 					$statusChanged = $true
 				}
 			}
 
-			If($statusChanged)
+			If ($statusChanged)
 			{
 				$res = "Warning"
 				[ref]$refOutput.Value = $tmpStatus
@@ -1181,13 +1247,15 @@ Function HardenSMBServices
 
 			return $res
 		}
-		catch{
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not verify HardenSMBServices.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not verify HardenSMBServices."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 
 	}
 }
@@ -1200,7 +1268,7 @@ Function HardenSMBServices
 # =================================================================================================================================
 Function PSM_CredFileHardening
 {
-<#
+	<#
 .SYNOPSIS
 	Return verification type on credential file
 .DESCRIPTION
@@ -1209,45 +1277,51 @@ Function PSM_CredFileHardening
 	Credential file location
 #>
 	param(
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[array]$Parameters = $null,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[ref]$refOutput
 	)
 
-	Begin {
-        $res = 'Good'
-        $myRef = ""
-        $PSMPath = ""
-        $tmpValue = ""
-    }
+	Begin
+	{
+		$res = 'Good'
+		$myRef = ""
+		$PSMPath = ""
+		$tmpValue = ""
+	}
 
-    Process {
-        Try{
-   			Write-LogMessage -Type Info -Msg "Start validating hardening of PSM credential file"
-            $PSMPath = (Get-DetectedComponents -Component "PSM").Path
-            $credentialsFolder = join-path -Path $PSMPath -ChildPath 'Vault'
+	Process
+	{
+		Try
+		{
+			Write-LogMessage -Type Info -Msg "Start validating hardening of PSM credential file"
+			$PSMPath = (Get-DetectedComponents -Component "PSM").Path
+			$credentialsFolder = Join-Path -Path $PSMPath -ChildPath 'Vault'
 			# Go over all PSM Cred Files in the folder
 			ForEach ($credFile in (Get-ChildItem -Path $credentialsFolder -Filter *.cred))
 			{
 				Write-LogMessage -Type Debug -Msg "Checking '$($credFile.Name)' credential file"
-				if((Test-CredFileVerificationType -CredentialFilePath $credFile.FullName -outStatus ([ref]$myRef)) -ne "Good")
+				if ((Test-CredFileVerificationType -CredentialFilePath $credFile.FullName -outStatus ([ref]$myRef)) -ne "Good")
 				{
 					$res = "Warning"
 				}
 				$tmpValue += $myRef.value + "<BR>"
 			}
 
-            [ref]$refOutput.Value = $tmpValue
-            Write-LogMessage -Type Info -Msg "Finish validating PSM component credential file"
-   			return $res
-        } catch {
+			[ref]$refOutput.Value = $tmpValue
+			Write-LogMessage -Type Info -Msg "Finish validating PSM component credential file"
+			return $res
+		}
+		catch
+		{
 			Write-LogMessage -Type "Error" -Msg "Could not validate the PSM component credential file.  Error: $(Join-ExceptionMessage $_.Exception)"
 			[ref]$refOutput.Value = "Could not validate PSM component credential file [0]."
 			return "Bad"
 		}
 	}
-	End {
+	End
+	{
 		# Write output to HTML
 	}
 }

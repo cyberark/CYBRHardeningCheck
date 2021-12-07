@@ -2169,18 +2169,16 @@ Function Compare-UserPermissions
 				else { $parsedIdentity = $identity }
 				$permissions = $acl.Access | Where-Object { $_.IdentityReference -match $parsedIdentity } | Select-Object IdentityReference, FileSystemRights, AccessControlType
 				if (($null -ne $permissions) -and ($permissions.FileSystemRights -like "*$rights*") -and ($permissions.AccessControlType -eq $ACLType))
-
 				{
-					Write-LogMessage -Type Debug -Msg "User $identity has the required rights ($rights) to $path"
-					[ref]$outStatus.Value = "$identity has the required rights ($rights) to $path"
-				}
-
-				else
-				{
-					[ref]$outStatus.Value = "$identity does not have required rights ($rights) to $path"
-					$retValue = "Warning"
-				}
-
+						$msg = "User $identity has the required rights ($ACLType - $rights) to $path"
+						Write-LogMessage -Type Debug -Msg $msg
+						[ref]$outStatus.Value = $msg
+		    }
+        else
+        {
+             [ref]$outStatus.Value = "$identity does not have required rights ($ACLType - $rights) to $path"
+             $retValue = "Warning"
+        }
 			}
 			Else
 			{
