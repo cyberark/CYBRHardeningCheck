@@ -1463,7 +1463,7 @@ Export-ModuleMember -Function Get-SeceditAnalysisResults
 # =================================================================================================================================
 Function Get-OSVersion
 {
-<#
+	<#
 .SYNOPSIS
 	Return the OS Version
 .DESCRIPTION
@@ -1478,7 +1478,7 @@ Function Get-OSVersion
 		return $osVer
 	}
 	catch
- 	{
+	{
 		Throw "Not able to get OS version. Error: $($_.Exception.Message)"
 	}
 }
@@ -2170,15 +2170,15 @@ Function Compare-UserPermissions
 				$permissions = $acl.Access | Where-Object { $_.IdentityReference -match $parsedIdentity } | Select-Object IdentityReference, FileSystemRights, AccessControlType
 				if (($null -ne $permissions) -and ($permissions.FileSystemRights -like "*$rights*") -and ($permissions.AccessControlType -eq $ACLType))
 				{
-						$msg = "User $identity has the required rights ($ACLType - $rights) to $path"
-						Write-LogMessage -Type Debug -Msg $msg
-						[ref]$outStatus.Value = $msg
-		    }
-        else
-        {
-             [ref]$outStatus.Value = "$identity does not have required rights ($ACLType - $rights) to $path"
-             $retValue = "Warning"
-        }
+					$msg = "User $identity has the required rights ($ACLType - $rights) to $path"
+					Write-LogMessage -Type Debug -Msg $msg
+					[ref]$outStatus.Value = $msg
+				}
+				else
+				{
+					[ref]$outStatus.Value = "$identity does not have required rights ($ACLType - $rights) to $path"
+					$retValue = "Warning"
+				}
 			}
 			Else
 			{
@@ -2513,15 +2513,21 @@ Function Compare-AdvancedAuditPolicySubCategory
 			$verifyFailure = $false
 			$auditLineOutput = ""
 			$_subCategory = $subcategory
-			# Avoid "Error 0x00000057 occurred"
-			If($subcategory -match "(?:^Audit\s)(.*)")
+			# Avoid "Error 0x00000057 occurred" for Audit policies
+			If ($subcategory -match "(?:^Audit\s)(.*)")
 			{
 				# Add an exception for "Audit Policy Change"
-				If($subcategory -ne "Audit Policy Change")
+				If ($subcategory -ne "Audit Policy Change")
 				{
 					# See: http://david-homer.blogspot.com/2016/08/when-using-auditpolexe-you-see-error.html
 					$_subCategory = $Matches[1]
 				}
+			}
+			# Avoid "Error 0x00000057 occurred" for "Central Access Policy Staging"
+			If ($subcategory -eq "Central Access Policy Staging")
+			{
+				# Thanks @ediulia for finding the fix
+				$_subCategory = "Central Policy Staging"
 			}
 			$auditCommandOutput = auditpol /get /subCategory:"$_subCategory" | Where-Object { $_ -match $_subCategory }
 			if ($null -ne $auditCommandOutput)
