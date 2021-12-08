@@ -414,9 +414,8 @@ Function Vault_FirewallNonStandardRules
 			$dbParmFWRules = @()
 			ForEach ($rule in $(Get-Content -Path $DBParmFile | Select-String "AllowNonStandardFWAddresses=").Line)
 			{
-				# Rule Parts: [0] - Address; [1] - Enabled; [2-3] - <Port>:<Direction>/<Protocol>
-				$ruleParts = $rule.Replace("AllowNonStandardFWAddresses=", "").Split(',')
-				Foreach ($direction in $ruleParts[2..5])
+				# Rule Groups: [1] - Address block; [2] - Enabled; [3] - <Port>:<Direction>/<Protocol> array
+				If ($rule -Match "^AllowNonStandardFWAddresses=\[([0-9\.\,\-]{4,})\],(Yes|No),(.*)$")
 				{
 					$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort	
 					$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
@@ -427,41 +426,37 @@ Function Vault_FirewallNonStandardRules
 					{
 						$fwRule.Enabled = "True"
 					}
+					else 
+					{
+						$fwRule.Enabled = "False"	
+					}
 					$fwRule.LocalAddress = "Any"
-					$fwRule.RemoteAddress = $Matches[1].Split(",")
+					$fwRule.RemoteAddress = $Matches[1]
 					$directions = $Matches[3] | Select-String -AllMatches "([\d-]{1,}):(\w{1,})/(\w{1,})"
 					If ($directions.Matches.Count -gt 0)
 					{
-						$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort	
-						$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
-							"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress, $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
-						}
-						$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
-						If ($ruleParts[1] -eq "Yes")
+						Foreach ($direction in $directions)
 						{
-							$fwRule.Enabled = "True"
-						}
-						$fwRule.Direction = $Matches[2]
-						$fwRule.LocalAddress = "Any"
-						$fwRule.RemoteAddress = $ruleParts[0].Replace("[", "").Replace("]", "")
-						$fwRule.Protocol = $Matches[3]
-						Switch ($fwRule.Direction)
-						{
-							"inbound"
-       						{
-								$fwRule.LocalPort = $Matches[1]
-								$fwRule.RemotePort = "Any"
-								break
-							}
-							"outbound"
+							$fwRule.Direction = $direction.Matches.Groups[2].Value
+							$fwRule.Protocol = $direction.Matches.Groups[3].Value
+							Switch ($fwRule.Direction)
 							{
-								$fwRule.LocalPort = "Any"
-								$fwRule.RemotePort = $Matches[1]
-								break
+								"inbound"
+								{
+									$fwRule.LocalPort = $direction.Matches.Groups[1].Value
+									$fwRule.RemotePort = "Any"
+									break
+								}
+								"outbound"
+								{
+									$fwRule.LocalPort = "Any"
+									$fwRule.RemotePort = $direction.Matches.Groups[1].Value
+									break
+								}
 							}
+							Write-LogMessage -Type Verbose -Msg "Added DBParm.ini rule: $($fwRule.FWRuleLine)"
+							$dbParmFWRules += $fwRule
 						}
-						Write-LogMessage -Type Verbose -Msg "Added DBParm.ini rule: $($fwRule.FWRuleLine)"
-						$dbParmFWRules += $fwRule
 					}
 					Else
 					{
@@ -486,7 +481,7 @@ Function Vault_FirewallNonStandardRules
 					{
 						$fwRule = "" | Select-Object DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort	
 						$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
-							"[{0}],{1},{2}:{3}/{4}" -f $($this.RemoteAddress -join " "), $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
+							"[{0}],{1},{2}:{3}/{4}" -f $this.RemoteAddress, $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
 						}
 						$fwRule.DisplayGroup = "CYBERARK_RULE_NON_STD_ADDRESS"
 						$fwRule.Protocol = "ICMPv4"
@@ -509,7 +504,7 @@ Function Vault_FirewallNonStandardRules
 				$portFilter = $($rule | Get-NetFirewallPortFilter)
 				$fwRule = "" | Select-Object DisplayName, DisplayGroup, Enabled, Direction, LocalAddress, RemoteAddress, Protocol, LocalPort, RemotePort
 				$fwRule | Add-Member -MemberType ScriptProperty -Name "FWRuleLine" -Value {
-					"[{0}],{1},{2}:{3}/{4}" -f $($this.RemoteAddress -join " "), $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
+					"[{0}],{1},{2}:{3}/{4}" -f $($this.RemoteAddress -join ","), $this.Enabled, $(If ($this.Direction -eq "inbound") { $this.LocalPort } else { $this.RemotePort }), $this.Direction, $this.Protocol
 				}
 				$fwRule.DisplayName = $rule.DisplayName
 				$fwRule.DisplayGroup = $rule.DisplayGroup
@@ -544,7 +539,7 @@ Function Vault_FirewallNonStandardRules
 
 			ForEach ($rule in $dbParmFWRules)
 			{
-				# Checking that all Non-Standard rules currently configured in the DBParm.ini also configured in Windows FireWall
+				# Checking that all Non-Standard rules currently configured also appear in the DBParm.ini also configured in Windows FireWall
 				If ($FWRules.FWRuleLine -NotContains $rule.FWRuleLine)
 				{
 					$res = "Warning"
@@ -730,8 +725,6 @@ Function Vault_KeysProtection
 			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
 			foreach ($path in $KeysLocations)
 			{
-				# $path = (Resolve-Path -Path $path)
-
                 # Test the path before checking permissions
                 If (Test-Path $Path)
 			    {
