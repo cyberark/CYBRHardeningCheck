@@ -462,16 +462,20 @@ Function RunAppLocker
 						Write-LogMessage -type Verbose "Checking rules for '$type'..."
 						$psmAppLockerConfig = $xmlPSM_AppLockerConfig.PSMAppLockerConfiguration.SelectNodes("//Application[@Type='$type']")
 						$currentAppLockerConfig = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='$type']")
-						$compareResult = Compare-Object -ReferenceObject $currentAppLockerConfig.Conditions.FilePathCondition.Path -DifferenceObject $psmAppLockerConfig.Path
-						If ($compareResult.Count -gt 0)
+						# Check that the configurations are not empty - related to issue #90
+						if(($null -ne $psmAppLockerConfig) -and ($null -ne $currentAppLockerConfig))
 						{
-							$tmpStatus += "The following '$type' rules are different between the current AppLocker configuration and the PSM AppLocker configuration file<BR><ul>"
-							# Get the rules missing from the PSM AppLocker config
-							$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "<=" }) -join "<li>(Effective)"
-							# Get the rules missing in the effective AppLocker config
-							$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "=>" }) -join "<li>(PSM Config)"
-							$tmpStatus += "</ul>"
-							$changeStatus = $true
+							$compareResult = Compare-Object -ReferenceObject $currentAppLockerConfig.Conditions.FilePathCondition.Path -DifferenceObject $psmAppLockerConfig.Path
+							If ($compareResult.Count -gt 0)
+							{
+								$tmpStatus += "The following '$type' rules are different between the current AppLocker configuration and the PSM AppLocker configuration file<BR><ul>"
+								# Get the rules missing from the PSM AppLocker config
+								$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "<=" }) -join "<li>(Effective)"
+								# Get the rules missing in the effective AppLocker config
+								$tmpStatus += ($compareResult | Where-Object { $_.SideIndicator -eq "=>" }) -join "<li>(PSM Config)"
+								$tmpStatus += "</ul>"
+								$changeStatus = $true
+							}
 						}
 					}
 				}
@@ -662,7 +666,7 @@ Function DisableTheScreenSaverForThePSMLocalUsers
 		try
 		{
 			# Disable Screen Saver on server
-			If ((DisableScreenSaver -refOutput ([ref]$myRef)) -ne "Good")
+			If ((EnableScreenSaver -refOutput ([ref]$myRef)) -ne "Good")
 			{
 				$tmpStatus += $myRef.Value
 			}
