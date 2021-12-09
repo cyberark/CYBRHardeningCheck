@@ -463,7 +463,7 @@ Function RunAppLocker
 						$psmAppLockerConfig = $xmlPSM_AppLockerConfig.PSMAppLockerConfiguration.SelectNodes("//Application[@Type='$type']")
 						$currentAppLockerConfig = $xmlAppLockerConfiguration.SelectSingleNode("//RuleCollection[@Type='$type']")
 						# Check that the configurations are not empty - related to issue #90
-						if(($null -ne $psmAppLockerConfig) -and ($null -ne $currentAppLockerConfig))
+						if(($null -ne $psmAppLockerConfig.Path) -and ($null -ne $currentAppLockerConfig.Conditions.FilePathCondition.Path))
 						{
 							$compareResult = Compare-Object -ReferenceObject $currentAppLockerConfig.Conditions.FilePathCondition.Path -DifferenceObject $psmAppLockerConfig.Path
 							If ($compareResult.Count -gt 0)
