@@ -1,4 +1,4 @@
-﻿$script:NICTeamingName = ""
+$script:NICTeamingName = ""
 
 # @FUNCTION@ ======================================================================================================================
 # Name...........: Vault_NICHardening
@@ -702,15 +702,22 @@ Function Vault_KeysProtection
 			else
 			{
 				Write-LogMessage -Type Verbose -Msg "RecoveryKey is not accessible on machine"
+                try
+                {
                 # Checking if any files found in the Recovery Key folder
                 $RecoveryKeyParentPath = Split-Path -Parent -Path $RecoveryKey
-                $RecoveryKeyParentPathFilesCount = ((Get-ChildItem -Path $RecoveryKeyParentPath -Recurse).FullName).count
+                $RecoveryKeyParentPathFilesCount = ((Get-ChildItem -Path $RecoveryKeyParentPath -Recurse -ErrorAction Stop).FullName).count
+                }
+                catch
+                {
+                    Write-LogMessage -Type Warning -Msg "Script was unable to check the content of the recovery key path `"$RecoveryKeyParrentPath`". Details: $($_.exception.message)"
+                }
                 # Drop a warning files found in the Recovery Key Parent Path folder
                 if ($RecoveryKeyParentPathFilesCount -gt 0)
                 {
                     $res = "Warning"
                     $tmpStatus += "<li>Recovery path is not empty. It's recommended to review there is no master key backup stored locally. Files found:</li>"
-                    Write-LogMessage -Type Verbose -Msg "Recovery path is not empty. Its' recommended to review there is no master key backup stored locally. Files found:"
+                    Write-LogMessage -Type Warning -Msg "Recovery path is not empty. Its' recommended to review there is no master key backup stored locally. Files found:"
 
                     # Display the list of the files found in Recovery key path
                     foreach ($fileFound in $((Get-ChildItem -Path $RecoveryKeyParentPath -Recurse).FullName))

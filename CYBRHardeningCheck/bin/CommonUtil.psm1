@@ -1,4 +1,4 @@
-﻿Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault", "CPM", "PVWA", "PSM", "AIM", "EPM", "SecureTunnel")
+Set-Variable -Name DetectionSupportedComponents -Option ReadOnly -Value @("Vault", "CPM", "PVWA", "PSM", "AIM", "EPM", "SecureTunnel")
 Set-Variable -Name UnsupportedHardeningComponents -Option ReadOnly -Value @("AIM", "EPM", "SecureTunnel")
 
 #region Writer Functions
@@ -2507,7 +2507,7 @@ Function Compare-AdvancedAuditPolicySubCategory
 	{
 		try
 		{
-			Write-LogMessage -Type "Info" -Msg "Checking Advance Audit Policy Sub Category for '$subcategory'"
+			Write-LogMessage -Type "Info" -Msg "Checking Advanced Audit Policy Sub Category for '$subcategory'"
 
 			$verifySuccess = $false
 			$verifyFailure = $false
@@ -2552,21 +2552,21 @@ Function Compare-AdvancedAuditPolicySubCategory
 			}
 			else
 			{
-				Write-LogMessage -Type Error -Msg "There was a problem verifying Advance Audit Policy Sub Category for '$_subCategory'"
+				Write-LogMessage -Type Error -Msg "There was a problem verifying Advanced Audit Policy Sub Category for '$_subCategory'"
 				$returnVal = "Warning"
-				[ref]$outStatus.Value = "There was a problem verifying Advance Audit Policy Sub Category for '$_subCategory'"
+				[ref]$outStatus.Value = "There was a problem verifying Advanced Audit Policy Sub Category for '$_subCategory'"
 			}
 			if ($verifySuccess -and $verifyFailure)
 			{
-				Write-LogMessage -Type Debug -Msg "Advance Audit Policy Sub Category for '$_subCategory' has the correct settings for Success and Failure"
+				Write-LogMessage -Type Debug -Msg "Advanced Audit Policy Sub Category for '$_subCategory' has the correct settings for Success and Failure"
 				$returnVal = "Good"
-				[ref]$outStatus.Value = "Advance Audit Policy Sub Category for '$_subCategory' has the correct settings for Success and Failure<BR>$auditLineOutput"
+				[ref]$outStatus.Value = "Advanced Audit Policy Sub Category for '$_subCategory' has the correct settings for Success and Failure<BR>$auditLineOutput"
 			}
 		}
 		Catch
 		{
-			Write-LogMessage -Type Error -Msg "Could not get Advance Audit Policy Sub Category for '$_subCategory'. Error: $(Join-ExceptionMessage $_.Exception)"
-			[ref]$outStatus.Value = "Could not get Advance Audit Policy Sub Category for '$_subCategory'. Error: $($_.Exception.Message)"
+			Write-LogMessage -Type Error -Msg "Could not get Advanced Audit Policy Sub Category for '$_subCategory'. Error: $(Join-ExceptionMessage $_.Exception)"
+			[ref]$outStatus.Value = "Could not get Advanced Audit Policy Sub Category for '$_subCategory'. Error: $($_.Exception.Message)"
 			$returnVal = "Bad"
 		}
 		return $returnVal
