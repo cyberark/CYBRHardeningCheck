@@ -94,7 +94,7 @@ Function Vault_NICHardening
 # =================================================================================================================================
 Function Vault_StaticIP
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Check that the Vault has Static IP
 .DESCRIPTION
@@ -161,7 +161,7 @@ Function Vault_StaticIP
 # =================================================================================================================================
 Function Vault_WindowsFirewall
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Check that the Vault has the Firewall active
 .DESCRIPTION
@@ -217,7 +217,7 @@ Function Vault_WindowsFirewall
 # =================================================================================================================================
 Function Vault_DomainJoined
 {
-<#
+	<#
 .SYNOPSIS
 	Method to Check that the Vault was not joined to a domain
 .DESCRIPTION
@@ -702,70 +702,70 @@ Function Vault_KeysProtection
 			else
 			{
 				Write-LogMessage -Type Verbose -Msg "RecoveryKey is not accessible on machine"
-                try
-                {
-                # Checking if any files found in the Recovery Key folder
-                $RecoveryKeyParentPath = Split-Path -Parent -Path $RecoveryKey
-                $RecoveryKeyParentPathFilesCount = ((Get-ChildItem -Path $RecoveryKeyParentPath -Recurse -ErrorAction Stop).FullName).count
-                }
-                catch
-                {
-                    Write-LogMessage -Type Warning -Msg "Script was unable to check the content of the recovery key path `"$RecoveryKeyParrentPath`". Details: $($_.exception.message)"
-                }
-                # Drop a warning files found in the Recovery Key Parent Path folder
-                if ($RecoveryKeyParentPathFilesCount -gt 0)
-                {
-                    $res = "Warning"
-                    $tmpStatus += "<li>Recovery path is not empty. It's recommended to review there is no master key backup stored locally. Files found:</li>"
-                    Write-LogMessage -Type Warning -Msg "Recovery path is not empty. Its' recommended to review there is no master key backup stored locally. Files found:"
+				try
+				{
+					# Checking if any files found in the Recovery Key folder
+					$RecoveryKeyParentPath = Split-Path -Parent -Path $RecoveryKey
+					$RecoveryKeyParentPathFilesCount = ((Get-ChildItem -Path $RecoveryKeyParentPath -Recurse -ErrorAction Stop).FullName).count
+				}
+				catch
+				{
+					Write-LogMessage -Type Warning -Msg "Script was unable to check the content of the recovery key path `"$RecoveryKeyParentPath`". Details: $($_.exception.message)"
+				}
+				# Drop a warning files found in the Recovery Key Parent Path folder
+				if ($RecoveryKeyParentPathFilesCount -gt 0)
+				{
+					$res = "Warning"
+					$tmpStatus += "<li>Recovery path is not empty. It's recommended to review there is no master key backup stored locally. Files found:</li>"
+					Write-LogMessage -Type Warning -Msg "Recovery path is not empty. It's recommended to review there is no master key backup stored locally. Files found:"
 
-                    # Display the list of the files found in Recovery key path
-                    foreach ($fileFound in $((Get-ChildItem -Path $RecoveryKeyParentPath -Recurse).FullName))
-                    {
-                        $tmpStatus += "<li>" + $fileFound + "</li>"
-                        Write-LogMessage -Type Verbose -Msg "$fileFound"
-                    }
-                } # end if ($RecoveryKeyParentPathFilesCount -gt 0)
+					# Display the list of the files found in Recovery key path
+					foreach ($fileFound in $((Get-ChildItem -Path $RecoveryKeyParentPath -Recurse).FullName))
+					{
+						$tmpStatus += "<li>" + $fileFound + "</li>"
+						Write-LogMessage -Type Warning -Msg "$fileFound"
+					}
+				} # end if ($RecoveryKeyParentPathFilesCount -gt 0)
 			} # end else
 
 			# Check that all paths have the right permissions
 			$KeysFolderLocalAdmins = $KeysFolderLocalSystem = $true
 			foreach ($path in $KeysLocations)
 			{
-                # Test the path before checking permissions
-                If (Test-Path $Path)
-			    {
-				    Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
-				    if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
-				    {
-					    $KeysFolderLocalAdmins = $false
-					    $res = "Warning"
-				    }
-				    $tmpStatus += "<li>" + $myRef.Value + "</li>"
+				# Test the path before checking permissions
+				If (Test-Path $Path)
+				{
+					Write-LogMessage -Type Verbose -Msg "Checking '$path' permissions..."
+					if ((Compare-UserPermissions -path $path -identity $(Get-LocalAdministrators) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+					{
+						$KeysFolderLocalAdmins = $false
+						$res = "Warning"
+					}
+					$tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-				    if ((Compare-UserPermissions -path $path -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
-				    {
-					    $KeysFolderLocalSystem = $false
-					    $res = "Warning"
-				    }
-				    $tmpStatus += "<li>" + $myRef.Value + "</li>"
+					if ((Compare-UserPermissions -path $path -identity $(Get-LocalSystem) -rights "FullControl" -outStatus ([ref]$myRef)) -ne "Good")
+					{
+						$KeysFolderLocalSystem = $false
+						$res = "Warning"
+					}
+					$tmpStatus += "<li>" + $myRef.Value + "</li>"
 
-				        # Verify if Administrators and System  are the only ones that have permissions on the keys folders
-				    if (($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
-				    {
-					    If ((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
-					    {
-						    $tmpStatus += "<li>" + $myRef.Value + "</li>"
-						    $res = "Warning"
-					    }
-					    Else { $tmpStatus += "<li> Permissions are set correctly on the path: " + $path + "</li>" }
-				    }
-				    Else
-				    {
-					    $tmpStatus += "<li>" + "The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user" + "</li>"
-					    $res = "Warning"
-				    }
-                } # end If (Test-Path $Path)
+					# Verify if Administrators and System  are the only ones that have permissions on the keys folders
+					if (($KeysFolderLocalAdmins -eq $true) -and ($KeysFolderLocalSystem -eq $true))
+					{
+						If ((Compare-AmountOfUserPermissions -Path $path -amount 2 -outStatus ([ref]$myRef)) -ne "Good")
+						{
+							$tmpStatus += "<li>" + $myRef.Value + "</li>"
+							$res = "Warning"
+						}
+						Else { $tmpStatus += "<li> Permissions are set correctly on the path: " + $path + "</li>" }
+					}
+					Else
+					{
+						$tmpStatus += "<li>" + "The permissions need to be reviewed. Permissions are not set correctly for the Local Administrators and the local System user" + "</li>"
+						$res = "Warning"
+					}
+				} # end If (Test-Path $Path)
 			} # end foreach ($path in $KeysLocations)
 
 			[ref]$refOutput.Value = "<ul>" + $tmpStatus + "</ul>"
