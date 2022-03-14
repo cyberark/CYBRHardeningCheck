@@ -1,0 +1,143 @@
+
+[Unicode]
+Unicode=yes
+
+[System Access]
+EnableAdminAccount= 1
+EnableGuestAccount= 0
+ForceLogoffWhenHourExpire= 1
+
+[System Log]
+AuditLogRetentionPeriod= 0
+MaximumLogSize= 100032
+RestrictGuestAccess= 1
+
+[Security Log]
+AuditLogRetentionPeriod= 0
+MaximumLogSize= 100032
+RestrictGuestAccess= 1
+
+[Application Log]
+AuditLogRetentionPeriod= 0
+MaximumLogSize= 100032
+RestrictGuestAccess= 1
+
+[Registry Values]
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Setup\RecoveryConsole\SecurityLevel=4,0
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Setup\RecoveryConsole\SetCommand=4,0
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\AllocateCDRoms=1,"1"
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\AllocateDASD=1,"0"
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\AllocateFloppies=1,"1"
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\CachedLogonsCount=1,"0"
+MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\ForceUnlockLogon=4,1
+MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer=NoDisconnect,
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ConsentPromptBehaviorAdmin=4,5
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ConsentPromptBehaviorUser=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\DisableCAD=4,0
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\DontDisplayLastUserName=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\EnableLUA=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\EnableSecureUIAPaths=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\EnableUIADesktopToggle=4,0
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\EnableVirtualization=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\FilterAdministratorToken=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\PromptOnSecureDesktop=4,1
+MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ShutdownWithoutLogon=4,0
+MACHINE\Software\Policies\Microsoft\Windows\Safer\CodeIdentifiers\AuthenticodeEnabled=4,1
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile=EnableFirewall,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\AuthorizedApplications=AllowUserPrefMerge,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\AuthorizedApplications\List=mstsc.exe,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\GloballyOpenPorts=AllowUserPrefMerge,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\GloballyOpenPorts\List=3389:TCP:*:RDP,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\IcmpSettings=AllowOutboundDestinationUnreachable,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\Services\RemoteDesktop=Enabled,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\Services\UPnPFramework=Enabled,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\StandardProfile=EnableFirewall,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\StandardProfile\AuthorizedApplications=AllowUserPrefMerge,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsFirewall\StandardProfile\Services\RemoteDesktop=Enabled,
+MACHINE\SOFTWARE\Policies\Microsoft\WindowsNT\TerminalServices=fDisableAutoReconnect,
+MACHINE\System\CurrentControlSet\Control\Lsa\DisableDomainCreds=4,1
+MACHINE\System\CurrentControlSet\Control\Lsa\EveryoneIncludesAnonymous=4,0
+MACHINE\System\CurrentControlSet\Control\Lsa\ForceGuest=4,0
+MACHINE\System\CurrentControlSet\Control\Lsa\FullPrivilegeAuditing=3,1
+MACHINE\System\CurrentControlSet\Control\Lsa\LimitBlankPasswordUse=4,1
+MACHINE\System\CurrentControlSet\Control\Lsa\LmCompatibilityLevel=4,5
+MACHINE\System\CurrentControlSet\Control\Lsa\MSV1_0\NTLMMinClientSec=4,537395200
+MACHINE\System\CurrentControlSet\Control\Lsa\MSV1_0\NTLMMinServerSec=4,537395200
+MACHINE\System\CurrentControlSet\Control\Lsa\NoLMHash=4,1
+MACHINE\System\CurrentControlSet\Control\Lsa\RestrictAnonymous=4,1
+MACHINE\System\CurrentControlSet\Control\Lsa\RestrictAnonymousSAM=4,1
+MACHINE\System\CurrentControlSet\Control\Lsa\SCENoApplyLegacyAuditPolicy=4,1
+MACHINE\System\CurrentControlSet\Control\Print\Providers\LanMan Print Services\Servers\AddPrinterDrivers=4,1
+MACHINE\System\CurrentControlSet\Control\SecurePipeServers\Winreg\AllowedExactPaths\Machine=7,
+MACHINE\System\CurrentControlSet\Control\SecurePipeServers\Winreg\AllowedPaths\Machine=7,
+MACHINE\System\CurrentControlSet\Control\Session Manager\Memory Management\ClearPageFileAtShutdown=4,1
+MACHINE\System\CurrentControlSet\Control\Session Manager\SubSystems\optional=7,
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\AutoDisconnect=4,15
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\EnableS4U2SelfForClaims=4,2
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\NullSessionPipes=7,
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\NullSessionShares=7,
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\RestrictNullSessAccess=4,1
+MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters\SmbServerNameHardeningLevel=4,0
+MACHINE\System\CurrentControlSet\Services\LanmanWorkstation\Parameters\EnablePlainTextPassword=4,0
+MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\DisablePasswordChange=4,0
+MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\MaximumPasswordAge=4,30
+MACHINE\System\CurrentControlSet\Services\Netlogon\Parameters\RequireStrongKey=4,1
+
+[Version]
+Revision=1
+signature="$CHICAGO$"
+
+[Registry Keys]
+"MACHINE\SOFTWARE",0,"D:PAR(A;CIIO;KA;;;CO)(A;CI;KA;;;SY)(A;CI;KA;;;BA)(A;CI;KR;;;S-1-15-2-1)(A;CI;KR;;;BU)S:AR(AU;OICIFA;LCWPSDRCWD;;;WD)(AU;OICISA;DCLCWPSDRCWD;;;WD)"
+"MACHINE\SYSTEM",0,"D:PAR(A;CIIO;KA;;;CO)(A;CI;KA;;;SY)(A;CI;KA;;;BA)(A;CI;KR;;;S-1-15-2-1)(A;CI;KR;;;BU)S:AR(AU;OICIFA;LCWPSDRCWD;;;WD)(AU;OICISA;DCLCWPSDRCWD;;;WD)"
+"MACHINE\SYSTEM\CurrentControlSet\Control\SecurePipeServers\winreg",0,"D:PAR(A;CIIO;KA;;;CO)(A;CI;KA;;;SY)(A;CI;KA;;;BA)"
+
+[Service General Setting]
+"MpsSvc",2,""
+"RemoteAccess",4,""
+"sacsvr",4,""
+"SCardSvr",4,""
+"SCPolicySvc",4,""
+"SNMPTRAP",4,""
+"WerSvc",4,""
+
+[File Security]
+"%SystemRoot%\System32\config",0,"D:PAR(A;OICIIO;FA;;;CO)(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)S:AR(AU;OICISAFA;DCLCRPDTCRSDWDWO;;;WD)(AU;OICIFA;CCSWWPLO;;;WD)"
+"%SystemRoot%\System32\config\RegBack",0,"D:PAR(A;OICIIO;FA;;;CO)(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)S:AR(AU;OICISAFA;DCLCRPDTCRSDWDWO;;;WD)(AU;OICIFA;CCSWWPLO;;;WD)"
+
+[Privilege Rights]
+SeAssignPrimaryTokenPrivilege= *S-1-5-19,*S-1-5-20
+SeBackupPrivilege= *S-1-5-32-544
+SeChangeNotifyPrivilege= *S-1-5-20,*S-1-5-19,*S-1-5-11,*S-1-5-32-544
+SeCreateGlobalPrivilege= *S-1-5-6,*S-1-5-20,*S-1-5-19,*S-1-5-32-544
+SeCreatePermanentPrivilege=
+SeCreateSymbolicLinkPrivilege= *S-1-5-32-544
+SeCreateTokenPrivilege=
+SeDebugPrivilege= *S-1-5-32-544
+SeDenyBatchLogonRight= *S-1-5-32-546
+SeDenyInteractiveLogonRight= *S-1-5-32-546
+SeDenyNetworkLogonRight= *S-1-5-32-546
+SeDenyRemoteInteractiveLogonRight= *S-1-5-32-546
+SeDenyServiceLogonRight= *S-1-5-32-546
+SeEnableDelegationPrivilege= *S-1-5-32-544
+SeIncreaseBasePriorityPrivilege= *S-1-5-32-544
+SeIncreaseQuotaPrivilege= *S-1-5-32-544,*S-1-5-19,*S-1-5-20
+SeInteractiveLogonRight= *S-1-5-32-544
+SeLoadDriverPrivilege= *S-1-5-32-544
+SeLockMemoryPrivilege= *S-1-5-32-544
+SeManageVolumePrivilege= *S-1-5-32-544
+SeProfileSingleProcessPrivilege= *S-1-5-32-544
+SeRelabelPrivilege=
+SeRemoteInteractiveLogonRight= *S-1-5-32-544
+SeRemoteShutdownPrivilege= *S-1-5-32-544
+SeRestorePrivilege= *S-1-5-32-544
+SeSecurityPrivilege= *S-1-5-32-544
+SeServiceLogonRight= PasswordManagerUser,*S-1-5-80-0,*S-1-5-20,*S-1-5-19,connector
+SeShutdownPrivilege= *S-1-5-32-544
+SeSystemEnvironmentPrivilege= *S-1-5-32-544
+SeSystemtimePrivilege= *S-1-5-19,*S-1-5-32-544
+SeTakeOwnershipPrivilege= *S-1-5-32-544
+SeTcbPrivilege=
+SeTimeZonePrivilege= *S-1-5-32-544
+SeTrustedCredManAccessPrivilege=
+
