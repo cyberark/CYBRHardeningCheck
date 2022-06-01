@@ -682,7 +682,7 @@ Function Vault_KeysProtection
 			$vaultFolder = $(Get-DetectedComponents -Component Vault).Path
 			$DBParmFile = $(Get-ChildItem -Path $vaultFolder -Include "DBParm.ini" -Recurse).FullName
 			# Get the location of all Vault Keys
-			$keysList = $(Get-Content -Path $DBParmFile | Select-String -List "RecoveryPubKey", "ServerKey", "ServerPrivateKey", "RecoveryPrvKey", "BackupKey").Line
+			$keysList = $(Get-Content -Path $DBParmFile | Select-String -List "^RecoveryPubKey", "^ServerKey", "^ServerPrivateKey", "^RecoveryPrvKey", "^BackupKey").Line
 			Write-LogMessage -Type Verbose -Msg "Found the following Keys paths: $($KeysList -join '; ')"
 			$KeysLocations = @()
 			# Get the Operator CD relevant keys and files path
